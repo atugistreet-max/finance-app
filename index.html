@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>資産・キャッシュフロー 統合管理アプリ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --card: #334155;
+      --text: #f8fafc;
+      --sub: #94a3b8;
+      --primary: #3b82f6;
+      --accent: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --border: #475569;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", "Meiryo", "Yu Gothic", "Hiragino Sans", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .top-bar {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      width: 100%;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .brand h1 {
+      font-size: 1.15rem;
+      margin: 0;
+      font-weight: 700;
+    }
+    .badge {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .period-group {
+      display: flex;
+      background: var(--bg);
+      padding: 2px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .period-btn {
+      background: transparent;
+      color: var(--sub);
+      border: none;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .period-btn:hover { color: var(--text); }
+    .period-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .action-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .action-btn:hover { background: #475569; }
+    .action-btn.primary {
+      background: var(--accent);
+      border-color: #059669;
+      color: #fff;
+    }
+    .action-btn.primary:hover { background: #059669; }
+    .action-btn.danger {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 12px 14px;
+      flex: 1;
+      overflow-x: hidden;
+    }
+
+    #toast-box {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(6, 78, 59, 0.96);
+      border: 1px solid #10b981;
+      color: #ecfdf5;
+      padding: 10px 14px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+      z-index: 9999;
+      display: none;
+      max-width: 88vw;
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+
+    .sync-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      display: none;
+      width: 100%;
+    }
+    .sync-panel.open { display: block; }
+    .sync-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .sync-box {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      min-width: 0;
+    }
+    .sync-box.recommended {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
+    }
+    .sync-box h4 { margin: 0 0 6px 0; font-size: 0.88rem; color: #34d399; }
+    .sync-box p { margin: 0 0 8px 0; font-size: 0.76rem; color: var(--sub); line-height: 1.4; }
+    .sync-box input[type="text"], .sync-box input[type="file"] {
+      padding: 5px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      font-size: 0.78rem;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+      width: 100%;
+    }
+    .kpi-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      min-width: 0;
+    }
+    .kpi-title {
+      font-size: 0.74rem;
+      color: var(--sub);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .kpi-val {
+      font-size: 1.18rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .kpi-sub {
+      font-size: 0.71rem;
+      color: #cbd5e1;
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .tab-btn {
+      background: var(--panel);
+      color: var(--sub);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.81rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: #1d4ed8;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+      width: 100%;
+    }
+    .visual-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+    }
+    @media (max-width: 1024px) {
+      .charts-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .visual-split { grid-template-columns: minmax(0, 1fr); }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .chart-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      min-width: 0;
+      width: 100%;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .chart-header h3 {
+      font-size: 0.88rem;
+      margin: 0;
+      color: #e2e8f0;
+    }
+    .chart-wrap {
+      position: relative;
+      height: 270px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .table-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+    }
+    .table-card h3 { margin: 0 0 10px 0; font-size: 0.92rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+    th, td {
+      padding: 6px 7px;
+      text-align: left;
+      border-bottom: 1px solid rgba(71, 85, 105, 0.5);
+    }
+    th {
+      background: rgba(15, 23, 42, 0.5);
+      color: #93c5fd;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+    tr:hover td { background: rgba(51, 65, 85, 0.4); }
+    .num-pos { color: #34d399; font-weight: 600; }
+    .num-neg { color: #f87171; font-weight: 600; }
+    .phase-tag {
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .phase-work { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4); }
+    .phase-retire { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    select, input[type="search"], input[type="number"] {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      max-width: 100%;
+    }
+    .mini-table td, .mini-table th {
+      padding: 4px 6px;
+      font-size: 0.74rem;
+    }
+    .section-banner {
+      background: linear-gradient(90deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95));
+      border-left: 4px solid #10b981;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+    }
+    .summary-pill {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+    }
+    .budget-control-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #3b82f6;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+    }
+
+    #table-mf-logs {
+      table-layout: fixed;
+      width: 100%;
+    }
+    #table-mf-logs th.col-date, #table-mf-logs td.col-date {
+      width: 86px;
+      white-space: nowrap;
+      text-align: center;
+      font-size: 0.74rem;
+    }
+    #table-mf-logs th.col-content, #table-mf-logs td.col-content {
+      width: 38%;
+      word-break: break-all;
+      overflow-wrap: anywhere;
+      white-space: normal;
+      line-height: 1.4;
+      padding: 6px 8px;
+    }
+    #table-mf-logs th.col-amount, #table-mf-logs td.col-amount {
+      width: 92px;
+      white-space: nowrap;
+      text-align: right;
+    }
+    #table-mf-logs th.col-cat, #table-mf-logs td.col-cat {
+      width: 145px;
+      word-break: break-all;
+      white-space: normal;
+      font-size: 0.74rem;
+    }
+    #table-mf-logs th.col-subcat, #table-mf-logs td.col-subcat {
+      width: 135px;
+      word-break: break-all;
+      white-space: normal;
+      font-size: 0.72rem;
+      color: var(--sub);
+    }
+    #table-mf-logs th.col-inst, #table-mf-logs td.col-inst {
+      width: 105px;
+      word-break: break-all;
+      white-space: normal;
+      font-size: 0.72rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toast-box"></div>
+
+  <header class="top-bar">
+    <div class="brand">
+      <span style="font-size:1.35rem;">💹</span>
+      <div>
+        <h1>資産・ライフプラン 統合管理アプリ</h1>
+        <div style="font-size:0.72rem; color:var(--sub);" id="phase-range-label">表示期間：現在〜100歳 (2026年〜2056年)</div>
+      </div>
+      <span class="badge" id="data-status-badge">✓ 現金100万維持・らくつむ補填＆スワップ逓減モデル</span>
+      <span class="badge" id="mf-status-badge" style="background:rgba(59,130,246,0.2); color:#93c5fd; border-color:rgba(59,130,246,0.4);">⏳ MF自動同期中...</span>
+    </div>
+
+    <div class="controls">
+      <div class="period-group">
+        <button class="period-btn active" onclick="changePhase('current', this)">現在〜100歳</button>
+        <button class="period-btn" onclick="changePhase('working', this)">💪 労働期(〜80歳)</button>
+        <button class="period-btn" onclick="changePhase('retire', this)">🌴 リタイヤ期(81〜100歳)</button>
+        <button class="period-btn" onclick="changePhase('near5', this)">直近5年</button>
+        <button class="period-btn" onclick="changePhase('all', this)">全期間</button>
+      </div>
+      <button class="action-btn primary" onclick="syncAllFromSheets(true)">🔄 最新取得</button>
+      <button class="action-btn" onclick="toggleSyncPanel()">⚙️ 連動・MF取込</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="sync-panel" id="sync-panel">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:0.9rem;">📂 Googleスプレッドシート完全自動同期 ＆ MF設定</h3>
+        <button class="action-btn" onclick="toggleSyncPanel()" style="padding:3px 8px;">✕ 閉じる</button>
+      </div>
+      <div class="sync-grid">
+        <div class="sync-box recommended">
+          <h4>★ マネーフォワード ＆ CF表 スプレッドシート自動同期</h4>
+          <p>スプレッドシートURLが内蔵されています。CF表URLも登録しておくと、CF表上で変更した「一番新しい予算額」も自動検出して採用します。</p>
+          <div style="display:grid; grid-template-columns: 105px 1fr; gap:6px; align-items:center; font-size:0.76rem; margin-bottom:8px;">
+            <span>① MF家計簿 URL:</span><input type="text" id="url-mf" style="width:100%;">
+            <span>② CF表 URL:</span><input type="text" id="url-cf" placeholder="https://docs.google.com/spreadsheets/d/.../edit?usp=sharing" style="width:100%;">
+            <span>③ らくつむ URL:</span><input type="text" id="url-raku" placeholder="https://docs.google.com/spreadsheets/d/.../edit?usp=sharing" style="width:100%;">
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="action-btn primary" onclick="saveAndSyncUrls()">🚀 共有URLを保存して同期</button>
+            <button class="action-btn" onclick="resetDefaultUrls()">初期URLに戻す</button>
+          </div>
+        </div>
+
+        <div class="sync-box">
+          <h4 style="color:#60a5fa;">💳 手動CSV一括取込（複数ファイル同時選択OK）</h4>
+          <p>PC上のCSVファイルを直接まとめて選択して合算する場合に使用します（重複は自動除去されます）。</p>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <input type="file" id="mf-panel-input" accept=".csv" multiple onchange="handleMfUpload(event)" style="flex:1;">
+            <button class="action-btn danger" onclick="clearMfData()">🗑️ リセット</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title"><span>2026年末(70歳) 予想総資産</span><span>🎯</span></div>
+        <div class="kpi-val" id="kpi-cur-asset">--</div>
+        <div class="kpi-sub" id="kpi-cur-sub">--</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title"><span>80歳卒業時(2036末) 総資産</span><span>🏆</span></div>
+        <div class="kpi-val" id="kpi-80-asset" style="color:#34d399;">--</div>
+        <div class="kpi-sub" id="kpi-80-sub">--</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title"><span>100歳時点(2056末) 最終資産</span><span>🛡️</span></div>
+        <div class="kpi-val" id="kpi-100-asset" style="color:#60a5fa;">--</div>
+        <div class="kpi-sub" id="kpi-100-sub">--</div>
+      </div>
+      <div class="kpi-card" style="border-color:rgba(16,185,129,0.5);">
+        <div class="kpi-title"><span>月平均：収支 (収入−支出合計)</span><span>⚖️</span></div>
+        <div class="kpi-val" id="kpi-inc-exp">--</div>
+        <div class="kpi-sub" id="kpi-inc-exp-sub">--</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title"><span>月平均：支出合計 (基本+特別)</span><span>🏠</span></div>
+        <div class="kpi-val" id="kpi-basic-spec">--</div>
+        <div class="kpi-sub" id="kpi-basic-spec-sub">--</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title"><span>らくつむペソ 現在実績</span><span>🇲🇽</span></div>
+        <div class="kpi-val" id="kpi-raku-now">69,172 円</div>
+        <div class="kpi-sub" id="kpi-raku-sub">元本7.5万 / 9,758ペソ / 1.27倍</div>
+      </div>
+    </section>
+
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('overview', this)">📊 総合キャッシュフロー</button>
+      <button class="tab-btn" onclick="switchTab('expense', this)">🏠 基本生活費 vs 臨時出費</button>
+      <button class="tab-btn" onclick="switchTab('rakutsumu', this)">🇲🇽 らくつむ複利・実績</button>
+      <button class="tab-btn" onclick="switchTab('mf', this)">💳 マネーフォワード分析 (直近月・2026平均＆当初予算比較)</button>
+      <button class="tab-btn" onclick="switchTab('logs', this)">📋 年次・月次一覧表</button>
+    </nav>
+
+    <div id="tab-overview">
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>① 資産残高推移（現金100万キープ＋らくつむ補填・総資産合計）</h3>
+            <span style="font-size:0.7rem; color:#34d399;">※90歳(2046年)〜現金100万円維持のためらくつむ口座から赤字分を自動補填</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-asset"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>② 年間収支バランス推移（年間収入 vs 支出合計[基本+特別] vs 純収支）</h3>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-annual-cf"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>③ 収入構造の推移（年金・企業年金・給料・支援金・スワップ収入[残高比例]）</h3>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-income-stack"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>④ 労働期 vs リタイヤ期 フェーズ別比較サマリー（現金100万円キープ・らくつむ補填）</h3>
+          </div>
+          <div style="overflow-x:auto;">
+            <table id="table-phase-compare">
+              <thead>
+                <tr>
+                  <th>ライフステージ</th>
+                  <th>期間 (年齢)</th>
+                  <th>主な収入源・補填ルール</th>
+                  <th>年平均収入</th>
+                  <th>月基本生活費</th>
+                  <th>年平均臨時出費</th>
+                  <th>期間末総資産 (内訳)</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-expense" style="display:none;">
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>⑤ 年間支出の内訳推移（基本生活費 vs 車検・アパート更新・その他臨時出費）</h3>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-exp-split"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>⑥ 年単位・隔年の臨時出費イベント推移（車検・更新料・保険・税金・大学援助等）</h3>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-special-detail"></canvas></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <h3>📅 年単位・隔年の臨時出費スケジュール＆予算一覧（基本生活費と分離管理）</h3>
+        <div style="max-height: 420px; overflow-y: auto;">
+          <table id="table-special-events">
+            <thead>
+              <tr>
+                <th>年月</th>
+                <th>年齢</th>
+                <th>区分</th>
+                <th>車検費用</th>
+                <th>アパート更新・住居</th>
+                <th>その他臨時・年払</th>
+                <th>臨時出費 合計</th>
+                <th>主な内訳・イベント内容</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-rakutsumu" style="display:none;">
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>⑦ らくつむ（メキシコペソ積立）12年間 複利シミュレーション（69歳〜80歳）</h3>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-raku-proj"></canvas></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>⑧ 2026年 月次確定実績 ＆ 待機資金・証拠金推移</h3>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-raku-actual"></canvas></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="table-card">
+          <h3>🇲🇽 2026年 月次実績・買付管理（確定実績 ＆ 計画）</h3>
+          <table id="table-raku-monthly">
+            <thead>
+              <tr>
+                <th>年月</th>
+                <th>区分</th>
+                <th>月間入金</th>
+                <th>累計元本</th>
+                <th>基本買付</th>
+                <th>スポット</th>
+                <th>月末評価額</th>
+                <th>維持率 / レバ</th>
+                <th>買付・再投資メモ</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="table-card">
+          <h3>📈 80歳（2037年）までの将来スワップ複利予測（標準・保守・悲観）</h3>
+          <table id="table-raku-forecast">
+            <thead>
+              <tr>
+                <th>経過年</th>
+                <th>年齢</th>
+                <th>累計元本</th>
+                <th>①標準:純資産</th>
+                <th>①月スワップ</th>
+                <th>②保守:純資産</th>
+                <th>②月スワップ</th>
+                <th>③悲観:純資産</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-mf" style="display:none;">
+      <div class="table-card" style="border-color:#3b82f6; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h3 style="margin:0; color:#60a5fa;">💳 マネーフォワード ME 直近月 ＆ 2026年・月平均ビジュアル分析（最新予算対比）</h3>
+            <p style="margin:3px 0 0 0; font-size:0.75rem; color:var(--sub);" id="mf-summary-text">
+              ※比較表は月末上書き前の「当初予算（常に一番新しい予算額）」を基準に比較します。予算を変更した際は右の「最新予算額」を変更して保存してください。
+            </p>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <div class="budget-control-box">
+              <span style="color:#93c5fd; font-weight:600;">🎯 最新・基本生活費予算:</span>
+              <input type="number" id="latest-basic-budget-input" value="307450" step="500" style="width:95px; font-weight:bold; color:#34d399;">
+              <span>円/月</span>
+              <button class="action-btn primary" style="padding:4px 8px; font-size:0.74rem;" onclick="updateLatestBudgetSetting()">予算更新</button>
+            </div>
+
+            <label style="font-size:0.78rem; color:#93c5fd; font-weight:600; margin-left:4px;">直近月切替:</label>
+            <select id="mf-latest-month-select" onchange="renderMfTab()" style="border-color:#3b82f6; font-weight:bold;"></select>
+            <input type="file" id="mf-file-input" accept=".csv" multiple style="display:none;" onchange="handleMfUpload(event)">
+            <button class="action-btn primary" onclick="document.getElementById('mf-file-input').click()">📂 CSV追加読込</button>
+            <button class="action-btn danger" onclick="clearMfData()">🗑️ リセット</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-banner">
+        <div>
+          <strong style="font-size:0.95rem; color:#34d399;" id="latest-month-banner-title">🎯 直近月（2026-10）の概要（収入・支出[基本+特別]・収支）</strong>
+          <div style="font-size:0.74rem; color:var(--sub); margin-top:2px;">
+            直近月の収入8項目（伸次年金・信子年金・Vポイント含）＆ 支出内訳（基本生活費[施設費・貸越利息含] ＋ 特別な支出）
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <div class="summary-pill">💰 収入合計: <b class="num-pos" id="latest-inc-total">-- 円</b></div>
+          <div class="summary-pill">🧾 支出合計(基本+特別): <b class="num-neg" id="latest-exp-grand-total">-- 円</b> <span style="font-size:0.71rem; color:var(--sub);" id="latest-exp-breakdown-inline">(基本 -- / 特別 --)</span></div>
+          <div class="summary-pill" style="border-color:#3b82f6;">⚖️ 直近月 収支: <b id="latest-net-balance">-- 円</b></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card" style="border-color:rgba(16,185,129,0.5);">
+          <div class="chart-header">
+            <h3 id="title-latest-inc">⑨ 直近月の収入内訳（8項目ビジュアル）</h3>
+            <span class="badge" style="font-size:0.68rem;">伸次年金・信子年金・支援金・給与1/2・その他(Vポイント含)</span>
+          </div>
+          <div class="visual-split">
+            <div class="chart-wrap" style="height:245px;"><canvas id="chart-latest-inc"></canvas></div>
+            <div style="overflow-x:auto;">
+              <table class="mini-table" id="table-latest-inc">
+                <thead>
+                  <tr><th>収入項目</th><th style="text-align:right;">金額</th><th style="text-align:right;">割合</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card" style="border-color:rgba(59,130,246,0.5);">
+          <div class="chart-header">
+            <h3 id="title-latest-exp">⑩ 直近月の支出内訳（基本生活費 ＆ 特別支出・合計）</h3>
+            <span class="badge" style="background:rgba(59,130,246,0.2); color:#93c5fd; border-color:rgba(59,130,246,0.4); font-size:0.68rem;">施設費・貸越利息含 / 最新予算対比付</span>
+          </div>
+          <div class="visual-split">
+            <div class="chart-wrap" style="height:245px;"><canvas id="chart-latest-exp"></canvas></div>
+            <div style="overflow-x:auto;">
+              <table class="mini-table" id="table-latest-exp">
+                <thead>
+                  <tr><th>支出項目 (基本生活費)</th><th style="text-align:right;">金額</th><th style="text-align:right;">割合</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <div id="latest-special-box" style="margin-top:6px; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid var(--border); border-radius:6px; font-size:0.75rem;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-banner" style="border-left-color:#f59e0b;">
+        <div>
+          <strong style="font-size:0.95rem; color:#fcd34d;" id="avg2026-banner-title">📊 2026年・月平均の概要（1か月あたりの平均収入・支出[基本+特別]・収支）</strong>
+          <div style="font-size:0.74rem; color:var(--sub); margin-top:2px;" id="avg2026-banner-sub">
+            2026年の取込済月から算出した1か月あたりの平均内訳（上段の直近月と1対1で比較可能）
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <div class="summary-pill">💰 2026月平均 収入: <b class="num-pos" id="avg2026-inc-total">-- 円</b></div>
+          <div class="summary-pill">🧾 2026月平均 支出(基本+特別): <b class="num-neg" id="avg2026-exp-grand-total">-- 円</b> <span style="font-size:0.71rem; color:var(--sub);" id="avg2026-exp-breakdown-inline">(基本 -- / 特別 --)</span></div>
+          <div class="summary-pill" style="border-color:#f59e0b;">⚖️ 2026月平均 収支: <b id="avg2026-net-balance">-- 円</b></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card" style="border-color:rgba(245,158,11,0.5);">
+          <div class="chart-header">
+            <h3 id="title-avg2026-inc">⑪ 2026年・月平均 収入内訳（8項目ビジュアル）</h3>
+            <span class="badge" style="background:rgba(245,158,11,0.2); color:#fcd34d; border-color:rgba(245,158,11,0.4); font-size:0.68rem;">1か月あたり平均額</span>
+          </div>
+          <div class="visual-split">
+            <div class="chart-wrap" style="height:245px;"><canvas id="chart-avg2026-inc"></canvas></div>
+            <div style="overflow-x:auto;">
+              <table class="mini-table" id="table-avg2026-inc">
+                <thead>
+                  <tr><th>収入項目 (2026月平均)</th><th style="text-align:right;">月平均額</th><th style="text-align:right;">割合</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card" style="border-color:rgba(245,158,11,0.5);">
+          <div class="chart-header">
+            <h3 id="title-avg2026-exp">⑫ 2026年・月平均 支出内訳（基本生活費 ＆ 特別支出・合計）</h3>
+            <span class="badge" style="background:rgba(245,158,11,0.2); color:#fcd34d; border-color:rgba(245,158,11,0.4); font-size:0.68rem;">1か月あたり平均額</span>
+          </div>
+          <div class="visual-split">
+            <div class="chart-wrap" style="height:245px;"><canvas id="chart-avg2026-exp"></canvas></div>
+            <div style="overflow-x:auto;">
+              <table class="mini-table" id="table-avg2026-exp">
+                <thead>
+                  <tr><th>支出項目 (2026月平均)</th><th style="text-align:right;">月平均額</th><th style="text-align:right;">割合</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <div id="avg2026-special-box" style="margin-top:6px; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid var(--border); border-radius:6px; font-size:0.75rem;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="kpi-grid" style="margin-bottom:14px;">
+        <div class="kpi-card">
+          <div class="kpi-title"><span>取込済 月数 / 明細件数</span><span>📅</span></div>
+          <div class="kpi-val" id="mf-kpi-months">0 か月</div>
+          <div class="kpi-sub" id="mf-kpi-count">明細 0 件</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title"><span>MF 月平均 収支 (収入−支出合計)</span><span>⚖️</span></div>
+          <div class="kpi-val" id="mf-kpi-net-avg">--</div>
+          <div class="kpi-sub" id="mf-kpi-net-sub">収入: -- / 支出(基本+特別): --</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title"><span>MF 支出合計 (基本＋特別)</span><span>📊</span></div>
+          <div class="kpi-val" id="mf-kpi-total-avg">--</div>
+          <div class="kpi-sub" id="mf-kpi-total-sub">基本: -- ＋ 特別: --</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title"><span>MF 基本生活費 vs 最新当初予算</span><span>🏠</span></div>
+          <div class="kpi-val" id="mf-kpi-pure-avg">--</div>
+          <div class="kpi-sub" id="mf-kpi-pure-sub">最新当初予算との比較: --</div>
+        </div>
+      </section>
+
+      <div class="table-card">
+        <h3>⚖️ 月別：CF当初予算（最新予算額を採用） vs マネーフォワード（MF実績） 比較・収支一覧表（直近月順）</h3>
+        <p style="font-size:0.75rem; color:var(--sub); margin:0 0 8px 0;" id="compare-table-budget-note">
+          ※月末にCF表を実績値で上書きしても、この表の「CF:基本生活費(最新予算)」には常に一番新しい当初予算額（初期値 307,450円）が適用され、予算に対していくら節約できたか（差額）を正確に判定します。
+        </p>
+        <div style="overflow-x:auto;">
+          <table id="table-mf-cf-compare">
+            <thead>
+              <tr>
+                <th>年月 (降順)</th>
+                <th>CF:基本生活費(最新予算)</th>
+                <th>MF:基本実績(施設・利息含)</th>
+                <th>基本生活費 予算差額</th>
+                <th>CF:予定臨時出費</th>
+                <th>MF:特別な支出</th>
+                <th>CF:予算合計</th>
+                <th>MF:支出合計(基本+特別)</th>
+                <th>MF:収入合計</th>
+                <th>MF:収支(収入-支出)</th>
+                <th>予算判定・イベントメモ</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="filter-bar">
+          <h3 style="margin:0; margin-right:auto;">📋 マネーフォワード 取り込み明細一覧</h3>
+          <select id="mf-month-filter" onchange="renderMfLogsOnly()">
+            <option value="ALL">📅 全取込月 表示</option>
+          </select>
+          <select id="mf-log-cat-filter" onchange="renderMfLogsOnly()">
+            <option value="ALL">すべての明細（収入・基本生活費・特別支出）</option>
+            <option value="INC_ONLY">収入明細のみ（8項目分類を確認）</option>
+            <option value="BASIC_ONLY">基本生活費のみ（貸越利息・施設費含む）</option>
+            <option value="SPECIAL_ONLY">特別な支出のみ</option>
+          </select>
+          <input type="search" id="mf-log-search" placeholder="明細検索 (例: 年金, 給与, Vポイント, 利息)..." oninput="renderMfLogsOnly()" style="width:240px;">
+        </div>
+        <div style="max-height: 440px; overflow-y: auto;">
+          <table id="table-mf-logs">
+            <thead>
+              <tr>
+                <th class="col-date">日付</th>
+                <th class="col-content">内容（品目名）</th>
+                <th class="col-amount">金額(円)</th>
+                <th class="col-cat">自動分類カテゴリ</th>
+                <th class="col-subcat">元の大項目 / 中項目</th>
+                <th class="col-inst">保有金融機関</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-logs" style="display:none;">
+      <div class="table-card">
+        <div class="filter-bar">
+          <h3 style="margin:0; margin-right:auto; font-size:0.9rem;">📋 キャッシュフロー詳細一覧（現金100万維持・らくつむ補填額＆スワップ逓減対応）</h3>
+          <select id="log-view-mode" onchange="renderCfLogTable()">
+            <option value="yearly">📅 年次サマリー（年齢別・1年単位）</option>
+            <option value="monthly">🗓️ 月次詳細データ（1か月単位）</option>
+          </select>
+          <input type="search" id="log-search" placeholder="検索 (例: 2046, 90歳, 補填, 車検)..." oninput="renderCfLogTable()" style="width:220px;">
+        </div>
+        <div style="max-height: 520px; overflow-y: auto;">
+          <table id="table-cf-logs">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const DEFAULT_FINANCE_URLS = {
+      mf: "https://docs.google.com/spreadsheets/d/1z-Mig3TKPgrGUf58tdu0o81pWdczqz3jb2N7_SCW69U/edit?usp=sharing",
+      cf: "",
+      raku: ""
+    };
+
+    let latestBasicBudgetAmount = 307450;
+
+    const INITIAL_PLANNED_SPECIAL_2026 = {
+      "2026-01": { car: 0, apt: 0, oth: 0, note: "" },
+      "2026-02": { car: 0, apt: 0, oth: 32200, note: "自動車保険年払(32,200円)" },
+      "2026-03": { car: 0, apt: 0, oth: 11000, note: "年払・臨時予算(11,000円)" },
+      "2026-04": { car: 0, apt: 0, oth: 0, note: "" },
+      "2026-05": { car: 0, apt: 0, oth: 10800, note: "軽自動車税(10,800円)" },
+      "2026-06": { car: 0, apt: 0, oth: 0, note: "" },
+      "2026-07": { car: 0, apt: 0, oth: 6980, note: "Amazonプライム等年会費(6,980円)" },
+      "2026-08": { car: 0, apt: 0, oth: 5900, note: "年会費等予定(5,900円)" },
+      "2026-09": { car: 0, apt: 0, oth: 5300, note: "MF年会費予定(5,300円)" },
+      "2026-10": { car: 0, apt: 5300, oth: 6000, note: "MF年会費(5,300円) / 保守党党費(6,000円)" },
+      "2026-11": { car: 0, apt: 0, oth: 0, note: "" },
+      "2026-12": { car: 0, apt: 0, oth: 16700, note: "Avast/Povo等年払(16,700円)" }
+    };
+
+    const RAKU_MONTHLY_ACTUALS = [
+      { ym: "2026-06", status: "確定実績", depMo: 30000, depCum: 30000, basicBuy: 4400, spotBuy: 0, evalVal: 29997, pnl: -3, ratio: "681.8%", lev: 0.29, note: "なし（毎日200円×22営業日）" },
+      { ym: "2026-07", status: "確定実績", depMo: 10000, depCum: 40000, basicBuy: 4400, spotBuy: 1100, evalVal: 39569, pnl: -431, ratio: "399.7%", lev: 0.50, note: "21ペソ×11回（約231ペソ）" },
+      { ym: "2026-08", status: "確定実績", depMo: 10000, depCum: 50000, basicBuy: 4200, spotBuy: 2500, evalVal: 50709, pnl: 709, ratio: "305.5%", lev: 0.65, note: "43〜44ペソ×12回+21ペソ1回（約543ペソ）" },
+      { ym: "2026-09", status: "確定実績(9/30)", depMo: 10000, depCum: 60000, basicBuy: 2700, spotBuy: 10300, evalVal: 56453, pnl: -3547, ratio: "159.8%", lev: 1.25, note: "スポット計43回（計2,256ペソ）" },
+      { ym: "2026-10", status: "確定実績(10/22)", depMo: 15000, depCum: 75000, basicBuy: 4800, spotBuy: 3600, evalVal: 69172, pnl: -5828, ratio: "157.0%", lev: 1.27, note: "スポット12回＋定期16回＋再投資3回(累計9,758ペソ)" },
+      { ym: "2026-11", status: "計画", depMo: 15000, depCum: 90000, basicBuy: 6600, spotBuy: 0, evalVal: 88132, pnl: -1868, ratio: "188.6%", lev: 1.06, note: "待機資金8,400円を口座プール" },
+      { ym: "2026-12", status: "計画", depMo: 15000, depCum: 105000, basicBuy: 6600, spotBuy: 0, evalVal: 103132, pnl: -1868, ratio: "193.4%", lev: 1.03, note: "待機資金8,400円を口座プール" }
+    ];
+
+    const RAKU_FORECAST = [
+      { year: 2026, label: "2026年(1年目)", age: "69歳", principal: 105000, stdAsset: 100311, stdSwapMo: 379, conAsset: 100146, conSwapMo: 334, pesAsset: 99937 },
+      { year: 2027, label: "2027年(2年目)", age: "70歳", principal: 285000, stdAsset: 289853, stdSwapMo: 795, conAsset: 288720, conSwapMo: 737, pesAsset: 286566 },
+      { year: 2028, label: "2028年(3年目)", age: "71歳", principal: 465000, stdAsset: 487942, stdSwapMo: 1507, conAsset: 485521, conSwapMo: 1424, pesAsset: 479549 },
+      { year: 2029, label: "2029年(4年目)", age: "72歳", principal: 645000, stdAsset: 695399, stdSwapMo: 2288, conAsset: 690984, conSwapMo: 2170, pesAsset: 678964 },
+      { year: 2030, label: "2030年(5年目)", age: "73歳", principal: 825000, stdAsset: 913128, stdSwapMo: 3144, conAsset: 906232, conSwapMo: 2984, pesAsset: 885714 },
+      { year: 2031, label: "2031年(6年目)", age: "74歳", principal: 1005000, stdAsset: 1142120, stdSwapMo: 4082, conAsset: 1132030, conSwapMo: 3871, pesAsset: 1101240 },
+      { year: 2032, label: "2032年(7年目)", age: "75歳", principal: 1185000, stdAsset: 1383450, stdSwapMo: 5111, conAsset: 1369560, conSwapMo: 4839, pesAsset: 1326450 },
+      { year: 2033, label: "2033年(8年目)", age: "76歳", principal: 1365000, stdAsset: 1638320, stdSwapMo: 6239, conAsset: 1619840, conSwapMo: 5896, pesAsset: 1562360 },
+      { year: 2034, label: "2034年(9年目)", age: "77歳", principal: 1545000, stdAsset: 1908030, stdSwapMo: 7475, conAsset: 1883950, conSwapMo: 7046, pesAsset: 1809920 },
+      { year: 2035, label: "2035年(10年目)", age: "78歳", principal: 1725000, stdAsset: 2194000, stdSwapMo: 8830, conAsset: 2162210, conSwapMo: 8281, pesAsset: 2069710 },
+      { year: 2036, label: "2036年(11年目)", age: "79歳", principal: 1905000, stdAsset: 2497800, stdSwapMo: 10317, conAsset: 2459730, conSwapMo: 9660, pesAsset: 2344860 },
+      { year: 2037, label: "2037年(12年目)", age: "80歳", principal: 2085000, stdAsset: 2821160, stdSwapMo: 11946, conAsset: 2773180, conSwapMo: 11137, pesAsset: 2635680 }
+    ];
+
+    function buildEmbeddedCashflow() {
+      const earlyRows = [
+        ["2023-04",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        ["2023-05",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        ["2023-06",395600,59783,0,0,0,0,0,0,194847,0,0,0,-1453330,0,0],
+        ["2023-07",0,0,0,0,0,46320,0,0,202824,0,0,0,-1638990,0,0],
+        ["2023-08",407000,0,0,0,0,25203,0,0,206124,0,0,0,-1428380,0,0],
+        ["2023-09",0,0,45000,0,0,39724,0,0,183343,0,0,0,-1532020,0,0],
+        ["2023-10",406730,0,0,0,0,16710,0,0,174811,0,0,6000,-1713280,0,0],
+        ["2023-11",0,0,0,0,0,8853,0,0,190862,0,0,50920,-2252920,0,0],
+        ["2023-12",407000,59783,0,109236,0,14656,0,0,169795,0,0,45210,-1675340,0,0],
+        ["2024-01",0,0,70000,69631,0,31934,0,0,196321,107932,0,6950,-1822390,0,0],
+        ["2024-02",407000,0,0,76798,0,30686,0,0,238767,0,0,32300,-1574270,0,0],
+        ["2024-03",0,0,15000,172480,0,10264,0,0,205125,0,0,0,-1573820,0,0],
+        ["2024-04",407000,0,0,172146,0,22047,0,0,196641,13555,13940,15000,-1205460,0,0],
+        ["2024-05",0,0,0,160553,0,-7434,1800,0,198964,0,22200,10800,-1218600,0,0],
+        ["2024-06",418395,59783,0,165343,0,-10000,179790,0,212041,0,0,0,-534058,0,0],
+        ["2024-07",0,0,0,190891,0,0,0,0,280371,0,0,6480,-1151620,0,0],
+        ["2024-08",402595,0,30000,168566,10000,0,111300,0,287281,0,0,5900,-919720,0,0],
+        ["2024-09",0,0,15000,167290,0,0,120647,0,285732,0,0,0,-834465,0,0],
+        ["2024-10",422095,0,0,164612,20000,0,123841,0,293195,0,0,6000,-381069,0,0],
+        ["2024-11",0,0,0,165707,0,0,107008,0,264055,0,0,0,-446068,0,0],
+        ["2024-12",422095,59783,0,201897,20000,9171,460000,0,277277,16847,66020,0,375279,0,0],
+        ["2025-01",0,0,0,145514,0,7600,-27356,0,275284,0,27791,34670,170154,0,0],
+        ["2025-02",422098,0,0,127450,20000,14810,-142000,0,260860,0,42000,0,313407,0,0],
+        ["2025-03",0,0,45000,123951,0,6800,-1580000,0,271766,0,18000,0,-1362690,0,0],
+        ["2025-04",422095,0,0,126289,20000,0,41089,0,253834,0,0,0,-1012340,0,0],
+        ["2025-05",0,0,0,117739,0,0,-190000,0,268879,0,0,10800,-1398280,0,0],
+        ["2025-06",430617,59783,0,117790,20000,8361,-35000,0,295360,0,0,0,-1132860,0,0],
+        ["2025-07",0,0,0,127638,0,2408,100877,0,341848,0,0,6480,-1249410,0,0],
+        ["2025-08",430617,0,40000,121991,20000,0,87078,0,313581,0,19800,5900,-828126,0,0],
+        ["2025-09",0,0,15000,125179,0,0,19533,0,340102,0,0,5300,-998081,0,0],
+        ["2025-10",405417,0,0,120455,20000,0,-310190,0,292588,0,0,6000,-1038580,0,0],
+        ["2025-11",0,0,0,133765,0,0,0,0,295167,0,4250,0,-1159220,0,0],
+        ["2025-12",405417,59783,0,134115,20000,3583,0,0,304046,117740,0,19868,-1059500,0,0],
+        ["2026-01",0,0,0,146231,0,0,0,0,284437,0,0,0,-1177920,0,0],
+        ["2026-02",405426,0,0,171841,10000,0,0,0,271701,0,0,32200,-897172,0,0],
+        ["2026-03",0,0,15000,157695,0,0,0,0,272890,0,26452,11000,-1008300,0,0],
+        ["2026-04",405417,0,0,178183,0,0,0,0,253480,0,0,0,-674832,0,0],
+        ["2026-05",0,0,0,170982,0,0,0,0,250779,0,53500,10800,-824234,0,0],
+        ["2026-06",414067,59783,1287,172869,0,0,0,0,307671,0,11429,3124,-504899,30000,29997],
+        ["2026-07",0,0,0,174354,0,0,0,0,327708,0,28502,6980,-663513,40000,39569],
+        ["2026-08",421357,0,0,180356,0,0,0,0,290969,0,0,27800,-396045,50000,50709],
+        ["2026-09",0,0,15000,173694,0,0,0,0,296302,0,26491,0,-525602,60000,56693],
+        ["2026-10",426147,0,0,180821,0,2652,0,0,307450,0,8683,6000,-238115,75000,68900],
+        ["2026-11",0,0,0,170000,0,0,0,0,307450,0,5300,0,-380865,90000,88132],
+        ["2026-12",426147,59783,0,170000,0,0,0,0,307450,0,0,16700,-49085,105000,100146]
+      ];
+
+      const rakuYearEval = {
+        2026: 100146, 2027: 294092, 2028: 493664, 2029: 704169, 2030: 926818,
+        2031: 1162950, 2032: 1414070, 2033: 1681830, 2034: 1968060, 2035: 2274820, 2036: 2604380
+      };
+
+      const BASE_RETIRE_RAKU = 2604380;
+      const BASE_RETIRE_SWAP = 11000;
+      const CASH_FLOOR = 1000000;
+
+      const rows = [];
+      for (const r of earlyRows) {
+        const [ym, pen, cpen, sup, sal, rent, genso, fx, swp, basic, car, apt, oth, bal, rakuDep, rakuEval] = r;
+        const y = parseInt(ym.slice(0, 4), 10);
+        const m = parseInt(ym.slice(5, 7), 10);
+        const incTot = pen + cpen + sup + sal + rent + genso + fx + swp;
+        const expTot = basic + car + apt + oth;
+        const diff = incTot - expTot;
+        const cashExRaku = bal - rakuDep;
+        const totAsset = cashExRaku + rakuEval;
+        rows.push(createCfRow(ym, y, m, pen, cpen, sup, sal, rent, genso, fx, swp, incTot, basic, car, apt, oth, expTot, diff, bal, rakuDep, cashExRaku, rakuEval, totAsset, 0));
+      }
+
+      let curBal = -49085;
+      let curRakuDep = 105000;
+      let curCashExRaku = curBal - curRakuDep;
+      let curRakuEval = 100146;
+
+      for (let y = 2027; y <= 2056; y++) {
+        for (let m = 1; m <= 12; m++) {
+          const ym = `${y}-${('0'+m).slice(-2)}`; const isRetire = (y >= 2037); const pen = (m \% 2 === 0) ? 426147 : 0; const cpen = (m === 6 \vert{}\vert{} m === 12) ? 59783 : ((m === 5 && y >= 2028 && y <= 2041) ? 15000 : 0); let sup = 0; if (y === 2027) { if (m === 3 \vert{}\vert{} m === 6 \vert{}\vert{} m === 9) sup = 15000; } else { if (m === 3 \vert{}\vert{} m === 9) sup = 15000; else if ([2, 4, 6, 8, 10, 12].includes(m)) sup = 20000; }  let sal = 0; if (!isRetire) { sal = (y < 2029 \vert{}\vert{} (y === 2029 && m === 1)) ? 170000 : 120000; }  const swp = isRetire ? Math.round(BASE_RETIRE_SWAP * (curRakuEval / BASE_RETIRE_RAKU)) : 0; const incTot = pen + cpen + sup + sal + swp;  let basic = 302450; if (y === 2027 && m <= 6) basic = 307450; else if (y > 2037 \vert{}\vert{} (y === 2037 && m >= 6)) basic = 260000;  let car = 0; if (m === 12) { if (y === 2027) car = 170000; else if (y === 2029) car = 200000; else if (y === 2031) car = 250000; else if (y === 2033) car = 300000; }  let apt = 0; const hasRenewal = (y \% 2 === 1) && (y <= 2045 \vert{}\vert{} y === 2049 \vert{}\vert{} y === 2051); if (hasRenewal && m === 2) apt = 42000; if (hasRenewal && m === 3) apt = 18000; if (y === 2027 && m === 10) apt = 5300; if (y === 2027 && m === 11) apt = 20000;  let oth = 0; if (m === 2 && y === 2027) oth = 34670; else if (m === 2 && y >= 2028 && y <= 2031) oth = 32300; if (m === 3 && y === 2034) oth = 300000; if (m === 4 && y >= 2028 && y <= 2031) oth += 20000; if (m === 4 && y === 2031) oth += 100000; if (m === 5 && (y <= 2034 \vert{}\vert{} [2036, 2038, 2040, 2042, 2044, 2046, 2047, 2048, 2050].includes(y))) oth = 10800; if (m === 8 && y <= 2051) oth = 6980; if (m === 9 && y >= 2028 && y <= 2051 && y !== 2032) oth = 5300; if (m === 11 && y === 2032) oth = 5300; if (m === 10 && y <= 2051) oth = 6000; if (m === 12 && y <= 2050 && y !== 2035 && ![2037, 2039, 2041, 2043, 2045, 2049].includes(y)) oth = 16700;  let expTot = basic + car + apt + oth; if (y === 2032 && m === 3) expTot = 319150;  const diff = incTot - expTot; let rakuTransfer = 0;  if (!isRetire) { curBal += diff; curRakuDep += 15000; const prevE = rakuYearEval[y - 1] \vert{}\vert{} 100146; const targetE = rakuYearEval[y] \vert{}\vert{} curRakuDep; curRakuEval = Math.round(prevE + (targetE - prevE) * (m / 12)); curCashExRaku = curBal - curRakuDep; } else { curBal += diff; curCashExRaku += diff; if (m \% 2 === 0 && curCashExRaku < CASH_FLOOR && curRakuEval > 0) { const shortfall = CASH_FLOOR - curCashExRaku; rakuTransfer = Math.min(shortfall, curRakuEval); curCashExRaku += rakuTransfer; curRakuEval -= rakuTransfer; } }  const totAsset = curCashExRaku + curRakuEval;  rows.push(createCfRow(ym, y, m, pen, cpen, sup, sal, 0, 0, 0, swp, incTot, basic, car, apt, oth, expTot, diff, curBal, curRakuDep, curCashExRaku, curRakuEval, totAsset, rakuTransfer)); } } return rows; }  function inferSpecialNote(ym, m, car, apt, oth, rakuTransfer = 0) { const notes = []; if (car > 0) notes.push(`車検(${car.toLocaleString()}円)`);
+      if (apt > 0) {
+        if (m === 2 && apt === 42000) notes.push("アパート更新料(4.2万)");
+        else if (m === 3 && apt === 18000) notes.push("火災保険・更新(1.8万)");
+        else notes.push(`住居・臨時(${apt.toLocaleString()}円)`); } if (oth > 0) { if (m === 2 && oth >= 32000 && oth <= 35000) notes.push("自動車保険年払"); else if (m === 5 && oth === 10800) notes.push("軽自動車税(10,800円)"); else if (m === 8 && (oth === 6980 \vert{}\vert{} oth === 5900)) notes.push("Amazonプライム等年会費"); else if ((m === 9 \vert{}\vert{} m === 11) && oth === 5300) notes.push("マネーフォワード年会費(5,300円)"); else if (m === 10 && oth === 6000) notes.push("保守党党費(6,000円)"); else if (m === 12 && oth === 16700) notes.push("Avast/Povo等年払(16,700円)"); else if (ym === "2031-04" && oth >= 100000) notes.push("進学祝・臨時(12万円)"); else if (ym === "2034-03" && oth === 300000) notes.push("大学援助(30万円)"); else notes.push(`その他臨時(${oth.toLocaleString()}円)`);
+      }
+      if (rakuTransfer > 0) {
+        notes.push(`🔄らくつむから現金補填(+${rakuTransfer.toLocaleString()}円)`); } return notes.join(" / "); }  function createCfRow(ym, y, m, pen, cpen, sup, sal, rent, genso, fx, swp, incTot, basic, car, apt, oth, expTot, diff, bal, rakuDep, cashExRaku, rakuEval, totAsset, rakuTransfer = 0) { return { ym, year: y, month: m, age: y - 1956, phase: y <= 2036 ? "労働期" : "リタイヤ期", pen, cpen, sup, sal, rent, genso, fx, swp, incTot, expBasic: basic, expCar: car, expApt: apt, expOther: oth, expSpecial: car + apt + oth, expTot, diff, bal, rakuDep, cashExRaku, rakuEval, totAsset, rakuTransfer, note: inferSpecialNote(ym, m, car, apt, oth, rakuTransfer) }; }  let appData = { cf: buildEmbeddedCashflow(), rakuMonthly: RAKU_MONTHLY_ACTUALS, rakuForecast: RAKU_FORECAST, mfTransactions: [] };  let currentPhase = 'current'; let charts = {};  const INCOME_8_ORDER = [ '伸次年金', '信子年金', '支援金', '給与１(20日入金)', '給与２(27日入金)', 'Amazon割引', 'omotanポイント', 'その他(税還付・Vポイント等)' ];  const INCOME_8_COLORS = { '伸次年金':                   '#3b82f6', '信子年金':                   '#6366f1', '支援金':                     '#a855f7', '給与１(20日入金)':           '#10b981', '給与２(27日入金)':           '#06b6d4', 'Amazon割引':                 '#f59e0b', 'omotanポイント':             '#ec4899', 'その他(税還付・Vポイント等)': '#eab308' };  function classifyIncome8(tx) { const text = `${tx.content || ''} ${tx.catLarge \vert{}\vert{} ''}${tx.catMid || ''} ${tx.memo \vert{}\vert{} ''}${tx.inst || ''}`.toLowerCase();
+      const day = parseInt((tx.date || '').slice(8, 10), 10) || 1;
+      const amt = Math.abs(tx.amount || 0);
+
+      if (text.includes('omotan') || text.includes('おもたん') || text.includes('オモタン')) {
+        return 'omotanポイント';
+      }
+      if (text.includes('amazon') || text.includes('アマゾン') || text.includes('割引')) {
+        return 'Amazon割引';
+      }
+      if (
+        text.includes('vポイント') || text.includes('vpoint') || text.includes('v-point') ||
+        text.includes('ポイント') || text.includes('還付') || text.includes('減税') ||
+        text.includes('税') || text.includes('利息') || text.includes('配当') ||
+        text.includes('返金') || text.includes('キャッシュバック')
+      ) {
+        return 'その他(税還付・Vポイント等)';
+      }
+      if (text.includes('年金') || text.includes('ネンキン') || text.includes('厚年') || text.includes('国年') || text.includes('企業年金')) {
+        if (text.includes('信子') || text.includes('のぶこ') || text.includes('ノブコ') || text.includes('妻') || text.includes('配偶者')) {
+          return '信子年金';
+        }
+        if (text.includes('伸次') || text.includes('のぶじ') || text.includes('ノブジ') || text.includes('企業年金') || amt === 59783) {
+          return '伸次年金';
+        }
+        if (amt > 0 && amt < 190000 && amt !== 59783) {
+          return '信子年金';
+        }
+        return '伸次年金';
+      }
+      if (text.includes('支援') || text.includes('給付') || text.includes('補助') || text.includes('手当')) {
+        return '支援金';
+      }
+      if (text.includes('給与') || text.includes('給料') || text.includes('キュウヨ') || text.includes('プラスパーフ') || text.includes('イワタニ')) {
+        if (text.includes('イワタニ') || day >= 24) {
+          return '給与２(27日入金)';
+        }
+        return '給与１(20日入金)';
+      }
+      if (amt >= 190000 || amt === 59783) return '伸次年金';
+      if (day === 15 && amt >= 80000 && amt < 190000) return '信子年金';
+      if (day >= 24 && amt >= 20000) return '給与２(27日入金)';
+      if (day >= 15 && day <= 23 && amt >= 20000) return '給与１(20日入金)';
+      if (amt === 15000 || amt === 20000 || amt === 30000 || amt === 45000) return '支援金';
+      return 'その他(税還付・Vポイント等)';
+    }
+
+    function normalizeMfCategory(rawCat, txObj = null) {
+      const c = (rawCat || '').trim();
+      const fullText = txObj ? `${txObj.content \vert{}\vert{} ''}${txObj.catLarge || ''} ${txObj.catMid \vert{}\vert{} ''}${txObj.memo || ''}` : '';
+
+      if (fullText.includes('貸越') || fullText.includes('貸し越し') || fullText.includes('利息')) {
+        return { group: 'その他(施設費・利息等)', isSpecial: false };
+      }
+
+      if (c === '特別な支出' || c === '現金・カード') {
+        return { group: '特別な支出', isSpecial: true };
+      }
+      if (c === 'その他') {
+        return { group: 'その他(施設費・利息等)', isSpecial: false };
+      }
+      if (c === '教養・教育' || c === '趣味・娯楽' || c === '交際費') {
+        return { group: '趣味・教養・交際', isSpecial: false };
+      }
+      if (c === '日用品' || c === '衣服・美容') {
+        return { group: '日用品・衣服美容', isSpecial: false };
+      }
+      return { group: c || '未分類', isSpecial: false };
+    }
+
+    const DISTINCT_CAT_COLORS = {
+      'その他(施設費・利息等)': '#3b82f6',
+      '住宅':                   '#10b981',
+      '食費':                   '#f59e0b',
+      '水道・光熱費':           '#06b6d4',
+      '通信費':                 '#8b5cf6',
+      '日用品・衣服美容':       '#ec4899',
+      '趣味・教養・交際':       '#84cc16',
+      '自動車':                 '#f97316',
+      '健康・医療':             '#14b8a6',
+      '税・社会保障':           '#eab308',
+      '保険':                   '#6366f1',
+      '特別な支出':             '#ef4444'
+    };
+
+    const FALLBACK_DISTINCT_PALETTE = [
+      '#38bdf8', '#a3e635', '#fb7185', '#c084fc', '#fbbf24', '#2dd4bf', '#818cf8', '#f472b6'
+    ];
+
+    function getDistinctCategoryColor(catName, index) {
+      if (DISTINCT_CAT_COLORS[catName]) return DISTINCT_CAT_COLORS[catName];
+      return FALLBACK_DISTINCT_PALETTE[index % FALLBACK_DISTINCT_PALETTE.length];
+    }
+
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(71, 85, 105, 0.35)';
+    Chart.defaults.font.family = '"Segoe UI", "Meiryo", sans-serif';
+
+    function showToast(msg, duration = 6500) {
+      const box = document.getElementById('toast-box');
+      if (!box) return;
+      box.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div>${msg}</div>
+        <span style="cursor:pointer;font-weight:bold;" onclick="document.getElementById('toast-box').style.display='none'">✕</span>
+      </div>`;
+      box.style.display = 'block';
+      if (duration > 0) setTimeout(() => { box.style.display = 'none'; }, duration);
+    }
+
+    function getPlannedBudgetForMonth(ym) {
+      const y = parseInt(ym.slice(0, 4), 10);
+      const plannedBasic = (y > 2037 || (y === 2037 && parseInt(ym.slice(5, 7), 10) >= 6))
+        ? 260000
+        : latestBasicBudgetAmount;
+
+      if (INITIAL_PLANNED_SPECIAL_2026[ym]) {
+        const sp = INITIAL_PLANNED_SPECIAL_2026[ym];
+        const spTot = sp.car + sp.apt + sp.oth;
+        return {
+          expBasic: plannedBasic,
+          expSpecial: spTot,
+          expTot: plannedBasic + spTot,
+          note: sp.note
+        };
+      }
+      const cfRow = appData.cf.find(r => r.ym === ym);
+      const spTot = cfRow ? cfRow.expSpecial : 0;
+      return {
+        expBasic: plannedBasic,
+        expSpecial: spTot,
+        expTot: plannedBasic + spTot,
+        note: cfRow ? cfRow.note : ''
+      };
+    }
+
+    function updateLatestBudgetSetting() {
+      const val = parseInt(document.getElementById('latest-basic-budget-input').value, 10);
+      if (isNaN(val) || val <= 0) return;
+      latestBasicBudgetAmount = val;
+      try {
+        localStorage.setItem('finance_app_latest_budget_v12', String(val));
+      } catch (e) {}
+      renderAll();
+      showToast(`<strong>🎯 最新・基本生活費予算を「${val.toLocaleString()} 円/月」に更新しました！</strong>`);
+    }
+
+    function updateMfMonthDropdown() {
+      const txs = appData.mfTransactions || [];
+      const txMonths = Array.from(new Set(txs.map(t => t.date.slice(0, 7)))).sort();
+      const defaultMonths = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10'];
+      const availMonths = txMonths.length > 0 ? txMonths : defaultMonths;
+
+      const sel = document.getElementById('mf-month-filter');
+      if (sel) {
+        const curVal = sel.value;
+        sel.innerHTML = `<option value="ALL">📅 全取込月 表示 (${txMonths.length || 10}か月)</option>` +
+          availMonths.slice().reverse().map(m => `<option value="${m}">🗓️ ${m} のみ表示</option>`).join('');
+        if (availMonths.includes(curVal)) sel.value = curVal;
+      }
+
+      const latestSel = document.getElementById('mf-latest-month-select');
+      if (latestSel) {
+        const prevLatest = latestSel.value;
+        const newestMonth = availMonths[availMonths.length - 1] || '2026-10';
+        latestSel.innerHTML = availMonths.slice().reverse().map((m, idx) =>
+          `<option value="${m}">${m}${idx === 0 ? ' (最新・直近月)' : ''}</option>`
+        ).join('');
+        if (availMonths.includes(prevLatest)) {
+          latestSel.value = prevLatest;
+        } else {
+          latestSel.value = newestMonth;
+        }
+      }
+
+      const badge = document.getElementById('mf-status-badge');
+      if (badge) {
+        if (txMonths.length > 0) {
+          badge.innerText = `✓ MF連携済 (${txMonths.length}か月・最新 ${txMonths[txMonths.length-1]})`;
+          badge.style.background = 'rgba(16, 185, 129, 0.2)';
+          badge.style.color = '#34d399';
+        } else {
+          badge.innerText = `💳 MFデータ読込可`;
+        }
+      }
+    }
+
+    window.onload = function() {
+      let savedUrls = {};
+      try {
+        savedUrls = JSON.parse(localStorage.getItem('finance_app_urls_v12') || '{}');
+      } catch (e) {}
+
+      const activeUrls = {
+        mf:   savedUrls.mf   || DEFAULT_FINANCE_URLS.mf,
+        cf:   savedUrls.cf   || DEFAULT_FINANCE_URLS.cf,
+        raku: savedUrls.raku || DEFAULT_FINANCE_URLS.raku
+      };
+
+      document.getElementById('url-mf').value   = activeUrls.mf;
+      document.getElementById('url-cf').value   = activeUrls.cf;
+      document.getElementById('url-raku').value = activeUrls.raku;
+
+      try {
+        const savedBudget = localStorage.getItem('finance_app_latest_budget_v12');
+        if (savedBudget && !isNaN(parseInt(savedBudget, 10))) {
+          latestBasicBudgetAmount = parseInt(savedBudget, 10);
+          document.getElementById('latest-basic-budget-input').value = latestBasicBudgetAmount;
+        }
+      } catch (e) {}
+
+      try {
+        const savedMf = localStorage.getItem('finance_app_mf_data_v12');
+        if (savedMf) {
+          appData.mfTransactions = JSON.parse(savedMf);
+        }
+      } catch (e) {}
+
+      updateMfMonthDropdown();
+      renderAll();
+      syncAllFromSheets(false);
+    };
+
+    function toggleSyncPanel() {
+      document.getElementById('sync-panel').classList.toggle('open');
+    }
+
+    function switchTab(tabName, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['overview', 'expense', 'rakutsumu', 'mf', 'logs'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = (t === tabName) ? 'block' : 'none';
+      });
+      renderAll();
+    }
+
+    function changePhase(phaseMode, btn) {
+      currentPhase = phaseMode;
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAll();
+    }
+
+    function getFilteredCf() {
+      return appData.cf.filter(r => {
+        if (currentPhase === 'current') return r.year >= 2026;
+        if (currentPhase === 'working') return r.year >= 2026 && r.year <= 2036;
+        if (currentPhase === 'retire')  return r.year >= 2037;
+        if (currentPhase === 'near5')   return r.year >= 2026 && r.year <= 2030;
+        return true;
+      });
+    }
+
+    function aggregateByYear(cfRows) {
+      const map = {};
+      cfRows.forEach(r => {
+        if (!map[r.year]) {
+          map[r.year] = {
+            year: r.year, age: r.age, phase: r.phase, months: 0,
+            pen: 0, cpen: 0, sup: 0, sal: 0, rent: 0, genso: 0, fx: 0, swp: 0, incTot: 0,
+            expBasic: 0, expCar: 0, expApt: 0, expOther: 0, expSpecial: 0, expTot: 0, diff: 0,
+            rakuTransfer: 0,
+            endBal: r.bal, endCashExRaku: r.cashExRaku, endRakuEval: r.rakuEval, endTotAsset: r.totAsset,
+            notes: []
+          };
+        }
+        const g = map[r.year];
+        g.months++;
+        g.pen += r.pen; g.cpen += r.cpen; g.sup += r.sup; g.sal += r.sal;
+        g.rent += r.rent; g.genso += r.genso; g.fx += r.fx; g.swp += r.swp; g.incTot += r.incTot;
+        g.expBasic += r.expBasic; g.expCar += r.expCar; g.expApt += r.expApt; g.expOther += r.expOther;
+        g.expSpecial += r.expSpecial; g.expTot += r.expTot; g.diff += r.diff;
+        g.rakuTransfer += (r.rakuTransfer || 0);
+        g.endBal = r.bal; g.endCashExRaku = r.cashExRaku; g.endRakuEval = r.rakuEval; g.endTotAsset = r.totAsset;
+        if (r.note) g.notes.push(`${r.month}月:${r.note}`);
+      });
+      return Object.values(map).sort((a, b) => a.year - b.year);
+    }
+
+    function fmtMan(val) {
+      if (val === null || val === undefined || isNaN(val)) return '--';
+      return (val / 10000).toFixed(1) + ' 万円';
+    }
+
+    function renderAll() {
+      const filtered = getFilteredCf();
+      const yearly = aggregateByYear(filtered);
+
+      const labelMap = {
+        current: '現在〜100歳 (2026年〜2056年 / 70歳〜100歳)',
+        working: '💪 労働期 (2026年〜2036年 / 70歳〜80歳・現役稼働＆積立期)',
+        retire:  '🌴 リタイヤ期 (2037年〜2056年 / 81歳〜100歳・現金100万維持＆らくつむ補填)',
+        near5:   '直近5年間 (2026年〜2030年 / 70歳〜74歳)',
+        all:     '全期間 (2023年〜2056年 / 過去FX実績含む)'
+      };
+      document.getElementById('phase-range-label').innerText = `表示期間：${labelMap[currentPhase]}`;
+
+      const r2026 = appData.cf.find(r => r.ym === '2026-12');
+      const r2036 = appData.cf.find(r => r.ym === '2036-12');
+      const r2056 = appData.cf.find(r => r.ym === '2056-12');
+
+      if (r2026) {
+        document.getElementById('kpi-cur-asset').innerText = fmtMan(r2026.totAsset);
+        document.getElementById('kpi-cur-sub').innerText = `現金(除積立):${(r2026.cashExRaku/10000).toFixed(1)}万 ＋ らくつむ:${(r2026.rakuEval/10000).toFixed(1)}万`;
+      }
+      if (r2036) {
+        document.getElementById('kpi-80-asset').innerText = fmtMan(r2036.totAsset);
+        document.getElementById('kpi-80-sub').innerText = `現金(除積立):${(r2036.cashExRaku/10000).toFixed(1)}万 ＋ らくつむ:${(r2036.rakuEval/10000).toFixed(1)}万`;
+      }
+      if (r2056) {
+        document.getElementById('kpi-100-asset').innerText = fmtMan(r2056.totAsset);
+        document.getElementById('kpi-100-sub').innerText = `現金(100万キープ):${(r2056.cashExRaku/10000).toFixed(1)}万 ＋ らくつむ:${(r2056.rakuEval/10000).toFixed(1)}万`;
+      }
+
+      const avgMoInc = filtered.length ? Math.round(filtered.reduce((a, b) => a + b.incTot, 0) / filtered.length) : 0;
+      const avgMoBasic = filtered.length ? Math.round(filtered.reduce((a, b) => a + b.expBasic, 0) / filtered.length) : 0;
+      const avgMoSpec = filtered.length ? Math.round(filtered.reduce((a, b) => a + b.expSpecial, 0) / filtered.length) : 0;
+      const avgMoExp = avgMoBasic + avgMoSpec;
+      const avgMoNet = avgMoInc - avgMoExp;
+
+      document.getElementById('kpi-inc-exp').innerHTML = `<span class="${avgMoNet >= 0 ? 'num-pos' : 'num-neg'}">${avgMoNet >= 0 ? '+' : ''}${(avgMoNet/10000).toFixed(1)}万円/月</span>`;
+      document.getElementById('kpi-inc-exp-sub').innerText = `収入:${(avgMoInc/10000).toFixed(1)}万 − 支出(基本+特別):${(avgMoExp/10000).toFixed(1)}万`;
+
+      document.getElementById('kpi-basic-spec').innerText = `計 ${(avgMoExp/10000).toFixed(1)} 万円/月`;
+      document.getElementById('kpi-basic-spec-sub').innerText = `基本:${(avgMoBasic/10000).toFixed(1)}万 ＋ 特別:${(avgMoSpec/10000).toFixed(1)}万/月`;
+
+      renderChart('chart-asset', {
+        type: 'line',
+        data: {
+          labels: yearly.map(y => `${y.year} (${y.age}歳)`),
+          datasets: [
+            { label: '総資産合計 (現金＋らくつむ残高)', data: yearly.map(y => +(y.endTotAsset/10000).toFixed(1)), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.15)', fill: true, tension: 0.25, pointRadius: 3 },
+            { label: '現金残高 (リタイヤ期100万円キープ)', data: yearly.map(y => +(y.endCashExRaku/10000).toFixed(1)), borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.25, pointRadius: 2 },
+            { label: 'らくつむ残高 (90歳〜赤字補填で減少)', data: yearly.map(y => +(y.endRakuEval/10000).toFixed(1)), borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [4, 4], tension: 0.25, pointRadius: 2 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: { y: { title: { display: true, text: '資産残高 (万円)' } } }
+        }
+      });
+
+      renderChart('chart-annual-cf', {
+        type: 'bar',
+        data: {
+          labels: yearly.map(y => `${y.year}(${y.age}歳)`),
+          datasets: [
+            { label: '年間純収支 (万円)', data: yearly.map(y => +(y.diff/10000).toFixed(1)), type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.2, pointRadius: 3, yAxisID: 'y' },
+            { label: '年間収入合計 (万円)', data: yearly.map(y => +(y.incTot/10000).toFixed(1)), backgroundColor: 'rgba(59, 130, 246, 0.7)', yAxisID: 'y' },
+            { label: '年間支出合計[基本+特別] (万円)', data: yearly.map(y => +(y.expTot/10000).toFixed(1)), backgroundColor: 'rgba(239, 68, 68, 0.7)', yAxisID: 'y' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: { y: { title: { display: true, text: '金額 (万円/年)' } } }
+        }
+      });
+
+      renderChart('chart-income-stack', {
+        type: 'bar',
+        data: {
+          labels: yearly.map(y => `${y.year}(${y.age}歳)`),
+          datasets: [
+            { label: '公的年金(伸次・信子)', data: yearly.map(y => +(y.pen/10000).toFixed(1)), backgroundColor: '#3b82f6', stack: 'inc' },
+            { label: '企業年金(伸次)', data: yearly.map(y => +(y.cpen/10000).toFixed(1)), backgroundColor: '#06b6d4', stack: 'inc' },
+            { label: '給与収入 (労働期〜80歳)', data: yearly.map(y => +(y.sal/10000).toFixed(1)), backgroundColor: '#10b981', stack: 'inc' },
+            { label: '支援金・家賃補助等', data: yearly.map(y => +((y.sup + y.rent)/10000).toFixed(1)), backgroundColor: '#8b5cf6', stack: 'inc' },
+            { label: 'スワップ収入 (残高比例・90歳以降逓減)', data: yearly.map(y => +(y.swp/10000).toFixed(1)), backgroundColor: '#f59e0b', stack: 'inc' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, title: { display: true, text: '年間収入内訳 (万円)' } }
+          }
+        }
+      });
+
+      const workRows = appData.cf.filter(r => r.year >= 2026 && r.year <= 2036);
+      const retRows  = appData.cf.filter(r => r.year >= 2037 && r.year <= 2056);
+      const workYr = aggregateByYear(workRows);
+      const retYr  = aggregateByYear(retRows);
+
+      const wIncAvg = workYr.reduce((a,b)=>a+b.incTot,0) / workYr.length;
+      const wSpecAvg = workYr.reduce((a,b)=>a+b.expSpecial,0) / workYr.length;
+      const rIncAvg = retYr.reduce((a,b)=>a+b.incTot,0) / retYr.length;
+      const rSpecAvg = retYr.reduce((a,b)=>a+b.expSpecial,0) / retYr.length;
+
+      const wEnd = workYr[workYr.length-1];
+      const rEnd = retYr[retYr.length-1];
+
+      document.querySelector('#table-phase-compare tbody').innerHTML = `
+        <tr>
+          <td><span class="phase-tag phase-work">💪 労働期</span></td>
+          <td>2026〜36年 (70〜80歳)</td>
+          <td>伸次/信子年金＋企業＋<b>給与</b>＋支援金<br><span style="font-size:0.7rem;color:var(--sub);">※毎月1.5万円らくつむ積立</span></td>
+          <td><b>${fmtMan(wIncAvg)}/年</b></td>
+          <td>30.7万→30.2万円/月</td>
+          <td>${fmtMan(wSpecAvg)}/年</td>
+          <td class="num-pos"><b>${fmtMan(wEnd.endTotAsset)}</b><br><span style="font-size:0.7rem;color:var(--sub);">(現金${(wEnd.endCashExRaku/10000).toFixed(1)}万＋らくつむ${(wEnd.endRakuEval/10000).toFixed(1)}万)</span></td>
+        </tr>
+        <tr>
+          <td><span class="phase-tag phase-retire">🌴 リタイヤ期</span></td>
+          <td>2037〜56年 (81〜100歳)</td>
+          <td>年金＋企業＋支援金＋<b>スワップ(月1.1万→逓減)</b><br><span style="font-size:0.7rem;color:#34d399;">※90歳〜現金100万維持のためらくつむ補填</span></td>
+          <td><b>${fmtMan(rIncAvg)}/年</b></td>
+          <td>26.0万円/月</td>
+          <td>${fmtMan(rSpecAvg)}/年</td>
+          <td class="num-pos"><b>${fmtMan(rEnd.endTotAsset)}</b><br><span style="font-size:0.7rem;color:var(--sub);">(現金${(rEnd.endCashExRaku/10000).toFixed(1)}万＋らくつむ${(rEnd.endRakuEval/10000).toFixed(1)}万)</span></td>
+        </tr>
+      `;
+
+      renderChart('chart-exp-split', {
+        type: 'bar',
+        data: {
+          labels: yearly.map(y => `${y.year}(${y.age}歳)`),
+          datasets: [
+            { label: '基本生活費 (万円)', data: yearly.map(y => +(y.expBasic/10000).toFixed(1)), backgroundColor: 'rgba(59, 130, 246, 0.65)', stack: 'exp' },
+            { label: '車検費用 (万円)', data: yearly.map(y => +(y.expCar/10000).toFixed(1)), backgroundColor: '#ef4444', stack: 'exp' },
+            { label: 'アパート更新・住居臨時 (万円)', data: yearly.map(y => +(y.expApt/10000).toFixed(1)), backgroundColor: '#f59e0b', stack: 'exp' },
+            { label: 'その他年払・特別出費 (万円)', data: yearly.map(y => +(y.expOther/10000).toFixed(1)), backgroundColor: '#8b5cf6', stack: 'exp' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, title: { display: true, text: '年間支出合計[基本+特別] (万円)' } }
+          }
+        }
+      });
+
+      renderChart('chart-special-detail', {
+        type: 'bar',
+        data: {
+          labels: yearly.map(y => `${y.year}(${y.age}歳)`),
+          datasets: [
+            { label: '車検 (隔年12月)', data: yearly.map(y => +(y.expCar/10000).toFixed(1)), backgroundColor: '#ef4444', stack: 'sp' },
+            { label: 'アパート更新 (隔年2・3月計6万)', data: yearly.map(y => +(y.expApt/10000).toFixed(1)), backgroundColor: '#f59e0b', stack: 'sp' },
+            { label: '年払サブスク・保険・税金・進学援助等', data: yearly.map(y => +(y.expOther/10000).toFixed(1)), backgroundColor: '#8b5cf6', stack: 'sp' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, title: { display: true, text: '臨時出費のみ (万円/年)' } }
+          }
+        }
+      });
+
+      const specRows = filtered.filter(r => r.expSpecial > 0 || r.rakuTransfer > 0);
+      document.querySelector('#table-special-events tbody').innerHTML = specRows.map(r => `
+        <tr>
+          <td><b>${r.ym}</b></td>
+          <td>${r.age}歳</td>
+          <td><span class="phase-tag ${r.phase === '労働期' ? 'phase-work' : 'phase-retire'}">${r.phase}</span></td>
+          <td>${r.expCar ? r.expCar.toLocaleString() + ' 円' : '-'}</td>
+          <td>${r.expApt ? r.expApt.toLocaleString() + ' 円' : '-'}</td>
+          <td>${r.expOther ? r.expOther.toLocaleString() + ' 円' : '-'}</td>
+          <td class="num-neg">${r.expSpecial.toLocaleString()} 円</td>
+          <td>${r.note}</td>
+        </tr>
+      `).join('');
+
+      renderChart('chart-raku-proj', {
+        type: 'line',
+        data: {
+          labels: appData.rakuForecast.map(x => `${x.year}(${x.age})`),
+          datasets: [
+            { label: '①標準シナリオ純資産 (万円)', data: appData.rakuForecast.map(x => +(x.stdAsset/10000).toFixed(1)), borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.25 },
+            { label: '②保守シナリオ純資産 (万円)', data: appData.rakuForecast.map(x => +(x.conAsset/10000).toFixed(1)), borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.25 },
+            { label: '③悲観シナリオ純資産 (万円)', data: appData.rakuForecast.map(x => +(x.pesAsset/10000).toFixed(1)), borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [4,4], tension: 0.25 },
+            { label: '累計投資元本 (万円)', data: appData.rakuForecast.map(x => +(x.principal/10000).toFixed(1)), borderColor: '#94a3b8', backgroundColor: 'rgba(148,163,184,0.15)', fill: true, tension: 0.1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: { y: { title: { display: true, text: '純資産 / 元本 (万円)' } } }
+        }
+      });
+
+      renderChart('chart-raku-actual', {
+        type: 'bar',
+        data: {
+          labels: appData.rakuMonthly.map(x => x.ym),
+          datasets: [
+            { label: '月末評価額 (円)', data: appData.rakuMonthly.map(x => x.evalVal), type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.2, pointRadius: 4 },
+            { label: '累計純入金 (円)', data: appData.rakuMonthly.map(x => x.depCum), backgroundColor: 'rgba(59, 130, 246, 0.5)' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: { y: { title: { display: true, text: '金額 (円)' } } }
+        }
+      });
+
+      document.querySelector('#table-raku-monthly tbody').innerHTML = appData.rakuMonthly.map(x => `
+        <tr>
+          <td><b>${x.ym}</b></td>
+          <td>${x.status}</td>
+          <td>${x.depMo.toLocaleString()}</td>
+          <td><b>${x.depCum.toLocaleString()}</b></td>
+          <td>${x.basicBuy.toLocaleString()}</td>
+          <td>${x.spotBuy.toLocaleString()}</td>
+          <td class="num-pos">${x.evalVal.toLocaleString()}</td>
+          <td>${x.ratio}/${x.lev}倍</td>
+          <td style="font-size:0.73rem;">${x.note}</td>
+        </tr>
+      `).join('');
+
+      document.querySelector('#table-raku-forecast tbody').innerHTML = appData.rakuForecast.map(x => `
+        <tr>
+          <td><b>${x.label}</b></td>
+          <td>${x.age}</td>
+          <td>${x.principal.toLocaleString()}</td>
+          <td class="num-pos">${x.stdAsset.toLocaleString()}</td>
+          <td>月${x.stdSwapMo.toLocaleString()}</td>
+          <td style="color:#60a5fa;font-weight:600;">${x.conAsset.toLocaleString()}</td>
+          <td>月${x.conSwapMo.toLocaleString()}</td>
+          <td>${x.pesAsset.toLocaleString()}</td>
+        </tr>
+      `).join('');
+
+      renderMfTab();
+      renderCfLogTable();
+    }
+
+    function extractSheetId(url) {
+      if (!url) return null;
+      const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      return (m && m[1] !== 'e') ? m[1] : null;
+    }
+
+    function extractGid(url) {
+      if (!url) return null;
+      const m = url.match(/[#&?]gid=(\d+)/);
+      return m ? m[1] : null;
+    }
+
+    function loadGvizTable(sheetId, sheetNameOrGid = null, isGid = false) {
+      return new Promise((resolve, reject) => {
+        const cbName = 'gviz_mf_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+        const script = document.createElement('script');
+        let timer = setTimeout(() => {
+          cleanup();
+          reject(new Error('GViz timeout'));
+        }, 5500);
+
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[cbName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[cbName] = function(resp) {
+          cleanup();
+          if (resp && resp.status === 'ok' && resp.table) {
+            resolve(resp.table);
+          } else {
+            reject(new Error('GViz status error'));
+          }
+        };
+
+        let param = '';
+        if (sheetNameOrGid) {
+          param = isGid ? `&gid=${encodeURIComponent(sheetNameOrGid)}` : `&sheet=${encodeURIComponent(sheetNameOrGid)}`;
+        }
+        script.src = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:${cbName}${param}&_=${Date.now()}`;
+        script.onerror = function() {
+          cleanup();
+          reject(new Error('Script load error'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    function extractCellText(c) {
+      if (!c) return '';
+      if (c.f !== undefined && c.f !== null && String(c.f).trim() !== '') return String(c.f).trim();
+      if (c.v === undefined || c.v === null) return '';
+      if (c.v instanceof Date) {
+        const y = c.v.getFullYear();
+        const m = ('0' + (c.v.getMonth() + 1)).slice(-2);
+        const d = ('0' + c.v.getDate()).slice(-2);
+        return `${y}-${m}-${d}`;
+      }
+      const s = String(c.v).trim();
+      const dm = s.match(/^Date\((\d+),(\d+),(\d+)/);
+      if (dm) {
+        const y = parseInt(dm[1], 10);
+        const mo = parseInt(dm[2], 10) + 1;
+        const da = parseInt(dm[3], 10);
+        return `${y}-${('0'+mo).slice(-2)}-${('0'+da).slice(-2)}`;
+      }
+      return s;
+    }
+
+    function extractCellNum(c) {
+      if (!c) return 0;
+      if (typeof c.v === 'number' && !isNaN(c.v)) return +c.v.toFixed(0);
+      const txt = extractCellText(c).replace(/,/g, '');
+      const n = Number(txt);
+      return isNaN(n) ? 0 : +n.toFixed(0);
+    }
+
+    function parseGvizMfTable(table) {
+      const parsed = [];
+      if (!table || !table.rows) return parsed;
+
+      for (const r of table.rows) {
+        const cells = r.c || [];
+        const calcTarget = extractCellText(cells[0]);
+        if (calcTarget === '0') continue;
+
+        const rawDate = extractCellText(cells[1]);
+        const dm = rawDate.match(/(\d{4})[-/年](\d{1,2})[-/月](\d{1,2})/);
+        if (!dm) continue;
+        const normD = `${dm[1]}-${('0'+dm[2]).slice(-2)}-${('0'+dm[3]).slice(-2)}`;
+
+        const amt = extractCellNum(cells[3]);
+        if (amt === 0) continue;
+
+        parsed.push({
+          date: normD,
+          content: extractCellText(cells[2]),
+          amount: amt,
+          inst: extractCellText(cells[4]),
+          catLarge: extractCellText(cells[5]) || '未分類',
+          catMid: extractCellText(cells[6]),
+          memo: extractCellText(cells[7]),
+          id: extractCellText(cells[9])
+        });
+      }
+      return parsed;
+    }
+
+    async function syncAllFromSheets(showAlert = true) {
+      const cfUrl = document.getElementById('url-cf')?.value.trim();
+      const cfSheetId = extractSheetId(cfUrl);
+      if (cfSheetId) {
+        try {
+          const cfTable = await loadGvizTable(cfSheetId, extractGid(cfUrl), !!extractGid(cfUrl));
+          if (cfTable && cfTable.rows) {
+            const nowYm = new Date().toISOString().slice(0, 7);
+            for (const r of cfTable.rows) {
+              const cells = r.c || [];
+              const ymTxt = extractCellText(cells[0]);
+              const m = ymTxt.match(/(\d{4})[-/年](\d{1,2})/);
+              if (m) {
+                const normYm = `${m[1]}-${('0'+m[2]).slice(-2)}`;
+                if (normYm >= nowYm && normYm <= '2027-06') {
+                  const bVal = extractCellNum(cells[9]);
+                  if (bVal >= 200000 && bVal <= 500000) {
+                    latestBasicBudgetAmount = bVal;
+                    document.getElementById('latest-basic-budget-input').value = bVal;
+                    localStorage.setItem('finance_app_latest_budget_v12', String(bVal));
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      const mfUrl = document.getElementById('url-mf').value.trim() || DEFAULT_FINANCE_URLS.mf;
+      const sheetId = extractSheetId(mfUrl);
+      const badge = document.getElementById('mf-status-badge');
+
+      if (!sheetId) {
+        updateMfMonthDropdown();
+        return;
+      }
+
+      badge.innerText = '⏳ MFシート確認中...';
+
+      try {
+        const gid = extractGid(mfUrl);
+        let table = await loadGvizTable(sheetId, gid, !!gid);
+        let txs = parseGvizMfTable(table);
+
+        if (txs.length < 5) {
+          try {
+            const subTable = await loadGvizTable(sheetId, 'シート1', false);
+            const subTxs = parseGvizMfTable(subTable);
+            if (subTxs.length >= 5) txs = subTxs;
+          } catch(e) {}
+        }
+
+        if (txs.length > 0) {
+          const existingMap = new Map();
+          (appData.mfTransactions || []).forEach(t => {
+            const key = t.id ? `ID_${t.id}` : `${t.date}_${t.amount}_${t.content}_${t.inst}`;
+            existingMap.set(key, t);
+          });
+          txs.forEach(t => {
+            const key = t.id ? `ID_${t.id}` : `${t.date}_${t.amount}_${t.content}_${t.inst}`;
+            existingMap.set(key, t);
+          });
+
+          appData.mfTransactions = Array.from(existingMap.values()).sort((a, b) => b.date.localeCompare(a.date));
+          try {
+            localStorage.setItem('finance_app_mf_data_v12', JSON.stringify(appData.mfTransactions));
+          } catch (e) {}
+
+          updateMfMonthDropdown();
+          renderMfTab();
+
+          const months = Array.from(new Set(appData.mfTransactions.map(t => t.date.slice(0, 7)))).sort();
+          badge.innerText = `✓ MF同期済 (${months.length}か月・最新 ${months[months.length-1]})`;
+          badge.style.background = 'rgba(16, 185, 129, 0.2)';
+          badge.style.color = '#34d399';
+
+          if (showAlert) {
+            showToast(`<strong>✅ マネーフォワードのスプレッドシートから最新データを同期しました！</strong><br>明細数: <b>${appData.mfTransactions.length}件</b> (${months[0]}〜${months[months.length-1]})`);
+          }
+        } else {
+          if (appData.mfTransactions.length > 0) {
+            updateMfMonthDropdown();
+          } else {
+            badge.innerText = '✓ MFシート接続OK (データ待機中)';
+          }
+        }
+      } catch (err) {
+        if (appData.mfTransactions.length > 0) {
+          updateMfMonthDropdown();
+        } else {
+          badge.innerText = '💳 MFシート未公開またはCSV手動読込可';
+        }
+      }
+    }
+
+    function saveAndSyncUrls() {
+      const urls = {
+        mf:   document.getElementById('url-mf').value.trim(),
+        cf:   document.getElementById('url-cf').value.trim(),
+        raku: document.getElementById('url-raku').value.trim()
+      };
+      try { localStorage.setItem('finance_app_urls_v12', JSON.stringify(urls)); } catch (e) {}
+      syncAllFromSheets(true);
+    }
+
+    function resetDefaultUrls() {
+      document.getElementById('url-mf').value = DEFAULT_FINANCE_URLS.mf;
+      try { localStorage.setItem('finance_app_urls_v12', JSON.stringify(DEFAULT_FINANCE_URLS)); } catch (e) {}
+      syncAllFromSheets(true);
+    }
+
+    function renderMfTab() {
+      const allTxs = appData.mfTransactions || [];
+      const latestMonth = document.getElementById('mf-latest-month-select')?.value || '2026-10';
+
+      document.getElementById('compare-table-budget-note').innerHTML =
+        `※月末にCF表を実績値で上書きしても、この表の「CF:基本生活費(最新予算)」には常に一番新しい予算額（現在 <b>${latestBasicBudgetAmount.toLocaleString()}円/月</b>）が適用され、上書き前の予算に対していくら節約できたか（予算差額）を正確に判定します。`;
+
+      const cfMap = {};
+      appData.cf.forEach(r => { cfMap[r.ym] = r; });
+
+      if (allTxs.length === 0) {
+        const cfLatest = cfMap[latestMonth] || cfMap['2026-10'];
+        const nobuziPen = cfLatest.pen > 0 ? Math.round(cfLatest.pen * 0.65) + cfLatest.cpen : cfLatest.cpen;
+        const nobukoPen = cfLatest.pen > 0 ? (cfLatest.pen - Math.round(cfLatest.pen * 0.65)) : 0;
+
+        const fallbackInc8 = {
+          '伸次年金': nobuziPen,
+          '信子年金': nobukoPen,
+          '支援金': cfLatest.sup,
+          '給与１(20日入金)': cfLatest.sal > 0 ? Math.round(cfLatest.sal * 0.68) : 0,
+          '給与２(27日入金)': cfLatest.sal > 0 ? (cfLatest.sal - Math.round(cfLatest.sal * 0.68)) : 0,
+          'Amazon割引': 0,
+          'omotanポイント': latestMonth === '2026-09' ? 5000 : 0,
+          'その他(税還付・Vポイント等)': cfLatest.genso || 0
+        };
+        const incTotVal = Object.values(fallbackInc8).reduce((a,b)=>a+b, 0);
+
+        const fallbackExpBasic = {
+          'その他(施設費・利息等)': 115000,
+          '住宅': 48000,
+          '食費': 46000,
+          '水道・光熱費': 18500,
+          '日用品・衣服美容': 22000,
+          '趣味・教養・交際': 23950,
+          '通信費': 12000,
+          '自動車': 14000,
+          '健康・医療': 8000
+        };
+
+        renderLatestMonthVisuals(latestMonth, fallbackInc8, incTotVal, fallbackExpBasic, cfLatest.expBasic, cfLatest.expSpecial, cfLatest.note || 'CF表データ表示中（CSV読込でMF実明細へ更新）');
+
+        const cf2026Asc = appData.cf.filter(r => r.ym >= '2026-01' && r.ym <= '2026-10');
+        const cf2026Desc = cf2026Asc.slice().reverse();
+        const mCnt26 = cf2026Asc.length || 1;
+
+        const avg26PenTot = Math.round(cf2026Asc.reduce((a,b)=>a+b.pen,0) / mCnt26);
+        const avg26Cpen = Math.round(cf2026Asc.reduce((a,b)=>a+b.cpen,0) / mCnt26);
+        const avg26Sup = Math.round(cf2026Asc.reduce((a,b)=>a+b.sup,0) / mCnt26);
+        const avg26Sal = Math.round(cf2026Asc.reduce((a,b)=>a+b.sal,0) / mCnt26);
+        const avg26OthInc = Math.round(cf2026Asc.reduce((a,b)=>a+b.rent+b.genso,0) / mCnt26);
+        const fallbackAvg26Inc8 = {
+          '伸次年金': Math.round(avg26PenTot * 0.65) + avg26Cpen,
+          '信子年金': avg26PenTot - Math.round(avg26PenTot * 0.65),
+          '支援金': avg26Sup,
+          '給与１(20日入金)': Math.round(avg26Sal * 0.68),
+          '給与２(27日入金)': avg26Sal - Math.round(avg26Sal * 0.68),
+          'Amazon割引': 0,
+          'omotanポイント': 500,
+          'その他(税還付・Vポイント等)': avg26OthInc
+        };
+        const avgInc26 = Object.values(fallbackAvg26Inc8).reduce((a,b)=>a+b, 0);
+        const avgBasic26 = Math.round(cf2026Asc.reduce((a,b)=>a+b.expBasic,0) / mCnt26);
+        const avgSpec26 = Math.round(cf2026Asc.reduce((a,b)=>a+b.expSpecial,0) / mCnt26);
+        const avgTotExp26 = avgBasic26 + avgSpec26;
+        const avgNet26 = avgInc26 - avgTotExp26;
+        const diffBudget26 = latestBasicBudgetAmount - avgBasic26;
+
+        render2026AvgVisuals('2026-01〜2026-10 (10か月平均)', fallbackAvg26Inc8, avgInc26, fallbackExpBasic, avgBasic26, avgSpec26, 'CF表 2026年1〜10月の実績月平均');
+
+        document.getElementById('mf-kpi-months').innerText = `CF実績 10か月`;
+        document.getElementById('mf-kpi-count').innerText = `CSV読込またはシート同期でMF明細反映`;
+        document.getElementById('mf-kpi-net-avg').innerHTML = `<span class="${avgNet26 >= 0 ? 'num-pos' : 'num-neg'}">${avgNet26 >= 0 ? '+' : ''}${avgNet26.toLocaleString()} 円/月</span>`;
+        document.getElementById('mf-kpi-net-sub').innerText = `収入:${avgInc26.toLocaleString()} − 支出:${avgTotExp26.toLocaleString()}`;
+        document.getElementById('mf-kpi-total-avg').innerText = `${avgTotExp26.toLocaleString()} 円/月`;
+        document.getElementById('mf-kpi-total-sub').innerText = `基本:${avgBasic26.toLocaleString()} ＋ 特別:${avgSpec26.toLocaleString()}`;
+        document.getElementById('mf-kpi-pure-avg').innerText = `${avgBasic26.toLocaleString()} 円/月`;
+        document.getElementById('mf-kpi-pure-sub').innerText = `最新予算(${latestBasicBudgetAmount.toLocaleString()})比: ${diffBudget26 >= 0 ? '予算内 +' : '超過 '}${diffBudget26.toLocaleString()}円`;
+
+        document.querySelector('#table-mf-cf-compare tbody').innerHTML = cf2026Desc.map(c => {
+          const planned = getPlannedBudgetForMonth(c.ym);
+          const diffBasic = planned.expBasic - c.expBasic;
+          const net = c.incTot - c.expTot;
+          const judge = diffBasic >= 0
+            ? `✅ 予算内 (${diffBasic.toLocaleString()}円 節約)`
+            : `⚠️ 予算超過 (${Math.abs(diffBasic).toLocaleString()}円 オーバー)`;
+          return `
+            <tr>
+              <td><b>${c.ym}</b></td>
+              <td><b>${planned.expBasic.toLocaleString()}</b></td>
+              <td style="color:#60a5fa; font-weight:700;">${c.expBasic.toLocaleString()}</td>
+              <td class="${diffBasic >= 0 ? 'num-pos' : 'num-neg'}">${diffBasic >= 0 ? '+' : ''}${diffBasic.toLocaleString()}</td>
+              <td>${planned.expSpecial.toLocaleString()}</td>
+              <td>${c.expSpecial.toLocaleString()}</td>
+              <td><b>${planned.expTot.toLocaleString()}</b></td>
+              <td class="num-neg"><b>${c.expTot.toLocaleString()}</b></td>
+              <td class="num-pos">${c.incTot.toLocaleString()}</td>
+              <td class="${net >= 0 ? 'num-pos' : 'num-neg'}"><b>${net >= 0 ? '+' : ''}${net.toLocaleString()}</b></td>
+              <td style="font-size:0.73rem;">${judge}${planned.note ? ' / ' + planned.note : ''}</td>
+            </tr>
+          `;
+        }).join('');
+        return;
+      }
+
+      const monthStats = {};
+
+      allTxs.forEach(t => {
+        const ym = t.date.slice(0, 7);
+        if (!monthStats[ym]) {
+          monthStats[ym] = {
+            ym, inc: 0, expTotal: 0, expBasic: 0, expSpecial: 0,
+            basicCats: {}, incCats: {}, specialItems: []
+          };
+          INCOME_8_ORDER.forEach(k => { monthStats[ym].incCats[k] = 0; });
+        }
+        const ms = monthStats[ym];
+
+        if (t.amount > 0) {
+          const incGroup = classifyIncome8(t);
+          ms.inc += t.amount;
+          ms.incCats[incGroup] = (ms.incCats[incGroup] || 0) + t.amount;
+        } else if (t.amount < 0) {
+          const v = Math.abs(t.amount);
+          const norm = normalizeMfCategory(t.catLarge, t);
+
+          ms.expTotal += v;
+          if (norm.isSpecial) {
+            ms.expSpecial += v;
+            ms.specialItems.push(`${t.content}(${v.toLocaleString()}円)`);
+          } else {
+            ms.expBasic += v;
+            ms.basicCats[norm.group] = (ms.basicCats[norm.group] || 0) + v;
+          }
+        }
+      });
+
+      const sortedMonthsAsc = Object.keys(monthStats).sort();
+      const activeLatestMonth = monthStats[latestMonth] ? latestMonth : sortedMonthsAsc[sortedMonthsAsc.length - 1];
+      const latestStat = monthStats[activeLatestMonth];
+
+      if (latestStat) {
+        const spNote = latestStat.specialItems.length > 0
+          ? `特別支出内訳: ${latestStat.specialItems.slice(0, 5).join(' / ')}`
+          : '直近月の特別な支出は 0円 です';
+        renderLatestMonthVisuals(
+          activeLatestMonth,
+          latestStat.incCats,
+          latestStat.inc,
+          latestStat.basicCats,
+          latestStat.expBasic,
+          latestStat.expSpecial,
+          spNote
+        );
+      }
+
+      const months2026 = sortedMonthsAsc.filter(m => m.startsWith('2026-'));
+      const avgTargetMonths = months2026.length > 0 ? months2026 : sortedMonthsAsc;
+      const avgCnt = avgTargetMonths.length || 1;
+
+      const avg26IncMap = {};
+      INCOME_8_ORDER.forEach(k => { avg26IncMap[k] = 0; });
+      const avg26ExpBasicMap = {};
+      let sum26Inc = 0, sum26Basic = 0, sum26Spec = 0;
+
+      avgTargetMonths.forEach(m => {
+        const ms = monthStats[m];
+        if (!ms) return;
+        sum26Inc += ms.inc;
+        sum26Basic += ms.expBasic;
+        sum26Spec += ms.expSpecial;
+        INCOME_8_ORDER.forEach(k => {
+          avg26IncMap[k] += (ms.incCats[k] || 0);
+        });
+        Object.keys(ms.basicCats).forEach(c => {
+          avg26ExpBasicMap[c] = (avg26ExpBasicMap[c] || 0) + ms.basicCats[c];
+        });
+      });
+
+      INCOME_8_ORDER.forEach(k => { avg26IncMap[k] = Math.round(avg26IncMap[k] / avgCnt); });
+      Object.keys(avg26ExpBasicMap).forEach(c => { avg26ExpBasicMap[c] = Math.round(avg26ExpBasicMap[c] / avgCnt); });
+
+      const moAvg26Inc = Math.round(sum26Inc / avgCnt);
+      const moAvg26Basic = Math.round(sum26Basic / avgCnt);
+      const moAvg26Spec = Math.round(sum26Spec / avgCnt);
+      const moAvg26Tot = moAvg26Basic + moAvg26Spec;
+      const moAvg26Net = moAvg26Inc - moAvg26Tot;
+      const rangeLabel26 = `${avgTargetMonths[0]}〜${avgTargetMonths[avgTargetMonths.length - 1]} (${avgCnt}か月平均)`;
+
+      render2026AvgVisuals(
+        rangeLabel26,
+        avg26IncMap,
+        moAvg26Inc,
+        avg26ExpBasicMap,
+        moAvg26Basic,
+        moAvg26Spec,
+        `2026年(${avgCnt}か月間)の特別支出合計 ${sum26Spec.toLocaleString()}円 ÷ ${avgCnt}か月`
+      );
+
+      const compareMonthsAsc = Array.from(new Set([
+        ...sortedMonthsAsc,
+        ...(sortedMonthsAsc.some(m => m.startsWith('2026-')) ? ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10'].slice(0, Math.max(sortedMonthsAsc.length, 9)) : [])
+      ])).sort();
+
+      const compareMonthsDesc = compareMonthsAsc.slice().reverse();
+      const diffBasicAvg = latestBasicBudgetAmount - moAvg26Basic;
+
+      document.getElementById('mf-kpi-months').innerText = `${sortedMonthsAsc.length} か月分取込済`;
+      document.getElementById('mf-kpi-count').innerText = `明細 ${allTxs.length.toLocaleString()} 件 (${sortedMonthsAsc[0]}〜${sortedMonthsAsc[sortedMonthsAsc.length-1]})`;
+
+      document.getElementById('mf-kpi-net-avg').innerHTML = `<span class="${moAvg26Net >= 0 ? 'num-pos' : 'num-neg'}">${moAvg26Net >= 0 ? '+' : ''}${moAvg26Net.toLocaleString()} 円/月</span>`;
+      document.getElementById('mf-kpi-net-sub').innerText = `収入:${moAvg26Inc.toLocaleString()} − 支出:${moAvg26Tot.toLocaleString()}`;
+
+      document.getElementById('mf-kpi-total-avg').innerText = `${moAvg26Tot.toLocaleString()} 円/月`;
+      document.getElementById('mf-kpi-total-sub').innerText = `基本:${moAvg26Basic.toLocaleString()} ＋ 特別:${moAvg26Spec.toLocaleString()}`;
+
+      document.getElementById('mf-kpi-pure-avg').innerText = `${moAvg26Basic.toLocaleString()} 円/月`;
+      document.getElementById('mf-kpi-pure-sub').innerText = `最新予算(${latestBasicBudgetAmount.toLocaleString()})比: ${diffBasicAvg >= 0 ? '予算内 +' : '超過 '}${diffBasicAvg.toLocaleString()}円`;
+
+      document.querySelector('#table-mf-cf-compare tbody').innerHTML = compareMonthsDesc.map(m => {
+        const planned = getPlannedBudgetForMonth(m);
+        const cf = cfMap[m] || { incTot: 0 };
+        const mf = monthStats[m];
+        if (!mf) {
+          return `
+            <tr>
+              <td><b>${m}</b></td>
+              <td><b>${planned.expBasic.toLocaleString()}</b></td>
+              <td style="color:var(--sub);">未取込</td>
+              <td>--</td>
+              <td>${planned.expSpecial.toLocaleString()}</td>
+              <td style="color:var(--sub);">未取込</td>
+              <td><b>${planned.expTot.toLocaleString()}</b></td>
+              <td style="color:var(--sub);">未取込</td>
+              <td>CF:${cf.incTot.toLocaleString()}</td>
+              <td>--</td>
+              <td style="font-size:0.73rem; color:var(--sub);">${planned.note || 'CSV未読込'}</td>
+            </tr>
+          `;
+        }
+        const mfGrandExp = mf.expBasic + mf.expSpecial;
+        const mfNet = mf.inc - mfGrandExp;
+        const dBasic = planned.expBasic - mf.expBasic;
+        let judge = '';
+        if (dBasic >= 0) {
+          judge = `✅ 予算内 (+${dBasic.toLocaleString()}円 節約)`;
+        } else {
+          judge = `⚠️ 予算超過 (-${Math.abs(dBasic).toLocaleString()}円 オーバー)`;
+        }
+
+        return `
+          <tr>
+            <td><b>${m}</b></td>
+            <td><b>${planned.expBasic.toLocaleString()}</b></td>
+            <td style="color:#60a5fa; font-weight:700;">${mf.expBasic.toLocaleString()}</td>
+            <td class="${dBasic >= 0 ? 'num-pos' : 'num-neg'}"><b>${dBasic >= 0 ? '+' : ''}${dBasic.toLocaleString()}</b></td>
+            <td>${planned.expSpecial.toLocaleString()}</td>
+            <td>${mf.expSpecial.toLocaleString()}</td>
+            <td><b>${planned.expTot.toLocaleString()}</b></td>
+            <td class="num-neg"><b>${mfGrandExp.toLocaleString()}</b></td>
+            <td class="num-pos">${mf.inc.toLocaleString()}</td>
+            <td class="${mfNet >= 0 ? 'num-pos' : 'num-neg'}"><b>${mfNet >= 0 ? '+' : ''}${mfNet.toLocaleString()}</b></td>
+            <td style="font-size:0.74rem;">${judge}${planned.note ? ' (' + planned.note + ')' : ''}</td>
+          </tr>
+        `;
+      }).join('');
+
+      renderMfLogsOnly();
+    }
+
+    function renderLatestMonthVisuals(ymLabel, inc8Map, incTotal, expBasicMap, expBasicTotal, expSpecialTotal, specialDetailText) {
+      const grandExpTotal = expBasicTotal + expSpecialTotal;
+      const netBalance = incTotal - grandExpTotal;
+      const budgetDiff = latestBasicBudgetAmount - expBasicTotal;
+
+      document.getElementById('latest-month-banner-title').innerText = `🎯 直近月（${ymLabel}）の概要（収入・支出[基本+特別]・収支）`;
+      document.getElementById('title-latest-inc').innerText = `⑨ ${ymLabel} 収入内訳（8項目ビジュアル）`;
+      document.getElementById('title-latest-exp').innerText = `⑩ ${ymLabel} 支出内訳（基本生活費 ＆ 特別支出・合計）`;
+
+      document.getElementById('latest-inc-total').innerText = `${incTotal.toLocaleString()} 円`;
+      document.getElementById('latest-exp-grand-total').innerText = `${grandExpTotal.toLocaleString()} 円`;
+      document.getElementById('latest-exp-breakdown-inline').innerText = `(基本 ${expBasicTotal.toLocaleString()}円 ＋ 特別 ${expSpecialTotal.toLocaleString()}円)`;
+
+      const netEl = document.getElementById('latest-net-balance');
+      netEl.innerText = `${netBalance >= 0 ? '+' : ''}${netBalance.toLocaleString()} 円`;
+      netEl.className = netBalance >= 0 ? 'num-pos' : 'num-neg';
+
+      const incLabels = INCOME_8_ORDER;
+      const incValues = incLabels.map(k => inc8Map[k] || 0);
+      const incColors = incLabels.map(k => INCOME_8_COLORS[k]);
+
+      renderChart('chart-latest-inc', {
+        type: 'doughnut',
+        data: {
+          labels: incLabels,
+          datasets: [{ data: incValues, backgroundColor: incColors, borderWidth: 2, borderColor: '#1e293b' }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { padding: 5, boxWidth: 10, font: { size: 9.5 } } } }
+        }
+      });
+
+      document.querySelector('#table-latest-inc tbody').innerHTML = incLabels.map(k => {
+        const v = inc8Map[k] || 0;
+        const pct = incTotal > 0 ? ((v / incTotal) * 100).toFixed(1) + '%' : '0.0%';
+        const col = INCOME_8_COLORS[k];
+        return `
+          <tr>
+            <td><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${col};margin-right:5px;"></span><b>${k}</b></td>
+            <td style="text-align:right; font-weight:600; color:${v > 0 ? '#f8fafc' : '#64748b'};">${v.toLocaleString()} 円</td>
+            <td style="text-align:right; color:var(--sub);">${pct}</td>
+          </tr>
+        `;
+      }).join('') + `
+        <tr style="background:rgba(16,185,129,0.15);">
+          <td><b>収入 合計</b></td>
+          <td style="text-align:right;" class="num-pos">${incTotal.toLocaleString()} 円</td>
+          <td style="text-align:right;">100%</td>
+        </tr>
+      `;
+
+      const expKeys = Object.keys(expBasicMap).sort((a, b) => (expBasicMap[b] || 0) - (expBasicMap[a] || 0));
+      const expVals = expKeys.map(k => expBasicMap[k] || 0);
+      const expCols = expKeys.map((k, idx) => getDistinctCategoryColor(k, idx));
+
+      renderChart('chart-latest-exp', {
+        type: 'doughnut',
+        data: {
+          labels: expKeys,
+          datasets: [{ data: expVals, backgroundColor: expCols, borderWidth: 2, borderColor: '#1e293b' }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { padding: 5, boxWidth: 10, font: { size: 9.5 } } } }
+        }
+      });
+
+      document.querySelector('#table-latest-exp tbody').innerHTML = expKeys.map((k, idx) => {
+        const v = expBasicMap[k] || 0;
+        const pct = expBasicTotal > 0 ? ((v / expBasicTotal) * 100).toFixed(1) + '%' : '0.0%';
+        const col = getDistinctCategoryColor(k, idx);
+        return `
+          <tr>
+            <td><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${col};margin-right:5px;"></span><b>${k}</b></td>
+            <td style="text-align:right; font-weight:600;">${v.toLocaleString()} 円</td>
+            <td style="text-align:right; color:var(--sub);">${pct}</td>
+          </tr>
+        `;
+      }).join('') + `
+        <tr style="background:rgba(59,130,246,0.15);">
+          <td><b>① 基本生活費 合計</b></td>
+          <td style="text-align:right; color:#60a5fa; font-weight:700;">${expBasicTotal.toLocaleString()} 円</td>
+          <td style="text-align:right;">100%</td>
+        </tr>
+      `;
+
+      document.getElementById('latest-special-box').innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:4px; border-bottom:1px solid rgba(71,85,105,0.5);">
+          <span>🎯 <b>最新当初予算 (${latestBasicBudgetAmount.toLocaleString()}円) との差</b></span>
+          <b class="${budgetDiff >= 0 ? 'num-pos' : 'num-neg'}">${budgetDiff >= 0 ? '予算内 +' + budgetDiff.toLocaleString() : '超過 -' + Math.abs(budgetDiff).toLocaleString()} 円</b>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid rgba(71,85,105,0.5);">
+          <span>⚡ <b>② 特別な支出（別枠分離）</b></span>
+          <b style="color:#fca5a5;">${expSpecialTotal.toLocaleString()} 円</b>
+        </div>
+        <div style="color:var(--sub); font-size:0.7rem; margin:3px 0 5px 0;">${specialDetailText}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:4px; border-top:1px solid rgba(71,85,105,0.8); font-size:0.81rem;">
+          <span>🧾 <b>支出総合計 (①基本 ＋ ②特別)</b></span>
+          <b class="num-neg">${grandExpTotal.toLocaleString()} 円</b>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:3px; font-size:0.81rem;">
+          <span>⚖️ <b>直近月 収支 (収入 − 支出総合計)</b></span>
+          <b class="${netBalance >= 0 ? 'num-pos' : 'num-neg'}">${netBalance >= 0 ? '+' : ''}${netBalance.toLocaleString()} 円</b>
+        </div>
+      `;
+    }
+
+    function render2026AvgVisuals(periodLabel, inc8AvgMap, incAvgTotal, expBasicAvgMap, expBasicAvgTotal, expSpecialAvgTotal, specialAvgDetailText) {
+      const grandExpAvgTotal = expBasicAvgTotal + expSpecialAvgTotal;
+      const netAvgBalance = incAvgTotal - grandExpAvgTotal;
+      const avgBudgetDiff = latestBasicBudgetAmount - expBasicAvgTotal;
+
+      document.getElementById('avg2026-banner-title').innerText = `📊 2026年・月平均の概要（${periodLabel}）`;
+      document.getElementById('avg2026-inc-total').innerText = `${incAvgTotal.toLocaleString()} 円/月`;
+      document.getElementById('avg2026-exp-grand-total').innerText = `${grandExpAvgTotal.toLocaleString()} 円/月`;
+      document.getElementById('avg2026-exp-breakdown-inline').innerText = `(基本 ${expBasicAvgTotal.toLocaleString()}円 ＋ 特別 ${expSpecialAvgTotal.toLocaleString()}円)`;
+
+      const netEl = document.getElementById('avg2026-net-balance');
+      netEl.innerText = `${netAvgBalance >= 0 ? '+' : ''}${netAvgBalance.toLocaleString()} 円/月`;
+      netEl.className = netAvgBalance >= 0 ? 'num-pos' : 'num-neg';
+
+      const incLabels = INCOME_8_ORDER;
+      const incValues = incLabels.map(k => inc8AvgMap[k] || 0);
+      const incColors = incLabels.map(k => INCOME_8_COLORS[k]);
+
+      renderChart('chart-avg2026-inc', {
+        type: 'doughnut',
+        data: {
+          labels: incLabels,
+          datasets: [{ data: incValues, backgroundColor: incColors, borderWidth: 2, borderColor: '#1e293b' }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { padding: 5, boxWidth: 10, font: { size: 9.5 } } } }
+        }
+      });
+
+      document.querySelector('#table-avg2026-inc tbody').innerHTML = incLabels.map(k => {
+        const v = inc8AvgMap[k] || 0;
+        const pct = incAvgTotal > 0 ? ((v / incAvgTotal) * 100).toFixed(1) + '%' : '0.0%';
+        const col = INCOME_8_COLORS[k];
+        return `
+          <tr>
+            <td><span style="display:inline
