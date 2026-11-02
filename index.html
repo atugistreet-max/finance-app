@@ -2258,6 +2258,116 @@
       return origFetch(url, options);
     };
   })();
+    // ===== らくつむスプレッドシート完全自動同期 ＆ 最新実績反映パッチ =====
+    (function() {
+      // 1. スプレッドシートの最新実績（10/31締 ＆ 11/2 11:55時点）を初期値としても即時反映
+      const LATEST_RAKU_ACTUALS = [
+        { ym: "2026-06", status: "確定実績", depMo: 30000, depCum: 30000, basicBuy: 4400, spotBuy: 0, evalVal: 29997, pnl: -3, ratio: "681.80%", lev: 0.29, note: "なし（毎日200円×22営業日）" },
+        { ym: "2026-07", status: "確定実績", depMo: 10000, depCum: 40000, basicBuy: 4400, spotBuy: 1100, evalVal: 39569, pnl: -431, ratio: "399.70%", lev: 0.50, note: "21ペソ×11回（約231ペソ）" },
+        { ym: "2026-08", status: "確定実績", depMo: 10000, depCum: 50000, basicBuy: 4200, spotBuy: 2500, evalVal: 50709, pnl: 709, ratio: "305.50%", lev: 0.65, note: "43〜44ペソ×12回+21ペソ1回（約543ペソ）" },
+        { ym: "2026-09", status: "確定実績(9/30 13:06)", depMo: 10000, depCum: 60000, basicBuy: 2700, spotBuy: 10300, evalVal: 56453, pnl: -3547, ratio: "159.80%", lev: 1.25, note: "43×17, 64/65各1, 44×15, 66×4, 134/135各1, 67/68各1, 68×1（計2,256ペソ/43回）" },
+        { ym: "2026-10", status: "確定実績(10/31締)", depMo: 15000, depCum: 75000, basicBuy: 6600, spotBuy: 3600, evalVal: 68575, pnl: -6425, ratio: "149.20%", lev: 1.34, note: "スポット12回＋定期22回(計1,690ペソ)＋再投資4回発動(累計10,280ペソ)" },
+        { ym: "2026-11", status: "確定実績(11/2 11:55)", depMo: 15000, depCum: 90000, basicBuy: 300, spotBuy: 0, evalVal: 84204, pnl: -5796, ratio: "182.00%", lev: 1.10, note: "なし（定期買付1回71ペソ）" },
+        { ym: "2026-12", status: "計画", depMo: 15000, depCum: 105000, basicBuy: 6600, spotBuy: 0, evalVal: 103132, pnl: -1868, ratio: "193.36%", lev: 1.03, note: "なし（待機資金8,400円を口座プール）" }
+      ];
+
+      appData.rakuMonthly = LATEST_RAKU_ACTUALS;
+
+      // 上部KPIカード「らくつむペソ 現在実績」を最新の確定実績行で更新する関数
+      function updateRakuKpiCard() {
+        const actualRows = appData.rakuMonthly.filter(r => r.status && r.status.includes('確定'));
+        const latest = actualRows.length > 0 ? actualRows[actualRows.length - 1] : appData.rakuMonthly[0];
+        if (!latest) return;
+        const elNow = document.getElementById('kpi-raku-now');
+        const elSub = document.getElementById('kpi-raku-sub');
+        if (elNow) elNow.innerText = `${latest.evalVal.toLocaleString()} 円`;
+        if (elSub) {
+          elSub.innerText = `${latest.ym} (${latest.status.replace('確定実績', '').replace(/[()]/g, '') || '確定'}) / 元本${(latest.depCum / 10000).toFixed(1)}万 / 維持率${latest.ratio} / ${latest.lev}倍`;
+        }
+      }
+
+      // 2. スプレッドシート「月次実績管理」のA〜N列を解析する関数
+      function parseGvizRakuMonthly(table) {
+        const rows = [];
+        if (!table || !table.rows) return rows;
+        for (const r of table.rows) {
+          const c = r.c || [];
+          const rawYm = extractCellText(c[0]);
+          const m = rawYm.match(/(\d{4})[-/年](\d{1,2})/);
+          if (!m) continue;
+          const ym = `${m[1]}-${('0' + m[2]).slice(-2)}`;
+          const status = extractCellText(c[1]) || '計画';
+          const depMo = extractCellNum(c[2]);
+          const depCum = extractCellNum(c[3]);
+          const basicBuy = extractCellNum(c[4]);
+          const spotBuy = extractCellNum(c[5]);
+          const note = extractCellText(c[6]);
+          const evalVal = extractCellNum(c[8]); // I列: 月末評価額(円)
+          const pnl = extractCellNum(c[9]);     // J列: 入金差額損益(円)
+          let ratio = extractCellText(c[12]);   // M列: 有効比率
+          if (ratio && !ratio.includes('%')) {
+            const numR = parseFloat(ratio);
+            if (!isNaN(numR)) ratio = (numR <= 10 ? (numR * 100).toFixed(2) : numR.toFixed(2)) + '%';
+          }
+          const levCell = c[13];                // N列: 実質レバレッジ
+          const lev = levCell && typeof levCell.v === 'number' ? +levCell.v.toFixed(2) : (parseFloat(extractCellText(levCell)) || 0);
+
+          rows.push({ ym, status, depMo, depCum, basicBuy, spotBuy, evalVal, pnl, ratio: ratio || '-', lev, note });
+        }
+        return rows;
+      }
+
+      // 3. 既存の syncAllFromSheets を拡張して「らくつむシート」も自動同期する
+      const origSyncAll = window.syncAllFromSheets;
+      window.syncAllFromSheets = async function(showAlert = true) {
+        updateRakuKpiCard();
+        renderAll();
+
+        const rakuUrl = document.getElementById('url-raku')?.value.trim();
+        const rakuSheetId = extractSheetId(rakuUrl);
+
+        if (rakuSheetId) {
+          try {
+            let rTable = null;
+            // まず「月次実績管理」シート名で取得を試み、ダメならgidまたは先頭シートを取得
+            try {
+              rTable = await loadGvizTable(rakuSheetId, '月次実績管理', false);
+            } catch (e) {
+              const gid = extractGid(rakuUrl);
+              rTable = await loadGvizTable(rakuSheetId, gid, !!gid);
+            }
+            const parsedRaku = parseGvizRakuMonthly(rTable);
+            if (parsedRaku.length > 0) {
+              appData.rakuMonthly = parsedRaku;
+              try { localStorage.setItem('finance_app_raku_monthly_v12', JSON.stringify(parsedRaku)); } catch (e) {}
+              updateRakuKpiCard();
+              renderAll();
+              if (showAlert) {
+                showToast(`<strong>🇲🇽 らくつむ管理シートから最新実績（${parsedRaku.length}か月分）を同期しました！</strong>`);
+              }
+            }
+          } catch (err) {
+            console.warn('Raku sync warning:', err);
+          }
+        }
+
+        if (typeof origSyncAll === 'function') {
+          await origSyncAll(showAlert);
+        }
+        updateRakuKpiCard();
+      };
+
+      // 起動時に保存済みデータがあれば復元して即座に表示更新
+      try {
+        const savedRaku = localStorage.getItem('finance_app_raku_monthly_v12');
+        if (savedRaku) {
+          const parsed = JSON.parse(savedRaku);
+          if (parsed && parsed.length > 0) appData.rakuMonthly = parsed;
+        }
+      } catch (e) {}
+      updateRakuKpiCard();
+      renderAll();
+    })();
   </script>
 </body>
 </html>
