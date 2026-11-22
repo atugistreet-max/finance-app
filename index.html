@@ -697,7 +697,7 @@
   <script>
     const DEFAULT_FINANCE_URLS = {
       mf: "https://docs.google.com/spreadsheets/d/1z-Mig3TKPgrGUf58tdu0o81pWdczqz3jb2N7_SCW69U/edit?usp=sharing",
-      cf: "https://docs.google.com/spreadsheets/d/1u1IggR4k6LsrejaCSYVH-jMmBCicVyaSVkXiXB0Ebck/edit?usp=sharing#gid=4505631",
+      cf: "https://docs.google.com/spreadsheets/d/1gQwcZIDIFwvVFfq_CzjeU3eWb_IiT3_Wcc4SVNfl99g/edit?usp=sharing",
       raku: ""
     };
 
@@ -2371,165 +2371,168 @@
   </script>
 
   <script>
-    // ===== キャッシュフロー表（2026年〜2056年 / N・O・P列臨時出費・MF比較表連動）完全自動同期パッチ =====
+    // ===== 新・長期プラン（2027〜2056年 / 月次プラン＋大きな買い物・イベント）完全自動同期パッチ =====
     (function() {
-      const CF_STORAGE_KEY = 'finance_app_cf_synced_v2';
-      const BASE_RETIRE_RAKU = 2604380;
-      const BASE_RETIRE_SWAP = 11000;
-      const CASH_FLOOR = 1000000;
+      const CF_STORAGE_KEY = 'finance_app_cf_synced_v3_longplan';
+      const OLD_CF_ID = '1u1IggR4k6LsrejaCSYVH-jMmBCicVyaSVkXiXB0Ebck';
+      const NEW_CF_URL = DEFAULT_FINANCE_URLS.cf;
 
       const RAKU_YEAR_EVAL_REF = {
         2026: 100146, 2027: 294092, 2028: 493664, 2029: 704169, 2030: 926818,
         2031: 1162950, 2032: 1414070, 2033: 1681830, 2034: 1968060, 2035: 2274820, 2036: 2604380
       };
+      const RETIRE_RAKU_EVAL = 2604380;
 
-      // Googleスプレッドシート『キャッシュフロー2』のA〜Z列を解析（2026年1月〜2056年12月）
-      function parseGvizCashflowTable(table) {
-        if (!table || !table.rows) return [];
+      // 2026年データ（アプリ内蔵の2026年1〜12月実績・計画）を保持しつつ、2026年末残高を新プラン開始残高(-56,578円)と整合
+      function getBase2026Rows() {
+        const base = buildEmbeddedCashflow().filter(r => r.year === 2026);
+        const dec = base.find(r => r.ym === '2026-12');
+        if (dec) {
+          dec.bal = -56578;
+          dec.cashExRaku = -56578;
+          dec.totAsset = dec.cashExRaku + dec.rakuEval;
+        }
+        return base;
+      }
 
-        const rawMonthly = [];
-        let currentYear = null;
+      // 「大きな買い物・イベント」タブ（A:予定年月, B:項目, C:金額, D:分類, E:メモ）を解析
+      function parseEventsTable(table) {
+        const eventMap = {};
+        if (!table || !table.rows) return eventMap;
 
         for (const r of table.rows) {
           const c = r.c || [];
-          // A列: 年（結合セル対応のため空欄は直前の年を継承）
-          const colA = extractCellText(c[0]).replace(/[^0-9]/g, '');
-          if (colA.length === 4) {
-            const parsedY = parseInt(colA, 10);
-            if (parsedY >= 2020 && parsedY <= 2100) currentYear = parsedY;
+          const rawYm = extractCellText(c[0]);
+          const m = rawYm.match(/(\d{4})[-/年](\d{1,2})/);
+          if (!m) continue;
+
+          const ym = `${m[1]}-${('0' + m[2]).slice(-2)}`;
+          const itemName = extractCellText(c[1]).trim();
+          const amount = extractCellNum(c[2]);
+          const category = extractCellText(c[3]).trim();
+          const memo = extractCellText(c[4]).trim();
+          if (amount === 0 && !itemName) continue;
+
+          if (!eventMap[ym]) {
+            eventMap[ym] = { car: 0, apt: 0, oth: 0, labels: [] };
           }
+          const ev = eventMap[ym];
 
-          // B列: 月（「1月」〜「12月」）
-          const colB = extractCellText(c[1]).trim();
-          const mMatch = colB.match(/^(\d{1,2})\s*月$/);
-          if (!currentYear || !mMatch) continue;
-
-          const m = parseInt(mMatch[1], 10);
-          if (m < 1 || m > 12) continue;
-
-          // 2025年以前は切り捨て、2026年スタートに統一
-          if (currentYear < 2026 || currentYear > 2056) continue;
-
-          const ym = `${currentYear}-${('0' + m).slice(-2)}`;
-
-          // 収入内訳 (D〜K列: index 3〜10)
-          const pen   = extractCellNum(c[3]);  // D: 年金
-          const cpen  = extractCellNum(c[4]);  // E: 企業年金
-          const sup   = extractCellNum(c[5]);  // F: 支援金
-          const sal   = extractCellNum(c[6]);  // G: 給料
-          const rent  = extractCellNum(c[7]);  // H: 家賃補助
-          const genso = extractCellNum(c[8]);  // I: 元素騎士 / Omotan等
-          const fx    = extractCellNum(c[9]);  // J: FX
-          let swp     = extractCellNum(c[10]); // K: スワポ
-
-          // 支出内訳 (M〜P列: index 12〜15) ※N列(車検)・O列(アパート更新)・P列(その他)の3列すべてが臨時出費
-          const basic = extractCellNum(c[12]); // M: 基本生活費
-          const car   = extractCellNum(c[13]); // N: 臨時出費①（車検等）
-          const apt   = extractCellNum(c[14]); // O: 臨時出費②（アパート更新等）
-          const oth   = extractCellNum(c[15]); // P: 臨時出費③（その他臨時出費）
-
-          // 残高・らくつむ・備考 (S〜Z列: index 18〜25)
-          const sheetBal     = extractCellNum(c[18]); // S: 残高
-          const sheetRakuDep = extractCellNum(c[19]); // T: らくつむ/入金
-          const sheetRakuEst = extractCellNum(c[20]); // U: らくつむ/予想残高
-          const sheetRakuCon = extractCellNum(c[21]); // V: らくつむ/保守シナリオ
-          const memoY        = extractCellText(c[24]); // Y: 備考1
-          const memoZ        = extractCellText(c[25]); // Z: 備考2
-
-          rawMonthly.push({
-            ym, y: currentYear, m,
-            pen, cpen, sup, sal, rent, genso, fx, swp,
-            basic, car, apt, oth,
-            sheetBal, sheetRakuDep, sheetRakuEst, sheetRakuCon,
-            sheetMemo: [memoY, memoZ].filter(Boolean).join(' / ')
-          });
-        }
-
-        if (rawMonthly.length === 0) return [];
-
-        const dedupMap = new Map();
-        rawMonthly.forEach(item => dedupMap.set(item.ym, item));
-        const sorted = Array.from(dedupMap.values()).sort((a, b) => a.ym.localeCompare(b.ym));
-
-        let runningBal = -1059502;
-        let runningRakuDep = 0;
-        let runningCashExRaku = runningBal;
-        let runningRakuEval = 0;
-
-        const builtRows = [];
-        for (let i = 0; i < sorted.length; i++) {
-          const item = sorted[i];
-          const { ym, y, m, pen, cpen, sup, sal, rent, genso, fx, basic, car, apt, oth } = item;
-          const isRetire = (y >= 2037);
-
-          let swp = item.swp;
-          if (isRetire && swp === 0 && runningRakuEval > 0) {
-            swp = Math.round(BASE_RETIRE_SWAP * (runningRakuEval / BASE_RETIRE_RAKU));
-          }
-
-          const incTot = pen + cpen + sup + sal + rent + genso + fx + swp;
-          const expTot = basic + car + apt + oth;
-          const diff = incTot - expTot;
-
-          if (item.sheetRakuDep > 0) {
-            runningRakuDep = item.sheetRakuDep;
-          } else if (!isRetire && ym >= '2026-06') {
-            runningRakuDep += (ym === '2026-06' ? 30000 : 15000);
-          }
-
-          if (y === 2026 && item.sheetBal !== 0) {
-            runningBal = item.sheetBal;
+          if (category.includes('車検') || itemName.includes('車検')) {
+            ev.car += amount;
+          } else if (category.includes('アパート更新') || itemName.includes('アパート更新')) {
+            ev.apt += amount;
           } else {
-            runningBal += diff;
+            ev.oth += amount;
           }
 
-          let rakuTransfer = 0;
-          if (!isRetire) {
-            if (item.sheetRakuCon > 0) {
-              runningRakuEval = item.sheetRakuCon;
-            } else if (item.sheetRakuEst > 0) {
-              runningRakuEval = item.sheetRakuEst;
-            } else if (ym >= '2026-06') {
-              const prevE = RAKU_YEAR_EVAL_REF[y - 1] || 0;
-              const targetE = RAKU_YEAR_EVAL_REF[y] || runningRakuDep;
-              const ratio = (y === 2026) ? ((m - 5) / 7) : (m / 12);
-              runningRakuEval = Math.round(prevE + (targetE - prevE) * Math.max(0, Math.min(1, ratio)));
-            }
-            runningCashExRaku = runningBal - runningRakuDep;
-          } else {
-            runningCashExRaku += diff;
-            if (m % 2 === 0 && runningCashExRaku < CASH_FLOOR && runningRakuEval > 0) {
-              const shortfall = CASH_FLOOR - runningCashExRaku;
-              rakuTransfer = Math.min(shortfall, runningRakuEval);
-              runningCashExRaku += rakuTransfer;
-              runningRakuEval -= rakuTransfer;
-            }
-          }
-
-          const totAsset = runningCashExRaku + runningRakuEval;
-          const rowObj = createCfRow(
-            ym, y, m,
-            pen, cpen, sup, sal, rent, genso, fx, swp, incTot,
-            basic, car, apt, oth, expTot, diff,
-            runningBal, runningRakuDep, runningCashExRaku, runningRakuEval, totAsset, rakuTransfer
-          );
-
-          if (item.sheetMemo && !/^\d+$/.test(item.sheetMemo)) {
-            rowObj.note = rowObj.note ? `${rowObj.note} / ${item.sheetMemo}` : item.sheetMemo;
-          }
-          builtRows.push(rowObj);
+          const labelTitle = itemName || category || memo || '特別出費';
+          ev.labels.push(`${labelTitle}(${amount.toLocaleString()}円)`);
         }
-
-        return builtRows;
+        return eventMap;
       }
 
-      // 【重要】MF比較表の「CF:予定臨時出費」も、固定配列ではなく同期されたCF表（N+O+P列の合計）から取得するよう上書き！
+      // 新シート「月次プラン」（A:年月, B:年金, C:企業年金, D:給料, E:その他収入, F:収入計, G:基本生活費, H:特別出費, I:支出計, J:収支, K:残高）を解析
+      function parseMonthlyPlanTable(table, eventMap = {}) {
+        if (!table || !table.rows) return [];
+
+        const parsedRows = [];
+        let curRakuDep = 105000; // 2026年末時点のらくつむ累計元本
+
+        for (const r of table.rows) {
+          const c = r.c || [];
+          const rawYm = extractCellText(c[0]);
+          const mMatch = rawYm.match(/(\d{4})[-/年](\d{1,2})/);
+          if (!mMatch) continue;
+
+          const y = parseInt(mMatch[1], 10);
+          const m = parseInt(mMatch[2], 10);
+          if (y < 2027 || y > 2056 || m < 1 || m > 12) continue;
+
+          const ym = `${y}-${('0' + m).slice(-2)}`;
+          const isRetire = (y >= 2037);
+
+          const pen      = extractCellNum(c[1]);  // B: 年金
+          const cpen     = extractCellNum(c[2]);  // C: 企業年金
+          const sal      = extractCellNum(c[3]);  // D: 給料
+          const otherInc = extractCellNum(c[4]);  // E: その他収入（支援金＋リタイヤ期はスワップ込）
+          const sheetInc = extractCellNum(c[5]);  // F: 収入計
+          const basic    = extractCellNum(c[6]);  // G: 基本生活費
+          const spTotal  = extractCellNum(c[7]);  // H: 特別出費
+          const sheetExp = extractCellNum(c[8]);  // I: 支出計
+          const sheetDiff= extractCellNum(c[9]);  // J: 収支
+          const sheetBal = extractCellNum(c[10]); // K: 残高（現金残高のみ）
+
+          // その他収入をグラフ表示用に「支援金(sup)」と「スワップ(swp)」へ按分（合計はシートと完全一致）
+          let sup = otherInc;
+          let swp = 0;
+          if (isRetire && otherInc >= 11000) {
+            swp = 11000;
+            sup = otherInc - 11000;
+          }
+
+          const incTot = sheetInc !== 0 ? sheetInc : (pen + cpen + sal + otherInc);
+
+          // 特別出費を「大きな買い物・イベント」タブから 車検 / アパート更新 / その他 に振り分け
+          const ev = eventMap[ym];
+          let car = 0, apt = 0, oth = 0;
+          if (ev) {
+            car = ev.car;
+            apt = ev.apt;
+            oth = ev.oth;
+            const evSum = car + apt + oth;
+            if (evSum !== spTotal) {
+              oth += (spTotal - evSum);
+            }
+          } else {
+            oth = spTotal;
+          }
+
+          const expTot = sheetExp !== 0 ? sheetExp : (basic + spTotal);
+          const diff = (c[9] && (c[9].v !== null && c[9].v !== undefined)) ? sheetDiff : (incTot - expTot);
+
+          // 現金残高は新シート「月次プラン」K列をそのまま採用（前提：らくつむは含めない現金残高のみ）
+          const cashExRaku = sheetBal;
+
+          // らくつむ残高（別枠資産）：労働期は積立継続、リタイヤ期は元本維持
+          let rakuEval = RETIRE_RAKU_EVAL;
+          if (!isRetire) {
+            curRakuDep += 15000;
+            const prevE = RAKU_YEAR_EVAL_REF[y - 1] || 100146;
+            const targetE = RAKU_YEAR_EVAL_REF[y] || curRakuDep;
+            rakuEval = Math.round(prevE + (targetE - prevE) * (m / 12));
+          }
+
+          const totAsset = cashExRaku + rakuEval;
+          const rowObj = createCfRow(
+            ym, y, m,
+            pen, cpen, sup, sal, 0, 0, 0, swp, incTot,
+            basic, car, apt, oth, expTot, diff,
+            sheetBal, curRakuDep, cashExRaku, rakuEval, totAsset, 0
+          );
+
+          if (ev && ev.labels.length > 0) {
+            rowObj.note = ev.labels.join(' / ');
+          }
+
+          parsedRows.push(rowObj);
+        }
+
+        if (parsedRows.length === 0) return [];
+
+        // 2026年データ ＋ 新シート2027〜2056年データを結合して年月順にソート
+        const combined = [...getBase2026Rows(), ...parsedRows];
+        const dedup = new Map();
+        combined.forEach(item => dedup.set(item.ym, item));
+        return Array.from(dedup.values()).sort((a, b) => a.ym.localeCompare(b.ym));
+      }
+
+      // MF比較表の「CF:予定臨時出費」も同期されたCF表から取得
       window.getPlannedBudgetForMonth = function(ym) {
         const y = parseInt(ym.slice(0, 4), 10);
         const m = parseInt(ym.slice(5, 7), 10);
         const plannedBasic = (y > 2037 || (y === 2037 && m >= 6)) ? 260000 : latestBasicBudgetAmount;
 
-        // 同期済みのCF表（appData.cf）に該当月があれば、その N列(expCar) + O列(expApt) + P列(expOther) を最優先採用
         const cfRow = (appData.cf || []).find(r => r.ym === ym);
         if (cfRow) {
           const spTot = (cfRow.expCar || 0) + (cfRow.expApt || 0) + (cfRow.expOther || 0);
@@ -2549,8 +2552,23 @@
         return { expBasic: plannedBasic, expSpecial: 0, expTot: plannedBasic, note: '' };
       };
 
-      // 起動時：2026年スタートに統一
-      function initClean2026Cashflow() {
+      // 旧CF表URLがブラウザに保存されている場合、自動で新URL『長期プラン（2027〜2056）』へ移行
+      function migrateOldCfUrlIfNeeded() {
+        try {
+          const saved = JSON.parse(localStorage.getItem('finance_app_urls_v12') || '{}');
+          if (!saved.cf || saved.cf.includes(OLD_CF_ID)) {
+            saved.cf = NEW_CF_URL;
+            localStorage.setItem('finance_app_urls_v12', JSON.stringify(saved));
+          }
+          const cfInput = document.getElementById('url-cf');
+          if (cfInput && (!cfInput.value.trim() || cfInput.value.includes(OLD_CF_ID))) {
+            cfInput.value = NEW_CF_URL;
+          }
+        } catch (e) {}
+      }
+
+      function initLongPlanCashflow() {
+        migrateOldCfUrlIfNeeded();
         try {
           const savedCf = localStorage.getItem(CF_STORAGE_KEY);
           if (savedCf) {
@@ -2564,49 +2582,62 @@
         appData.cf = appData.cf.filter(r => r.year >= 2026);
       }
 
+      // 既存の syncAllFromSheets をラップし、新シート「月次プラン」＆「大きな買い物・イベント」を完全自動同期
       const prevSyncAll = window.syncAllFromSheets;
       window.syncAllFromSheets = async function(showAlert = true) {
+        migrateOldCfUrlIfNeeded();
         const cfInput = document.getElementById('url-cf');
-        const cfUrl = (cfInput && cfInput.value.trim()) ? cfInput.value.trim() : DEFAULT_FINANCE_URLS.cf;
+        const cfUrl = (cfInput && cfInput.value.trim()) ? cfInput.value.trim() : NEW_CF_URL;
         if (cfInput && !cfInput.value.trim()) cfInput.value = cfUrl;
 
         const cfSheetId = extractSheetId(cfUrl);
         let cfSyncedCount = 0;
+        let eventCount = 0;
 
         if (cfSheetId) {
           try {
-            let cfTable = null;
-            // まずシート名「キャッシュフロー」で取得を試み、失敗したらgidまたは先頭シートで取得
+            // 1. 「月次プラン」シートを取得
+            let monthlyTable = null;
             try {
-              cfTable = await loadGvizTable(cfSheetId, 'キャッシュフロー', false);
+              monthlyTable = await loadGvizTable(cfSheetId, '月次プラン', false);
             } catch (e) {
               const gid = extractGid(cfUrl);
-              cfTable = await loadGvizTable(cfSheetId, gid, !!gid);
+              monthlyTable = await loadGvizTable(cfSheetId, gid, !!gid);
             }
 
-            const newCfRows = parseGvizCashflowTable(cfTable);
+            // 2. 「大きな買い物・イベント」シートを並列取得
+            let eventMap = {};
+            try {
+              const evTable = await loadGvizTable(cfSheetId, '大きな買い物・イベント', false);
+              eventMap = parseEventsTable(evTable);
+              eventCount = Object.values(eventMap).reduce((sum, x) => sum + x.labels.length, 0);
+            } catch (e) {
+              console.warn('Events sheet optional load warning:', e);
+            }
+
+            const newCfRows = parseMonthlyPlanTable(monthlyTable, eventMap);
             if (newCfRows.length >= 12) {
               appData.cf = newCfRows;
               cfSyncedCount = newCfRows.length;
               try { localStorage.setItem(CF_STORAGE_KEY, JSON.stringify(newCfRows)); } catch (e) {}
 
-              const nowYm = new Date().toISOString().slice(0, 7);
-              const curRow = newCfRows.find(r => r.ym >= nowYm && r.expBasic >= 200000);
-              if (curRow) {
-                latestBasicBudgetAmount = curRow.expBasic;
+              // 基本生活費の最新予算も反映
+              const targetRow = newCfRows.find(r => r.ym === '2027-01') || newCfRows.find(r => r.expBasic >= 200000);
+              if (targetRow && targetRow.expBasic >= 200000) {
+                latestBasicBudgetAmount = targetRow.expBasic;
                 const bInput = document.getElementById('latest-basic-budget-input');
-                if (bInput) bInput.value = curRow.expBasic;
-                try { localStorage.setItem('finance_app_latest_budget_v12', String(curRow.expBasic)); } catch (e) {}
+                if (bInput) bInput.value = targetRow.expBasic;
+                try { localStorage.setItem('finance_app_latest_budget_v12', String(targetRow.expBasic)); } catch (e) {}
               }
 
               const badge = document.getElementById('data-status-badge');
               if (badge) {
-                badge.innerText = `✓ CF表同期済 (2026〜2056年・${cfSyncedCount}か月反映)`;
+                badge.innerText = `✓ 長期プラン同期済 (2027〜2056年・イベント${eventCount}件連動)`;
               }
               renderAll();
             }
           } catch (err) {
-            console.warn('CF sheet sync error:', err);
+            console.warn('Long-term plan sync error:', err);
           }
         }
 
@@ -2615,16 +2646,23 @@
         }
 
         if (cfSyncedCount > 0) {
+          const targetRow = appData.cf.find(r => r.ym === '2027-01') || appData.cf.find(r => r.expBasic >= 200000);
+          if (targetRow && targetRow.expBasic >= 200000) {
+            latestBasicBudgetAmount = targetRow.expBasic;
+            const bInput = document.getElementById('latest-basic-budget-input');
+            if (bInput) bInput.value = targetRow.expBasic;
+            try { localStorage.setItem('finance_app_latest_budget_v12', String(targetRow.expBasic)); } catch (e) {}
+          }
           renderAll();
           if (showAlert) {
-            showToast(`<strong>📊 キャッシュフロー表（2026〜2056年 / N・O・P列臨時出費含む ${cfSyncedCount}か月分）を同期しました！</strong>`);
+            showToast(`<strong>📊 新・長期プラン（2027〜2056年 / イベント${eventCount}件）とMF・らくつむを同期しました！</strong>`);
           }
         }
       };
 
       window.resetDefaultUrls = function() {
         document.getElementById('url-mf').value   = DEFAULT_FINANCE_URLS.mf;
-        document.getElementById('url-cf').value   = DEFAULT_FINANCE_URLS.cf;
+        document.getElementById('url-cf').value   = NEW_CF_URL;
         document.getElementById('url-raku').value = DEFAULT_FINANCE_URLS.raku;
         try {
           localStorage.setItem('finance_app_urls_v12', JSON.stringify(DEFAULT_FINANCE_URLS));
@@ -2633,7 +2671,12 @@
         syncAllFromSheets(true);
       };
 
-      initClean2026Cashflow();
+      // DOMContentLoaded 後にも旧URLチェック＆初期化を実行
+      window.addEventListener('DOMContentLoaded', function() {
+        migrateOldCfUrlIfNeeded();
+      });
+
+      initLongPlanCashflow();
       renderAll();
     })();
   </script>
