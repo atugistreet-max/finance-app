@@ -319,7 +319,7 @@
         <div class="chart-card">
           <div class="chart-header">
             <h3>① 資産残高推移（現金100万キープ＋らくつむ補填・総資産合計）</h3>
-            <span style="font-size:0.7rem; color:#34d399;">※90歳(2046年)〜現金100万円維持のためらくつむ口座から赤字分を自動補填</span>
+            <span id="asset-chart-sub" style="font-size:0.7rem; color:#34d399;">※現金100万円維持のため割込時にらくつむ口座から赤字分を自動補填</span>
           </div>
           <div class="chart-wrap"><canvas id="chart-asset"></canvas></div>
         </div>
@@ -1210,6 +1210,15 @@
         document.getElementById('kpi-100-asset').innerText = fmtMan(r2056.totAsset);
         document.getElementById('kpi-100-sub').innerText = `現金(100万キープ):${(r2056.cashExRaku/10000).toFixed(1)}万 ＋ らくつむ:${(r2056.rakuEval/10000).toFixed(1)}万`;
       }
+      const subEl = document.getElementById('asset-chart-sub');
+      if (subEl) {
+        const firstTr = appData.cf.find(r => (r.rakuTransfer || 0) > 0);
+        if (firstTr) {
+          subEl.innerText = `※${firstTr.age}歳(${firstTr.year}年)〜現金100万円維持のためらくつむ口座から赤字分を自動補填`;
+        } else {
+          subEl.innerText = `※現金100万円維持のため割込時にらくつむ口座から赤字分を自動補填`;
+        }
+      }
 
       const avgMoInc = filtered.length ? Math.round(filtered.reduce((a, b) => a + b.incTot, 0) / filtered.length) : 0;
       const avgMoBasic = filtered.length ? Math.round(filtered.reduce((a, b) => a + b.expBasic, 0) / filtered.length) : 0;
@@ -1230,7 +1239,7 @@
           datasets: [
             { label: '総資産合計 (現金＋らくつむ残高)', data: yearly.map(y => +(y.endTotAsset/10000).toFixed(1)), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.15)', fill: true, tension: 0.25, pointRadius: 3 },
             { label: '現金残高 (リタイヤ期100万円キープ)', data: yearly.map(y => +(y.endCashExRaku/10000).toFixed(1)), borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.25, pointRadius: 2 },
-            { label: 'らくつむ残高 (90歳〜赤字補填で減少)', data: yearly.map(y => +(y.endRakuEval/10000).toFixed(1)), borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [4, 4], tension: 0.25, pointRadius: 2 }
+            { label: 'らくつむ残高 (現金100万割込時に赤字補填で減少)', data: yearly.map(y => +(y.endRakuEval/10000).toFixed(1)), borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderDash: [4, 4], tension: 0.25, pointRadius: 2 }
           ]
         },
         options: {
@@ -1266,7 +1275,7 @@
             { label: '企業年金(伸次)', data: yearly.map(y => +(y.cpen/10000).toFixed(1)), backgroundColor: '#06b6d4', stack: 'inc' },
             { label: '給与収入 (労働期〜80歳)', data: yearly.map(y => +(y.sal/10000).toFixed(1)), backgroundColor: '#10b981', stack: 'inc' },
             { label: '支援金・家賃補助等', data: yearly.map(y => +((y.sup + y.rent)/10000).toFixed(1)), backgroundColor: '#8b5cf6', stack: 'inc' },
-            { label: 'スワップ収入 (残高比例・90歳以降逓減)', data: yearly.map(y => +(y.swp/10000).toFixed(1)), backgroundColor: '#f59e0b', stack: 'inc' }
+            { label: 'スワップ収入 (残高比例・補填開始後逓減)', data: yearly.map(y => +(y.swp/10000).toFixed(1)), backgroundColor: '#f59e0b', stack: 'inc' }
           ]
         },
         options: {
@@ -1301,7 +1310,7 @@
         <tr>
           <td><span class="phase-tag phase-retire">🌴 リタイヤ期</span></td>
           <td>2037〜56年 (81〜100歳)</td>
-          <td>年金＋企業＋支援金＋<b>スワップ(月1.1万→逓減)</b><br><span style="font-size:0.7rem;color:#34d399;">※90歳〜現金100万維持のためらくつむ補填</span></td>
+          <td>年金＋企業＋支援金＋<b>スワップ(月1.1万→逓減)</b><br><span style="font-size:0.7rem;color:#34d399;">※現金100万割込時にらくつむ口座から自動補填</span></td>
           <td><b>${fmtMan(rIncAvg)}/年</b></td>
           <td>26.0万円/月</td>
           <td>${fmtMan(rSpecAvg)}/年</td>
@@ -2373,7 +2382,7 @@
   <script>
     // ===== 新・長期プラン（2027〜2056年 / 月次プラン＋大きな買い物・イベント）完全自動同期パッチ =====
     (function() {
-      const CF_STORAGE_KEY = 'finance_app_cf_synced_v3_longplan';
+      const CF_STORAGE_KEY = 'finance_app_cf_synced_v4_longplan_floor';
       const OLD_CF_ID = '1u1IggR4k6LsrejaCSYVH-jMmBCicVyaSVkXiXB0Ebck';
       const NEW_CF_URL = DEFAULT_FINANCE_URLS.cf;
 
@@ -2436,8 +2445,15 @@
       function parseMonthlyPlanTable(table, eventMap = {}) {
         if (!table || !table.rows) return [];
 
+        const CASH_FLOOR = 1000000;
+        const BASE_RETIRE_RAKU = RETIRE_RAKU_EVAL;
+        const BASE_RETIRE_SWAP = 11000;
+
         const parsedRows = [];
         let curRakuDep = 105000; // 2026年末時点のらくつむ累計元本
+        let runningBal = -56578;
+        let runningCashExRaku = -56578;
+        let runningRakuEval = 100146;
 
         for (const r of table.rows) {
           const c = r.c || [];
@@ -2463,16 +2479,6 @@
           const sheetDiff= extractCellNum(c[9]);  // J: 収支
           const sheetBal = extractCellNum(c[10]); // K: 残高（現金残高のみ）
 
-          // その他収入をグラフ表示用に「支援金(sup)」と「スワップ(swp)」へ按分（合計はシートと完全一致）
-          let sup = otherInc;
-          let swp = 0;
-          if (isRetire && otherInc >= 11000) {
-            swp = 11000;
-            sup = otherInc - 11000;
-          }
-
-          const incTot = sheetInc !== 0 ? sheetInc : (pen + cpen + sal + otherInc);
-
           // 特別出費を「大きな買い物・イベント」タブから 車検 / アパート更新 / その他 に振り分け
           const ev = eventMap[ym];
           let car = 0, apt = 0, oth = 0;
@@ -2489,30 +2495,60 @@
           }
 
           const expTot = sheetExp !== 0 ? sheetExp : (basic + spTotal);
-          const diff = (c[9] && (c[9].v !== null && c[9].v !== undefined)) ? sheetDiff : (incTot - expTot);
 
-          // 現金残高は新シート「月次プラン」K列をそのまま採用（前提：らくつむは含めない現金残高のみ）
-          const cashExRaku = sheetBal;
+          let sup = otherInc;
+          let swp = 0;
+          let incTot = 0;
+          let diff = 0;
+          let rakuTransfer = 0;
 
-          // らくつむ残高（別枠資産）：労働期は積立継続、リタイヤ期は元本維持
-          let rakuEval = RETIRE_RAKU_EVAL;
           if (!isRetire) {
+            // 労働期（2027〜2036年 / 〜80歳）：シートの収支・現金残高(K列)をそのまま採用し、らくつむは積立継続
+            incTot = sheetInc !== 0 ? sheetInc : (pen + cpen + sal + otherInc);
+            diff = (c[9] && (c[9].v !== null && c[9].v !== undefined)) ? sheetDiff : (incTot - expTot);
+            runningBal = sheetBal;
+            runningCashExRaku = sheetBal;
+
             curRakuDep += 15000;
             const prevE = RAKU_YEAR_EVAL_REF[y - 1] || 100146;
             const targetE = RAKU_YEAR_EVAL_REF[y] || curRakuDep;
-            rakuEval = Math.round(prevE + (targetE - prevE) * (m / 12));
+            runningRakuEval = Math.round(prevE + (targetE - prevE) * (m / 12));
+          } else {
+            // リタイヤ期（2037〜2056年 / 81〜100歳）：
+            // ① スワップ収入はらくつむ残高に比例して逓減（残高が減った分だけスワップも減額）
+            if (otherInc >= BASE_RETIRE_SWAP) {
+              sup = otherInc - BASE_RETIRE_SWAP;
+              swp = Math.round(BASE_RETIRE_SWAP * (runningRakuEval / BASE_RETIRE_RAKU));
+            } else {
+              sup = otherInc;
+              swp = 0;
+            }
+            incTot = pen + cpen + sal + sup + swp;
+            diff = incTot - expTot;
+
+            runningBal += diff;
+            runningCashExRaku += diff;
+
+            // ② 現金100万円キープ：偶数月（年金支給月・年末含む）に100万円を割り込んだ不足分をらくつむから自動補填
+            if (m % 2 === 0 && runningCashExRaku < CASH_FLOOR && runningRakuEval > 0) {
+              const shortfall = CASH_FLOOR - runningCashExRaku;
+              rakuTransfer = Math.min(shortfall, runningRakuEval);
+              runningCashExRaku += rakuTransfer;
+              runningRakuEval -= rakuTransfer;
+            }
           }
 
-          const totAsset = cashExRaku + rakuEval;
+          const totAsset = runningCashExRaku + runningRakuEval;
           const rowObj = createCfRow(
             ym, y, m,
             pen, cpen, sup, sal, 0, 0, 0, swp, incTot,
             basic, car, apt, oth, expTot, diff,
-            sheetBal, curRakuDep, cashExRaku, rakuEval, totAsset, 0
+            runningBal, curRakuDep, runningCashExRaku, runningRakuEval, totAsset, rakuTransfer
           );
 
           if (ev && ev.labels.length > 0) {
-            rowObj.note = ev.labels.join(' / ');
+            const evText = ev.labels.join(' / ');
+            rowObj.note = rakuTransfer > 0 ? `${evText} / 🔄らくつむから現金補填(+${rakuTransfer.toLocaleString()}円)` : evText;
           }
 
           parsedRows.push(rowObj);
