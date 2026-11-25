@@ -2382,7 +2382,7 @@
   <script>
     // ===== 新・長期プラン（2027〜2056年 / 月次プラン＋大きな買い物・イベント）完全自動同期パッチ =====
     (function() {
-      const CF_STORAGE_KEY = 'finance_app_cf_synced_v4_longplan_floor';
+      const CF_STORAGE_KEY = 'finance_app_cf_synced_v5_longplan_2026ev';
       const OLD_CF_ID = '1u1IggR4k6LsrejaCSYVH-jMmBCicVyaSVkXiXB0Ebck';
       const NEW_CF_URL = DEFAULT_FINANCE_URLS.cf;
 
@@ -2392,13 +2392,39 @@
       };
       const RETIRE_RAKU_EVAL = 2604380;
 
-      // 2026年データ（アプリ内蔵の2026年1〜12月実績・計画）を保持しつつ、2026年末残高を新プラン開始残高(-56,578円)と整合
-      function getBase2026Rows() {
+      // 2026年データ（アプリ内蔵の2026年1〜12月実績・計画）に「大きな買い物・イベント」タブの2026年イベントを自動反映
+      function getBase2026Rows(eventMap = {}) {
         const base = buildEmbeddedCashflow().filter(r => r.year === 2026);
+        let extraEventTotal = 0;
+
+        for (const row of base) {
+          const ev = eventMap[row.ym];
+          if (ev) {
+            const added = (ev.car || 0) + (ev.apt || 0) + (ev.oth || 0);
+            row.expCar += (ev.car || 0);
+            row.expApt += (ev.apt || 0);
+            row.expOther += (ev.oth || 0);
+            row.expSpecial = row.expCar + row.expApt + row.expOther;
+            row.expTot = row.expBasic + row.expSpecial;
+            row.diff = row.incTot - row.expTot;
+            extraEventTotal += added;
+
+            if (ev.labels && ev.labels.length > 0) {
+              const evText = ev.labels.join(' / ');
+              row.note = row.note ? `${row.note} / ${evText}` : evText;
+            }
+          }
+          if (extraEventTotal !== 0) {
+            row.bal -= extraEventTotal;
+            row.cashExRaku = row.bal - row.rakuDep;
+            row.totAsset = row.cashExRaku + row.rakuEval;
+          }
+        }
+
         const dec = base.find(r => r.ym === '2026-12');
         if (dec) {
-          dec.bal = -56578;
-          dec.cashExRaku = -56578;
+          dec.bal = -56578 - extraEventTotal;
+          dec.cashExRaku = dec.bal;
           dec.totAsset = dec.cashExRaku + dec.rakuEval;
         }
         return base;
@@ -2557,7 +2583,7 @@
         if (parsedRows.length === 0) return [];
 
         // 2026年データ ＋ 新シート2027〜2056年データを結合して年月順にソート
-        const combined = [...getBase2026Rows(), ...parsedRows];
+        const combined = [...getBase2026Rows(eventMap), ...parsedRows];
         const dedup = new Map();
         combined.forEach(item => dedup.set(item.ym, item));
         return Array.from(dedup.values()).sort((a, b) => a.ym.localeCompare(b.ym));
