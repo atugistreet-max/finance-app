@@ -1488,6 +1488,57 @@
       return isNaN(n) ? 0 : +n.toFixed(0);
     }
 
+    // ===== 二重計上防止ユーティリティ（2026-11-26 追加） =====
+    // シート経由（ID: MFME_…）とCSV経由（ID: MF本体の生ID）では同じ取引でもIDが一致しないため、
+    // IDではなく「日付＋金額＋内容（正規化）」をキーにして重複を判定する。
+    function mfNormalizeContent(s) {
+      return (s || '').normalize('NFKC').replace(/[−―—–]/g, '-').replace(/\s+/g, '');
+    }
+    function mfContentKey(t) {
+      return `${t.date}|${t.amount}|${mfNormalizeContent(t.content)}`;
+    }
+    // 2つの明細配列を統合する。キーごとに「件数の多い方」の行を採用するので、
+    // 両方に同じ取引があっても二重計上にならず、同日・同額・同内容の正当な複数件も消えない。
+    // 件数が同数の場合は secondary（後から取り込んだ側）を優先する。
+    function mergeMfTransactions(primary, secondary) {
+      const byKey = new Map();
+      const push = (rows, side) => {
+        (rows || []).forEach(t => {
+          const k = mfContentKey(t);
+          if (!byKey.has(k)) byKey.set(k, { a: [], b: [] });
+          byKey.get(k)[side].push(t);
+        });
+      };
+      push(primary, 'a');
+      push(secondary, 'b');
+      const merged = [];
+      byKey.forEach(({ a, b }) => { merged.push(...(b.length >= a.length ? b : a)); });
+      return merged;
+    }
+
+    // 既存データの中に「シート経由（MFME_ ID）」と「CSV経由（生ID）」の両方で
+    // 二重化してしまった行がある場合に、キーごとに多い方の系統だけを残して直す。
+    // 片方の系統しかないキーは正当な複数件の可能性があるため、そのまま残す。
+    function healMfTransactions(rows) {
+      const byKey = new Map();
+      (rows || []).forEach(t => {
+        const k = mfContentKey(t);
+        if (!byKey.has(k)) byKey.set(k, []);
+        byKey.get(k).push(t);
+      });
+      const healed = [];
+      byKey.forEach(group => {
+        const sheetSide = group.filter(t => (t.id || '').startsWith('MFME_'));
+        const csvSide = group.filter(t => !(t.id || '').startsWith('MFME_'));
+        if (sheetSide.length > 0 && csvSide.length > 0) {
+          healed.push(...(csvSide.length >= sheetSide.length ? csvSide : sheetSide));
+        } else {
+          healed.push(...group);
+        }
+      });
+      return healed;
+    }
+
     function parseGvizMfTable(table) {
       const parsed = [];
       if (!table || !table.rows) return parsed;
@@ -1565,13 +1616,15 @@
         }
 
         if (txs.length > 0) {
-          const existingMap = new Map();
+          const sheetMap = new Map();
           txs.forEach(t => {
             const key = t.id ? `ID_${t.id}` : `${t.date}_${t.amount}_${t.content}_${t.inst}`;
-            existingMap.set(key, t);
+            sheetMap.set(key, t);
           });
 
-          appData.mfTransactions = Array.from(existingMap.values()).sort((a, b) => b.date.localeCompare(a.date));
+          // CSV手動取込分と内容キーで統合する（二重計上を防ぎ、CSVだけにある明細は同期後も残す）
+          appData.mfTransactions = mergeMfTransactions(Array.from(sheetMap.values()), healMfTransactions(appData.mfTransactions || []))
+            .sort((a, b) => b.date.localeCompare(a.date));
           try { localStorage.setItem('finance_app_mf_data_v12', JSON.stringify(appData.mfTransactions)); } catch (e) {}
 
           updateMfMonthDropdown();
@@ -2113,13 +2166,12 @@
     async function handleMfUpload(evt) {
       const files = Array.from(evt.target.files || []);
       if (!files.length) return;
-      const existingMap = new Map();
-      (appData.mfTransactions || []).forEach(t => {
-        const key = t.id ? `ID_${t.id}` : `${t.date}_${t.amount}_${t.content}_${t.inst}`;
-        existingMap.set(key, t);
+      const existingTxs = appData.mfTransactions || [];
+      const seenKeys = new Set();
+      existingTxs.forEach(t => {
+        seenKeys.add(t.id ? `ID_${t.id}` : `${t.date}_${t.amount}_${t.content}_${t.inst}`);
       });
-
-      let addedCount = 0;
+      const incomingTxs = [];
       for (const file of files) {
         const buffer = await file.arrayBuffer();
         let text = new TextDecoder('utf-8').decode(buffer);
@@ -2141,17 +2193,23 @@
             memo: r['メモ'] || '', inst: r['保有金融機関'] || ''
           };
           const key = tx.id ? `ID_${tx.id}` : `${tx.date}_${tx.amount}_${tx.content}_${tx.inst}`;
-          if (!existingMap.has(key)) { existingMap.set(key, tx); addedCount++; }
+          if (!seenKeys.has(key)) { seenKeys.add(key); incomingTxs.push(tx); }
         });
       }
 
-      appData.mfTransactions = Array.from(existingMap.values()).sort((a, b) => b.date.localeCompare(a.date));
+      // 既存データ（シート同期分など）と内容キーで統合し、二重計上を防ぐ
+      const healedExisting = healMfTransactions(existingTxs);
+      const beforeCount = healedExisting.length;
+      appData.mfTransactions = mergeMfTransactions(healedExisting, incomingTxs)
+        .sort((a, b) => b.date.localeCompare(a.date));
+      const addedCount = appData.mfTransactions.length - beforeCount;
+      const dupSkipped = incomingTxs.length - addedCount;
       try { localStorage.setItem('finance_app_mf_data_v12', JSON.stringify(appData.mfTransactions)); } catch (e) {}
       updateMfMonthDropdown();
       renderMfTab();
 
       const months = Array.from(new Set(appData.mfTransactions.map(t => t.date.slice(0, 7)))).sort();
-      showToast(`<strong>✅ ${files.length}個のCSVファイルを追加統合しました！</strong><br>新規追加: ${addedCount}件 / 合計: ${appData.mfTransactions.length}件<br>対象月: <b>${months.join(', ')} (${months.length}か月分)</b>`);
+      showToast(`<strong>✅ ${files.length}個のCSVファイルを追加統合しました！</strong><br>新規追加: ${addedCount}件${dupSkipped > 0 ? ` / 重複スキップ: ${dupSkipped}件` : ''} / 合計: ${appData.mfTransactions.length}件<br>対象月: <b>${months.join(', ')} (${months.length}か月分)</b>`);
     }
 
     function clearMfData() {
