@@ -1,15 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>総合財務管理ダッシュボード（2026〜2056｜69歳〜100歳）</title>
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js CDN -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <!-- Google Fonts: Inter & Noto Sans JP -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -26,14 +25,13 @@
     };
   </script>
   <style>
-    /* 等幅数値表示とスクロールバー調整 */
     .num {
       font-family: 'JetBrains Mono', 'Inter', monospace;
       font-variant-numeric: tabular-nums;
     }
     .table-scroll::-webkit-scrollbar {
-      height: 8px;
-      width: 8px;
+      height: 9px;
+      width: 9px;
     }
     .table-scroll::-webkit-scrollbar-track {
       background: #f1f5f9;
@@ -54,51 +52,50 @@
     }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col text-[15px]">
 
   <!-- ==================== ヘッダー ==================== -->
   <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-inner shrink-0">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">総合財務管理ダッシュボード</h1>
-            <p class="text-xs text-slate-400 flex items-center gap-2 flex-wrap">
-              <span>2026年11月〜2056年12月（69歳〜100歳・全362ヶ月）</span>
-              <span id="headerSyncStatus" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-300 border border-slate-700">内蔵データ稼働中</span>
-            </p>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-inner shrink-0">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold tracking-tight leading-tight">総合財務管理ダッシュボード</h1>
+          <div class="text-xs text-slate-300 flex items-center gap-2 flex-wrap mt-0.5">
+            <span>2026年11月〜2056年12月（69歳〜100歳・全362ヶ月）</span>
+            <span id="headerLatestConfirmedBadge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-800/80 text-emerald-100 border border-emerald-600">
+              最新確定: 2026-11
+            </span>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 flex-wrap">
+      <div class="flex items-center gap-2.5 flex-wrap">
         <button id="btnOpenConfirmModal" type="button"
-          class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition">
-          <span>📝</span>
-          <span>月末残高を確定・上書き</span>
+          class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+          <span>✏️</span>
+          <span>月末残高を確定上書き</span>
         </button>
         <button id="btnSyncSheets" type="button"
-          class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition">
+          class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white text-xs sm:text-sm font-bold shadow-sm transition">
           <span id="syncIcon">🔄</span>
           <span>スプレッドシート即時同期</span>
         </button>
       </div>
     </div>
 
-    <!-- タブナビゲーション -->
-    <nav class="bg-slate-800/90 border-t border-slate-700/80">
-      <div class="max-w-7xl mx-auto px-2 sm:px-6 overflow-x-auto">
-        <div class="flex space-x-1 py-1.5 min-w-max" role="tablist">
-          <button data-tab="dashboard" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition bg-sky-600 text-white">📊 ダッシュボード</button>
-          <button data-tab="monthly" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-700/60">📅 月次プラン（362ヶ月）</button>
-          <button data-tab="annual" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-700/60">📈 年次サマリー（2026〜2056）</button>
-          <button data-tab="events" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-700/60">🛒 イベント ＆ MF実績</button>
-          <button data-tab="settings" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-700/60">⚙️ 連携・らくつむ・バックアップ</button>
+    <!-- 4タブナビゲーション -->
+    <nav class="bg-slate-800/95 border-t border-slate-700">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 overflow-x-auto">
+        <div class="flex space-x-1.5 py-2 min-w-max" role="tablist">
+          <button data-tab="dashboard" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-sky-600 text-white">📊 ダッシュボード＆推移グラフ</button>
+          <button data-tab="tables" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">📅 年次サマリー ＆ 月次明細</button>
+          <button data-tab="events" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">🛒 イベント ＆ MF実績</button>
+          <button data-tab="settings" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">⚙️ 連携・設定・バックアップ</button>
         </div>
       </div>
     </nav>
@@ -107,184 +104,219 @@
   <!-- ==================== メインコンテンツ ==================== -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-    <!-- ==================== TAB 1: ダッシュボード ==================== -->
+    <!-- ==================== TAB 1: ダッシュボード＆推移グラフ ==================== -->
     <section id="tab-dashboard" class="tab-panel space-y-6">
-      <!-- シナリオ＆運用モード切替バー -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">らくつむ予測シナリオ:</span>
-          <div class="inline-flex rounded-xl bg-slate-100 p-1">
-            <button type="button" data-scenario="standard" class="scenario-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">① 標準</button>
-            <button type="button" data-scenario="conservative" class="scenario-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">② 保守</button>
-            <button type="button" data-scenario="pessimistic" class="scenario-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">③ 悲観</button>
+
+      <!-- シミュレーション条件コントロールバー -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
+          <h2 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+            <span>🎛️ シミュレーション条件コントロール</span>
+            <span class="text-xs font-normal text-slate-500">（変更すると全KPI・グラフ・表に即時反映）</span>
+          </h2>
+          <span id="activeRuleSummary" class="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full self-start sm:self-auto"></span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- 1. らくつむ積立停止 -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">らくつむ積立停止（最終積立月）</label>
+            <select id="ctrlStopYm" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="2036-12">2036年12月（80歳到達で停止）</option>
+              <option value="2037-12">2037年12月（81歳到達で停止）</option>
+              <option value="2035-12">2035年12月（79歳到達で停止）</option>
+              <option value="2038-12">2038年12月（82歳到達で停止）</option>
+              <option value="2056-12">停止しない（100歳まで継続）</option>
+            </select>
+            <p class="text-[11px] text-slate-500">毎月積立: <span id="ctrlDepositLabel" class="font-bold num text-slate-700">15,000円</span>（設定タブで変更可）</p>
+          </div>
+
+          <!-- 2. 現金下限補填ライン -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">現金口座 下限防衛ライン（補填基準）</label>
+            <div class="inline-flex w-full rounded-xl bg-slate-100 p-1">
+              <button type="button" data-floor="500000" class="floor-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">50万円</button>
+              <button type="button" data-floor="1000000" class="floor-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">100万円</button>
+              <button type="button" data-floor="1500000" class="floor-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">150万円</button>
+              <button type="button" data-floor="0" class="floor-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">補填なし</button>
+            </div>
+            <p class="text-[11px] text-slate-500">下回った不足分をらくつむ口座から自動振替</p>
+          </div>
+
+          <!-- 3. スワップシナリオ切替 -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">らくつむ想定スワップ年利（税引後）</label>
+            <div class="inline-flex w-full rounded-xl bg-slate-100 p-1">
+              <button type="button" data-scenario="standard" class="scenario-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">標準 4.32%</button>
+              <button type="button" data-scenario="conservative" class="scenario-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">保守 3.72%</button>
+              <button type="button" data-scenario="pessimistic" class="scenario-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">悲観 2.67%</button>
+              <button type="button" data-scenario="custom" class="scenario-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">カスタム</button>
+            </div>
+            <p class="text-[11px] text-slate-500">補填で残高が減るとスワップも比例して減少</p>
+          </div>
+
+          <!-- 4. 補填開始条件 -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-700">自動補填の発動条件</label>
+            <div class="inline-flex w-full rounded-xl bg-slate-100 p-1">
+              <button type="button" data-topup-cond="afterStop" class="topup-cond-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">積立停止後</button>
+              <button type="button" data-topup-cond="alwaysAfterReach" class="topup-cond-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">100万到達後の全期間</button>
+            </div>
+            <p class="text-[11px] text-slate-500">デフォルト：80歳積立停止の翌月から発動</p>
           </div>
         </div>
-        <div class="flex flex-wrap items-center gap-3">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">80歳以降（2038〜2056）運用:</span>
-          <div class="inline-flex rounded-xl bg-slate-100 p-1">
-            <button type="button" data-post80="compound" class="post80-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">① 複利運用（年4.1%）</button>
-            <button type="button" data-post80="hold" class="post80-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">② 残高据置（スワップ受取）</button>
-          </div>
-        </div>
       </div>
 
-      <!-- 上部KPIカード群 -->
-      <div id="kpiGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- JSで動的描画 -->
+      <!-- KPIサマリーカード（5枚） -->
+      <div id="kpiGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- JS描画 -->
       </div>
 
-      <!-- 節目年齢（80/90/100歳）＆現金最低値アラート -->
-      <div id="milestoneGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- JSで動的描画 -->
-      </div>
-
-      <!-- メイン推移グラフ -->
+      <!-- 第1グラフ：資産残高の長期推移（＋100万円防衛ライン破線） -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-900">資産残高の長期推移（2026年11月〜2056年12月）</h2>
-            <p class="text-xs text-slate-500">総合残高 ＝ 現金残高（マネーフォワード／長期CF） ＋ らくつむ残高（メキシコペソ積立）</p>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">1. 資産残高の長期推移（現金・らくつむ・総合 ＋ 防衛ライン）</h2>
+            <p class="text-xs text-slate-500">2026年11月（69歳）〜2056年12月（100歳）。現金残高が下限ラインに達するとらくつむから自動補填されます。</p>
           </div>
           <div class="inline-flex rounded-xl bg-slate-100 p-1 self-start sm:self-auto">
-            <button type="button" data-chart-granularity="annual" class="granularity-btn px-3 py-1 rounded-lg text-xs font-semibold transition">年末推移（31点）</button>
-            <button type="button" data-chart-granularity="monthly" class="granularity-btn px-3 py-1 rounded-lg text-xs font-semibold transition">全月次（362ヶ月）</button>
+            <button type="button" data-chart-granularity="annual" class="granularity-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">年末推移（31点）</button>
+            <button type="button" data-chart-granularity="monthly" class="granularity-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">全月次（362ヶ月）</button>
           </div>
         </div>
-        <div class="relative w-full h-72 sm:h-96">
+        <div class="relative w-full h-80 sm:h-96">
           <canvas id="mainBalanceChart"></canvas>
         </div>
       </div>
 
-      <!-- 年次収支＆特別出費グラフ -->
+      <!-- 第2グラフ：月次スワップポイント推移 ＆ らくつむからの補填額（複合チャート） -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-        <div class="mb-4">
-          <h2 class="text-base sm:text-lg font-bold text-slate-900">年次収支（収入 vs 支出）＆ 特別出費</h2>
-          <p class="text-xs text-slate-500">各年の総収入・総支出と、イベントによる特別出費の推移（年齢付き）</p>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">2. 月次スワップポイント推移 ＆ らくつむからの自動補填額</h2>
+            <p class="text-xs text-slate-500">80歳までの積立増加 → 積立停止後の複利増加 → 補填開始に伴うスワップポイント減少カーブを可視化します。</p>
+          </div>
+          <span id="swapChartBadge" class="text-xs font-semibold px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 self-start sm:self-auto"></span>
         </div>
         <div class="relative w-full h-72 sm:h-80">
-          <canvas id="annualCashflowChart"></canvas>
+          <canvas id="swapTopupChart"></canvas>
         </div>
       </div>
     </section>
 
-    <!-- ==================== TAB 2: 月次プラン（362ヶ月） ==================== -->
-    <section id="tab-monthly" class="tab-panel hidden space-y-4">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-3">
-          <label class="text-xs font-semibold text-slate-600 flex items-center gap-2">
-            表示年:
-            <select id="monthlyYearFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500">
-              <option value="ALL">全期間（2026〜2056・362ヶ月）</option>
-            </select>
+    <!-- ==================== TAB 2: 年次サマリー ＆ 月次明細 ==================== -->
+    <section id="tab-tables" class="tab-panel hidden space-y-5">
+
+      <!-- サブ切替バー -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="inline-flex rounded-xl bg-slate-100 p-1 self-start">
+          <button type="button" id="btnSubAnnual" class="subtable-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition bg-slate-900 text-white shadow-sm">📈 年次サマリー（2026〜2056）</button>
+          <button type="button" id="btnSubMonthly" class="subtable-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition text-slate-600 hover:text-slate-900">📅 月次明細（全362ヶ月）</button>
+        </div>
+
+        <!-- 月次明細用フィルタ（月次表示時に表示） -->
+        <div id="monthlyFiltersWrap" class="hidden flex-wrap items-center gap-2.5">
+          <select id="monthlyYearFilter" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none">
+            <option value="ALL">全期間（2026〜2056・362ヶ月）</option>
+          </select>
+          <label class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl cursor-pointer select-none">
+            <input id="monthlyTopupOnly" type="checkbox" class="rounded text-amber-600 focus:ring-amber-500" />
+            <span>補填発生月のみ</span>
           </label>
-          <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer select-none bg-slate-100 px-3 py-1.5 rounded-lg">
+          <label class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl cursor-pointer select-none">
             <input id="monthlyConfirmedOnly" type="checkbox" class="rounded text-emerald-600 focus:ring-emerald-500" />
-            <span>確定月のみ表示</span>
+            <span>確定月のみ</span>
           </label>
-        </div>
-        <div class="text-xs text-slate-500">
-          表示件数: <span id="monthlyCountBadge" class="font-bold text-slate-800 num">362</span> ヶ月
-          <span class="ml-2 text-emerald-700">※確定月は起点（アンカー）となり翌月以降を自動連動</span>
+          <span class="text-xs text-slate-500">表示: <b id="monthlyCountBadge" class="num text-slate-800">362</b>件</span>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="table-scroll overflow-x-auto max-h-[70vh]">
-          <table class="min-w-full text-xs sm:text-sm border-collapse">
-            <thead class="bg-slate-800 text-slate-100 sticky top-0 z-10">
-              <tr>
-                <th class="px-3 py-3 text-left font-semibold whitespace-nowrap">年月</th>
-                <th class="px-2.5 py-3 text-center font-semibold whitespace-nowrap">年齢</th>
-                <th class="px-2.5 py-3 text-center font-semibold whitespace-nowrap">区分</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">年金</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">企業年金</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">給料</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">その他収入</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-slate-700/70">収入計</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">基本生活費</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">特別出費</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-slate-700/70">支出計</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">収支</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-sky-900/60">現金残高</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-indigo-900/60">らくつむ残高</th>
-                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-emerald-900/60">総合残高</th>
-                <th class="px-3 py-3 text-center font-semibold whitespace-nowrap">操作</th>
-              </tr>
-            </thead>
-            <tbody id="monthlyTableBody" class="divide-y divide-slate-100">
-              <!-- JS描画 -->
-            </tbody>
-          </table>
+      <!-- 年次サマリー表 -->
+      <div id="annualTableSection" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <p class="text-xs text-slate-600">※2026年は11月・12月の2ヶ月間集計。年齢は各年12月末時点。</p>
+          <span id="annualConditionBadge" class="text-xs font-bold text-indigo-700"></span>
         </div>
-      </div>
-    </section>
-
-    <!-- ==================== TAB 3: 年次サマリー（2026〜2056） ==================== -->
-    <section id="tab-annual" class="tab-panel hidden space-y-4">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          <h2 class="text-base font-bold text-slate-900">年次サマリー（2026年〜2056年｜70歳〜100歳）</h2>
-          <p class="text-xs text-slate-500">※2026年は11月・12月の2ヶ月間集計。年齢は各年12月末時点の年齢を表示。</p>
-        </div>
-        <span id="annualScenarioTag" class="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 self-start sm:self-auto"></span>
-      </div>
-
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="table-scroll overflow-x-auto max-h-[72vh]">
           <table class="min-w-full text-xs sm:text-sm border-collapse">
             <thead class="bg-slate-800 text-slate-100 sticky top-0 z-10">
               <tr>
-                <th class="px-3.5 py-3 text-left font-semibold whitespace-nowrap">西暦</th>
-                <th class="px-3 py-3 text-center font-semibold whitespace-nowrap">年齢（12月末）</th>
-                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap">年収入</th>
-                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap">年支出</th>
-                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap">うち特別出費</th>
-                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap">年収支</th>
-                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap bg-sky-900/60">年末現金残高</th>
-                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap bg-indigo-900/60">年末らくつむ残高</th>
-                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap bg-emerald-900/60">年末総合残高</th>
+                <th class="px-3 py-3 text-left font-bold whitespace-nowrap">西暦</th>
+                <th class="px-2.5 py-3 text-center font-bold whitespace-nowrap">年齢(12月末)</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap">年収入</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap">年支出</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap">うち特別出費</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-indigo-950/60">らくつむ積立</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-indigo-950/60">年間スワップ</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-amber-900/60">年間補填額</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-sky-900/70">年末現金残高</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-indigo-900/70">年末らくつむ</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-emerald-900/70">年末総合残高</th>
               </tr>
             </thead>
-            <tbody id="annualTableBody" class="divide-y divide-slate-100">
-              <!-- JS描画 -->
-            </tbody>
+            <tbody id="annualTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 月次明細表 -->
+      <div id="monthlyTableSection" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="table-scroll overflow-x-auto max-h-[72vh]">
+          <table class="min-w-full text-xs sm:text-sm border-collapse">
+            <thead class="bg-slate-800 text-slate-100 sticky top-0 z-10">
+              <tr>
+                <th class="px-3 py-3 text-left font-bold whitespace-nowrap">年月</th>
+                <th class="px-2 py-3 text-center font-bold whitespace-nowrap">年齢</th>
+                <th class="px-2 py-3 text-center font-bold whitespace-nowrap">状態</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap">収入計</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap">支出計(特別)</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap">月次収支</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-indigo-950/60">積立</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-indigo-950/60">月スワップ</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-amber-900/70">自動補填額</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-sky-900/70">補填後 現金残高</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-indigo-900/70">補填後 らくつむ</th>
+                <th class="px-3 py-3 text-right font-bold whitespace-nowrap bg-emerald-900/70">総合残高</th>
+                <th class="px-2.5 py-3 text-center font-bold whitespace-nowrap">操作</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyTableBody" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- ==================== TAB 4: イベント ＆ MF実績 ==================== -->
+    <!-- ==================== TAB 3: イベント ＆ MF実績 ==================== -->
     <section id="tab-events" class="tab-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- 左：大きな買い物・イベント管理 -->
       <div class="lg:col-span-7 space-y-4">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-base font-bold text-slate-900">🛒 大きな買い物・イベント管理</h2>
-              <p class="text-xs text-slate-500">追加・削除すると即座に月次プランの「特別出費」と全残高へ連動します。</p>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900">🛒 大きな買い物・イベント管理</h2>
+              <p class="text-xs text-slate-500">追加・削除すると即座に月次明細の特別出費・自動補填・スワップ推移へ連動します。</p>
             </div>
-            <span id="eventTotalCount" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 num">0件</span>
+            <span id="eventTotalCount" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 num">0件</span>
           </div>
 
-          <!-- 新規イベント追加フォーム -->
           <form id="addEventForm" class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
             <div class="sm:col-span-3">
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">年月 (YYYY-MM)</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">年月</label>
               <input id="evYm" type="month" min="2026-11" max="2056-12" value="2027-06" required
-                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div class="sm:col-span-4">
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">イベント内容</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">イベント内容</label>
               <input id="evTitle" type="text" placeholder="例：家電買い替え" required
-                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div class="sm:col-span-3">
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">金額（円）</label>
-              <input id="evAmount" type="number" min="0" step="100" placeholder="50000" required
-                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm num focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+              <label class="block text-xs font-bold text-slate-700 mb-1">金額（円）</label>
+              <input id="evAmount" type="number" min="1" step="100" placeholder="50000" required
+                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm num bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">カテゴリ</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">カテゴリ</label>
               <select id="evCategory" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
                 <option value="家族">家族</option>
                 <option value="住宅">住宅</option>
@@ -297,17 +329,16 @@
               </select>
             </div>
             <div class="sm:col-span-12 flex justify-end pt-1">
-              <button type="submit" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-sm transition">
-                ＋ イベントを追加して残高に反映
+              <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-sm transition">
+                ＋ イベントを追加して全期間へ反映
               </button>
             </div>
           </form>
 
-          <!-- フィルター -->
           <div class="flex flex-wrap items-center gap-2">
-            <input id="eventSearchInput" type="text" placeholder="キーワードや年月(例: 2027)で検索..."
-              class="flex-1 min-w-[180px] rounded-lg border border-slate-300 px-3 py-1.5 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
-            <select id="eventCategoryFilter" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white">
+            <input id="eventSearchInput" type="text" placeholder="キーワードや年月（例: 2028）で検索..."
+              class="flex-1 min-w-[180px] rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            <select id="eventCategoryFilter" class="rounded-xl border border-slate-300 px-3 py-2 text-xs bg-white font-medium">
               <option value="ALL">全カテゴリ</option>
               <option value="家族">家族</option>
               <option value="住宅">住宅</option>
@@ -320,93 +351,118 @@
             </select>
           </div>
 
-          <!-- イベントテーブル -->
-          <div class="table-scroll overflow-x-auto max-h-[52vh] border border-slate-200 rounded-xl">
+          <div class="table-scroll overflow-x-auto max-h-[54vh] border border-slate-200 rounded-xl">
             <table class="min-w-full text-xs sm:text-sm border-collapse">
-              <thead class="bg-slate-100 text-slate-700 sticky top-0">
+              <thead class="bg-slate-100 text-slate-800 sticky top-0">
                 <tr>
-                  <th class="px-3 py-2 text-left font-semibold">年月（年齢）</th>
-                  <th class="px-3 py-2 text-left font-semibold">内容</th>
-                  <th class="px-2.5 py-2 text-left font-semibold">カテゴリ</th>
-                  <th class="px-3 py-2 text-right font-semibold">金額</th>
-                  <th class="px-2.5 py-2 text-center font-semibold">削除</th>
+                  <th class="px-3 py-2.5 text-left font-bold">年月（年齢）</th>
+                  <th class="px-3 py-2.5 text-left font-bold">内容</th>
+                  <th class="px-2.5 py-2.5 text-left font-bold">カテゴリ</th>
+                  <th class="px-3 py-2.5 text-right font-bold">金額</th>
+                  <th class="px-2.5 py-2.5 text-center font-bold">削除</th>
                 </tr>
               </thead>
-              <tbody id="eventsTableBody" class="divide-y divide-slate-100">
-                <!-- JS描画 -->
-              </tbody>
+              <tbody id="eventsTableBody" class="divide-y divide-slate-100"></tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- 右：マネーフォワード月次実績分析 -->
+      <!-- 右：マネーフォワード実績分析 -->
       <div class="lg:col-span-5 space-y-4">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <h2 class="text-base font-bold text-slate-900">💳 マネーフォワード月次実績分析</h2>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900">💳 マネーフォワード月次実績</h2>
               <p id="mfSubtitle" class="text-xs text-slate-500">2026年11月（11/1〜11/27実績）</p>
             </div>
             <button id="btnTransferMfToConfirm" type="button"
-              class="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition">
-              確定入力へ転記 →
+              class="shrink-0 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition">
+              月末確定へ転記 →
             </button>
           </div>
 
-          <!-- MFサマリーKPI -->
-          <div id="mfSummaryCards" class="grid grid-cols-3 gap-2.5">
-            <!-- JS描画 -->
+          <div id="mfSummaryCards" class="grid grid-cols-3 gap-2.5"></div>
+
+          <div id="mfMonthSelectorWrap" class="hidden items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+            <span class="text-xs font-bold text-slate-700">集計対象月:</span>
+            <select id="mfMonthSelector" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold"></select>
           </div>
 
-          <!-- MF月選択（複数月読み込み時） -->
-          <div id="mfMonthSelectorWrap" class="hidden items-center justify-between bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
-            <span class="text-xs font-semibold text-slate-600">集計対象月:</span>
-            <select id="mfMonthSelector" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium"></select>
-          </div>
-
-          <!-- MF CSVドロップゾーン -->
           <div id="mfDropZone"
-            class="border-2 border-dashed border-slate-300 hover:border-sky-500 rounded-xl p-3 text-center transition cursor-pointer bg-slate-50/70">
+            class="border-2 border-dashed border-slate-300 hover:border-sky-500 rounded-xl p-3.5 text-center transition cursor-pointer bg-slate-50/70">
             <input id="mfFileInput" type="file" accept=".csv,text/csv" class="hidden" />
-            <p class="text-xs text-slate-600 font-medium">📂 マネーフォワード明細CSVをここにドロップ / クリックして選択</p>
-            <p class="text-[11px] text-slate-400 mt-0.5">読み込みと同時にカテゴリ別集計＆グラフを即時更新します</p>
+            <p class="text-xs text-slate-700 font-bold">📂 マネーフォワード明細CSVをドロップ / クリックして選択</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">大項目別に自動集計し、月末確定入力へワンクリック転記できます</p>
           </div>
 
-          <!-- カテゴリ別横棒グラフ -->
-          <div class="relative w-full h-64">
+          <div class="relative w-full h-60">
             <canvas id="mfCategoryChart"></canvas>
           </div>
 
-          <!-- カテゴリ別集計表 -->
-          <div class="table-scroll overflow-x-auto max-h-60 border border-slate-200 rounded-xl">
+          <div class="table-scroll overflow-x-auto max-h-56 border border-slate-200 rounded-xl">
             <table class="min-w-full text-xs border-collapse">
-              <thead class="bg-slate-100 text-slate-700 sticky top-0">
+              <thead class="bg-slate-100 text-slate-800 sticky top-0">
                 <tr>
-                  <th class="px-3 py-2 text-left font-semibold">大項目（支出）</th>
-                  <th class="px-3 py-2 text-right font-semibold">金額</th>
-                  <th class="px-3 py-2 text-right font-semibold">構成比</th>
+                  <th class="px-3 py-2 text-left font-bold">大項目（支出）</th>
+                  <th class="px-3 py-2 text-right font-bold">金額</th>
+                  <th class="px-3 py-2 text-right font-bold">構成比</th>
                 </tr>
               </thead>
-              <tbody id="mfTableBody" class="divide-y divide-slate-100">
-                <!-- JS描画 -->
-              </tbody>
+              <tbody id="mfTableBody" class="divide-y divide-slate-100"></tbody>
             </table>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ==================== TAB 5: 連携・らくつむ・バックアップ ==================== -->
+    <!-- ==================== TAB 4: 連携・設定・バックアップ ==================== -->
     <section id="tab-settings" class="tab-panel hidden space-y-6">
-      <!-- Googleスプレッドシート公開CSV URL設定 -->
+
+      <!-- らくつむ詳細パラメータ設定 -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">🇲🇽 らくつむ積立・補填・利回り詳細パラメータ</h2>
+          <p class="text-xs text-slate-500">積立額・停止年月・補填ライン・カスタム税引後スワップ年利を細かく調整できます。</p>
+        </div>
+
+        <form id="paramSettingsForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">毎月積立額（円）</label>
+            <input id="setMonthlyDeposit" type="number" min="0" step="1000" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">積立停止年月（この月まで積立）</label>
+            <input id="setStopYm" type="month" min="2026-11" max="2056-12" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">現金下限補填ライン（円）</label>
+            <input id="setCashFloor" type="number" min="0" step="50000" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">カスタム税引後スワップ年利（%）</label>
+            <input id="setCustomRate" type="number" min="0" max="30" step="0.01" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          </div>
+          <div class="sm:col-span-2 lg:col-span-4 flex justify-end">
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-bold shadow-sm transition">
+              パラメータを適用して再計算
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Googleスプレッドシート公開CSV URL連携 -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 class="text-base sm:text-lg font-bold text-slate-900">🔗 Googleスプレッドシート 公開CSV URL連携</h2>
-            <p class="text-xs text-slate-500">各シートの「ウェブに公開（CSV形式）」URLを登録すると、ヘッダーの同期ボタンで最新データを即時反映できます。</p>
+            <p class="text-xs text-slate-500">5つの公開CSV URLを登録しておくと、同期ボタンでキャッシュを回避して最新データを一括反映します。</p>
           </div>
-          <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-xl cursor-pointer select-none">
+          <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 bg-slate-100 px-3.5 py-2 rounded-xl cursor-pointer select-none">
             <input id="autoSyncToggle" type="checkbox" class="rounded text-sky-600 focus:ring-sky-500" />
             <span>起動時に自動同期する</span>
           </label>
@@ -415,167 +471,108 @@
         <form id="sheetUrlsForm" class="space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">(a) 長期プラン：月次プラン CSV URL</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">(1) 長期プラン_月次プラン CSV URL</label>
               <input id="urlMonthlyPlan" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">(b) 長期プラン：大きな買い物・イベント CSV URL</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">(2) 長期プラン_大きな買い物・イベント CSV URL</label>
               <input id="urlEvents" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">(c) らくつむ：月次実績管理 CSV URL</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">(3) らくつむ_月次実績管理 CSV URL</label>
               <input id="urlRakutsumuActual" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">(d) らくつむ：将来スワップ複利予測 CSV URL</label>
-              <input id="urlRakutsumuForecast" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+              <label class="block text-xs font-bold text-slate-700 mb-1">(4) らくつむ_CF表連携サマリー CSV URL</label>
+              <input id="urlRakutsumuCf" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
+                class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div class="md:col-span-2">
-              <label class="block text-xs font-semibold text-slate-700 mb-1">(e) マネーフォワード：明細 CSV URL</label>
+              <label class="block text-xs font-bold text-slate-700 mb-1">(5) マネーフォワード明細 CSV URL</label>
               <input id="urlMoneyForward" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+                class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
           </div>
-          <div class="flex flex-wrap items-center gap-2 pt-1">
-            <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">
+          <div class="flex flex-wrap items-center gap-2.5 pt-1">
+            <button type="submit" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
               💾 URL設定を保存
             </button>
-            <button id="btnSyncFromSettings" type="button" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition">
-              🔄 保存して今すぐ全シート同期
+            <button id="btnSyncFromSettings" type="button" class="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition">
+              🔄 保存して今すぐ同期
             </button>
           </div>
         </form>
 
-        <!-- 同期ログ表示エリア -->
         <div id="syncLogBox" class="hidden rounded-xl bg-slate-900 text-slate-200 p-3.5 text-xs font-mono space-y-1 max-h-40 overflow-y-auto"></div>
 
-        <!-- 公開手順ガイド -->
-        <details class="bg-sky-50/70 border border-sky-200 rounded-xl p-3.5 text-xs text-slate-700">
-          <summary class="font-bold text-sky-900 cursor-pointer select-none">📘 GoogleスプレッドシートのCSV公開URL取得手順（CORS対策）</summary>
-          <ol class="list-decimal list-inside mt-2 space-y-1 leading-relaxed">
-            <li>Googleスプレッドシートを開き、上部メニューの <strong>「ファイル」→「共有」→「ウェブに公開」</strong> をクリックします。</li>
-            <li>「リンク」タブで、対象となる<strong>個別のシート名</strong>を選択し、形式を <strong>「カンマ区切り形式（.csv）」</strong> に変更して「公開」を押します。</li>
-            <li>生成されたURL（末尾が <code class="bg-white px-1 py-0.5 rounded border">output=csv</code>）を上の対応する入力欄に貼り付けて保存します。</li>
-            <li>※「再公開」設定で「変更時に自動的に再公開する」にチェックを入れておくと、シートを書き換えた直後に本アプリの同期ボタンで即反映されます。</li>
-          </ol>
-        </details>
-
-        <!-- ローカルCSV読み込み -->
+        <!-- ローカルCSV個別読込 -->
         <div class="pt-3 border-t border-slate-200 space-y-3">
-          <h3 class="text-sm font-bold text-slate-800">📂 ローカルCSVファイルからの即時読み込み</h3>
+          <h3 class="text-sm font-bold text-slate-800">📂 ローカルCSVファイルの直接読み込み</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
-              <span class="text-xs font-semibold text-slate-700">(a) 月次プラン CSV</span>
-              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-bold text-slate-700">(1) 月次プラン CSV</span>
+              <span class="text-[11px] text-slate-500 mt-0.5">クリックで選択</span>
               <input type="file" accept=".csv" data-csv-type="monthlyPlan" class="local-csv-input hidden" />
             </label>
-            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
-              <span class="text-xs font-semibold text-slate-700">(b) イベント CSV</span>
-              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-bold text-slate-700">(2) イベント CSV</span>
+              <span class="text-[11px] text-slate-500 mt-0.5">クリックで選択</span>
               <input type="file" accept=".csv" data-csv-type="events" class="local-csv-input hidden" />
             </label>
-            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
-              <span class="text-xs font-semibold text-slate-700">(c) らくつむ実績 CSV</span>
-              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-bold text-slate-700">(3) らくつむ実績 CSV</span>
+              <span class="text-[11px] text-slate-500 mt-0.5">クリックで選択</span>
               <input type="file" accept=".csv" data-csv-type="rakutsumuActual" class="local-csv-input hidden" />
             </label>
-            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
-              <span class="text-xs font-semibold text-slate-700">(d) らくつむ予測 CSV</span>
-              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
-              <input type="file" accept=".csv" data-csv-type="rakutsumuForecast" class="local-csv-input hidden" />
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-bold text-slate-700">(4) CF表連携 CSV</span>
+              <span class="text-[11px] text-slate-500 mt-0.5">クリックで選択</span>
+              <input type="file" accept=".csv" data-csv-type="rakutsumuCf" class="local-csv-input hidden" />
             </label>
-            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
-              <span class="text-xs font-semibold text-slate-700">(e) MF明細 CSV</span>
-              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-bold text-slate-700">(5) MF明細 CSV</span>
+              <span class="text-[11px] text-slate-500 mt-0.5">クリックで選択</span>
               <input type="file" accept=".csv" data-csv-type="moneyForward" class="local-csv-input hidden" />
             </label>
           </div>
         </div>
       </div>
 
-      <!-- らくつむ実績 ＆ 将来スワップ複利予測テーブル -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- らくつむ月次実績 -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
-          <div>
-            <h3 class="text-base font-bold text-slate-900">🇲🇽 らくつむ月次実績管理</h3>
-            <p class="text-xs text-slate-500">メキシコペソ積立口座の実績推移（現金残高とは分離管理）</p>
-          </div>
-          <div class="table-scroll overflow-x-auto border border-slate-200 rounded-xl">
-            <table class="min-w-full text-xs border-collapse">
-              <thead class="bg-slate-100 text-slate-700">
-                <tr>
-                  <th class="px-3 py-2 text-left font-semibold">年月</th>
-                  <th class="px-2.5 py-2 text-center font-semibold">区分</th>
-                  <th class="px-3 py-2 text-right font-semibold">累計純入金</th>
-                  <th class="px-3 py-2 text-right font-semibold">月末評価額</th>
-                  <th class="px-2.5 py-2 text-right font-semibold">有効比率</th>
-                  <th class="px-2.5 py-2 text-right font-semibold">レバ</th>
-                </tr>
-              </thead>
-              <tbody id="rakutsumuActualTableBody" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- らくつむ将来予測 -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
-          <div>
-            <h3 class="text-base font-bold text-slate-900">📈 将来スワップ複利予測（2026〜2037）</h3>
-            <p class="text-xs text-slate-500">各シナリオの年末純資産目安（2037年＝80歳目標）</p>
-          </div>
-          <div class="table-scroll overflow-x-auto max-h-72 border border-slate-200 rounded-xl">
-            <table class="min-w-full text-xs border-collapse">
-              <thead class="bg-slate-100 text-slate-700 sticky top-0">
-                <tr>
-                  <th class="px-3 py-2 text-left font-semibold">西暦（年齢）</th>
-                  <th class="px-3 py-2 text-right font-semibold">① 標準</th>
-                  <th class="px-3 py-2 text-right font-semibold">② 保守</th>
-                  <th class="px-3 py-2 text-right font-semibold">③ 悲観</th>
-                </tr>
-              </thead>
-              <tbody id="rakutsumuForecastTableBody" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- 確定履歴の管理 ＆ JSONバックアップ -->
+      <!-- 確定履歴 ＆ JSONバックアップ -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 class="text-base font-bold text-slate-900">🛡️ 月末確定履歴 ＆ データバックアップ</h3>
-            <p class="text-xs text-slate-500">確定した月末残高はブラウザ（localStorage）に自動保存されます。JSONでバックアップ・復元も可能です。</p>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900">🛡️ 月末確定履歴 ＆ JSONバックアップ</h3>
+            <p class="text-xs text-slate-500">確定済み残高・設定・イベントはブラウザに自動保存されます。別端末への移行はJSONをご活用ください。</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button id="btnExportJson" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition">
+            <button id="btnExportJson" type="button" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition">
               ⬇️ JSONエクスポート
             </button>
-            <label class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold cursor-pointer transition border border-slate-300">
+            <label class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer transition border border-slate-300">
               ⬆️ JSONインポート
               <input id="importJsonInput" type="file" accept=".json,application/json" class="hidden" />
             </label>
-            <button id="btnResetAll" type="button" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition">
-              🗑️ 全データ初期化
+            <button id="btnResetAll" type="button" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition">
+              🗑️ 初期データにリセット
             </button>
           </div>
         </div>
 
-        <div id="confirmedHistoryWrap" class="table-scroll overflow-x-auto border border-slate-200 rounded-xl">
-          <table class="min-w-full text-xs border-collapse">
-            <thead class="bg-slate-100 text-slate-700">
+        <div class="table-scroll overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="min-w-full text-xs sm:text-sm border-collapse">
+            <thead class="bg-slate-100 text-slate-800">
               <tr>
-                <th class="px-3 py-2 text-left font-semibold">確定年月（年齢）</th>
-                <th class="px-3 py-2 text-right font-semibold">確定現金残高</th>
-                <th class="px-3 py-2 text-right font-semibold">確定らくつむ残高</th>
-                <th class="px-3 py-2 text-right font-semibold">確定収入</th>
-                <th class="px-3 py-2 text-right font-semibold">確定支出</th>
-                <th class="px-3 py-2 text-left font-semibold">メモ</th>
-                <th class="px-3 py-2 text-center font-semibold">解除</th>
+                <th class="px-3 py-2.5 text-left font-bold">確定年月（年齢）</th>
+                <th class="px-3 py-2.5 text-right font-bold">確定現金残高</th>
+                <th class="px-3 py-2.5 text-right font-bold">確定らくつむ残高</th>
+                <th class="px-3 py-2.5 text-right font-bold">確定収入</th>
+                <th class="px-3 py-2.5 text-right font-bold">確定支出</th>
+                <th class="px-3 py-2.5 text-left font-bold">メモ</th>
+                <th class="px-3 py-2.5 text-center font-bold">解除</th>
               </tr>
             </thead>
             <tbody id="confirmedHistoryBody" class="divide-y divide-slate-100"></tbody>
@@ -589,78 +586,74 @@
   <!-- ==================== フッター ==================== -->
   <footer class="bg-white border-t border-slate-200 py-4 mt-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-      <span>総合財務管理アプリ（2026年11月〜2056年12月｜69歳〜100歳）</span>
-      <span>データはブラウザのローカルストレージに安全に保存されます（外部送信なし）</span>
+      <span>総合財務管理ダッシュボード（2026年11月〜2056年12月｜69歳〜100歳）</span>
+      <span>80歳積立停止・100万円自動補填・スワップ動的減少シミュレーション搭載</span>
     </div>
   </footer>
 
-  <!-- ==================== モーダル：月末残高の確定・上書き ==================== -->
+  <!-- ==================== モーダル：月末残高の確定上書き ==================== -->
   <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
       <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
         <div>
-          <h3 class="text-base font-bold">📝 月末残高の確定・上書き</h3>
-          <p class="text-xs text-slate-300 mt-0.5">確定した月を起点に、翌月〜2056年12月の全残高を即時再計算します。</p>
+          <h3 class="text-base font-bold">✏️ 月末残高の確定・上書き</h3>
+          <p class="text-xs text-slate-300 mt-0.5">確定した月をアンカー起点とし、翌月〜2056年12月の残高・補填・スワップを全連動します。</p>
         </div>
-        <button id="btnCloseConfirmModal" type="button" class="text-slate-400 hover:text-white text-xl leading-none px-1">&times;</button>
+        <button id="btnCloseConfirmModal" type="button" class="text-slate-400 hover:text-white text-2xl leading-none px-1">&times;</button>
       </div>
 
       <form id="confirmMonthForm" class="p-5 space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">対象年月</label>
-            <select id="cmYm" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+            <label class="block text-xs font-bold text-slate-700 mb-1">対象年月</label>
+            <select id="cmYm" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
           </div>
           <div class="flex flex-col justify-end">
-            <div id="cmPlanHint" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-600">
-              計画値読込中...
-            </div>
+            <div id="cmPlanHint" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700"></div>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">確定 現金残高（円）<span class="text-rose-500">*</span></label>
+            <label class="block text-xs font-bold text-slate-700 mb-1">確定 現金残高（円）<span class="text-rose-500">*</span></label>
             <input id="cmCash" type="number" step="1" required placeholder="例: -592358"
-              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
-            <p class="text-[11px] text-slate-400 mt-0.5">マネーフォワード月末実績</p>
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">確定 らくつむ残高（円）</label>
-            <input id="cmRakutsumu" type="number" step="1" placeholder="空欄ならモデル値維持"
-              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
-            <p class="text-[11px] text-slate-400 mt-0.5">らくつむ月末評価額（任意）</p>
+            <label class="block text-xs font-bold text-slate-700 mb-1">確定 らくつむ残高（円）</label>
+            <input id="cmRakutsumu" type="number" step="1" placeholder="空欄なら自動計算値"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">当月の確定収入（任意）</label>
-            <input id="cmIncome" type="number" step="1" placeholder="空欄なら計画値を使用"
+            <label class="block text-xs font-bold text-slate-700 mb-1">当月の確定収入（任意）</label>
+            <input id="cmIncome" type="number" step="1" placeholder="空欄なら計画値"
               class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-sky-500 focus:outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">当月の確定支出（任意・正の値）</label>
-            <input id="cmExpense" type="number" step="1" min="0" placeholder="空欄なら計画値を使用"
+            <label class="block text-xs font-bold text-slate-700 mb-1">当月の確定支出（任意・正の値）</label>
+            <input id="cmExpense" type="number" step="1" min="0" placeholder="空欄なら計画値"
               class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-sky-500 focus:outline-none" />
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">メモ（任意）</label>
-          <input id="cmMemo" type="text" placeholder="例：11月末マネーフォワード確定"
+          <label class="block text-xs font-bold text-slate-700 mb-1">メモ（任意）</label>
+          <input id="cmMemo" type="text" placeholder="例：11月末マネーフォワード＆らくつむ確定"
             class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
         </div>
 
-        <div class="flex items-center justify-between pt-2 border-t border-slate-200">
-          <button id="btnDeleteConfirmInModal" type="button" class="hidden px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition">
+        <div class="flex items-center justify-between pt-3 border-t border-slate-200">
+          <button id="btnDeleteConfirmInModal" type="button" class="hidden px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition">
             この月の確定を解除
           </button>
           <div class="flex items-center gap-2 ml-auto">
-            <button id="btnCancelConfirmModal" type="button" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+            <button id="btnCancelConfirmModal" type="button" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
               キャンセル
             </button>
-            <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition">
+            <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition">
               確定して全期間へ連動
             </button>
           </div>
@@ -673,18 +666,18 @@
   <div id="dialogModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4 border border-slate-200">
       <h3 id="dialogTitle" class="text-base font-bold text-slate-900">確認</h3>
-      <p id="dialogMessage" class="text-xs sm:text-sm text-slate-600 leading-relaxed"></p>
+      <p id="dialogMessage" class="text-sm text-slate-600 leading-relaxed"></p>
       <div class="flex justify-end gap-2 pt-2">
-        <button id="dialogCancelBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">キャンセル</button>
-        <button id="dialogOkBtn" type="button" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold">実行する</button>
+        <button id="dialogCancelBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">キャンセル</button>
+        <button id="dialogOkBtn" type="button" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold">実行する</button>
       </div>
     </div>
   </div>
 
-  <!-- ==================== トースト通知コンテナ ==================== -->
+  <!-- ==================== トースト通知 ==================== -->
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-[calc(100%-2rem)] pointer-events-none"></div>
 
-  <!-- ==================== JavaScript アプリケーション本体 ==================== -->
+  <!-- ==================== JavaScript 本体 ==================== -->
   <script>
     (() => {
       'use strict';
@@ -692,49 +685,56 @@
       // =========================================================================
       // 1. 定数・ユーティリティ
       // =========================================================================
-      const STORAGE_KEY = 'financial_dashboard_2026_2056_v1';
+      const STORAGE_KEY = 'financial_dashboard_2026_2056_v2';
       const START_YEAR = 2026;
       const START_MONTH = 11;
       const END_YEAR = 2056;
       const END_MONTH = 12;
-      const BASE_START_CASH_2026_10 = -332011; // 2026年10月末基準の逆算起点
 
-      /**
-       * 年齢計算: 2026年12月を70歳とし、毎年12月に+1歳
-       * 2026-11 = 69歳, 2026-12〜2027-11 = 70歳, ..., 2056-12 = 100歳
-       */
+      const BASE_START_CASH_2026_10 = -332011;
+      const BASE_START_RAKU_2026_10 = 68575;
+
+      const SCENARIO_RATES = {
+        standard: 4.32,     // ① 標準（1万通貨13円/日水準・税引後）
+        conservative: 3.72, // ② 保守
+        pessimistic: 2.67   // ③ 悲観
+      };
+
+      /** 2026年12月を70歳とし、毎年12月に+1歳 */
       function getAge(year, month) {
         return (year - 1957) + (month === 12 ? 1 : 0);
       }
 
-      /** YYYY-MM 形式を生成 */
       function formatYm(year, month) {
         return `${year}-${String(month).padStart(2, '0')}`;
       }
 
-      /** YYYY-MM を {year, month} に分解 */
       function parseYm(ym) {
         const m = String(ym || '').trim().match(/(\d{4})[^\d]?(\d{1,2})/);
         if (!m) return null;
         return { year: parseInt(m[1], 10), month: parseInt(m[2], 10) };
       }
 
-      /** 数値フォーマット（カンマ区切り・円記号オプション） */
       function fmtYen(val, showSign = false) {
         if (val === null || val === undefined || isNaN(val)) return '-';
-        const rounded = Math.round(val);
-        const sign = showSign && rounded > 0 ? '+' : '';
-        return `${sign}${rounded.toLocaleString('ja-JP')}円`;
+        const r = Math.round(val);
+        const sign = showSign && r > 0 ? '+' : '';
+        return `${sign}${r.toLocaleString('ja-JP')}円`;
       }
 
       function fmtNum(val, showSign = false) {
         if (val === null || val === undefined || isNaN(val)) return '-';
-        const rounded = Math.round(val);
-        const sign = showSign && rounded > 0 ? '+' : '';
-        return `${sign}${rounded.toLocaleString('ja-JP')}`;
+        const r = Math.round(val);
+        const sign = showSign && r > 0 ? '+' : '';
+        return `${sign}${r.toLocaleString('ja-JP')}`;
       }
 
-      /** 数値文字列（カンマ・円・全角等含む）を安全に数値化 */
+      function fmtMan(val) {
+        if (val === null || val === undefined || isNaN(val)) return '-';
+        const man = val / 10000;
+        return `${man.toLocaleString('ja-JP', { maximumFractionDigits: 1 })}万円`;
+      }
+
       function parseAmount(str) {
         if (typeof str === 'number') return isNaN(str) ? 0 : str;
         if (str === null || str === undefined) return 0;
@@ -747,14 +747,12 @@
         return isNaN(num) ? 0 : num;
       }
 
-      /** 金額に応じた色クラス */
-      function amtClass(val, neutralZero = false) {
-        if (val < 0) return 'text-rose-600 font-semibold';
-        if (val > 0 && !neutralZero) return 'text-emerald-700';
-        return 'text-slate-700';
+      function amtClass(val) {
+        if (val < 0) return 'text-rose-600 font-bold';
+        if (val > 0) return 'text-emerald-700 font-semibold';
+        return 'text-slate-600';
       }
 
-      /** HTMLエスケープ */
       function escHtml(str) {
         return String(str ?? '')
           .replace(/&/g, '&amp;')
@@ -763,17 +761,16 @@
           .replace(/"/g, '&quot;');
       }
 
-      /** トースト通知 */
       function showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         const colors = {
           success: 'bg-emerald-600 text-white border-emerald-700',
           error: 'bg-rose-600 text-white border-rose-700',
-          warning: 'bg-amber-500 text-white border-amber-600',
+          warning: 'bg-amber-600 text-white border-amber-700',
           info: 'bg-slate-800 text-white border-slate-900'
         };
         const el = document.createElement('div');
-        el.className = `pointer-events-auto rounded-xl px-4 py-3 text-xs sm:text-sm font-medium shadow-lg border transition-all duration-300 ${colors[type] || colors.info}`;
+        el.className = `pointer-events-auto rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold shadow-lg border transition-all duration-300 ${colors[type] || colors.info}`;
         el.textContent = message;
         container.appendChild(el);
         setTimeout(() => {
@@ -782,7 +779,6 @@
         }, 4200);
       }
 
-      /** カスタム確認ダイアログ（confirm()の代替） */
       function showConfirmDialog(title, message) {
         return new Promise((resolve) => {
           const modal = document.getElementById('dialogModal');
@@ -791,15 +787,15 @@
           modal.classList.remove('hidden');
           modal.classList.add('flex');
 
-          const cleanup = (result) => {
+          const okBtn = document.getElementById('dialogOkBtn');
+          const cancelBtn = document.getElementById('dialogCancelBtn');
+          const cleanup = (res) => {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             okBtn.removeEventListener('click', onOk);
             cancelBtn.removeEventListener('click', onCancel);
-            resolve(result);
+            resolve(res);
           };
-          const okBtn = document.getElementById('dialogOkBtn');
-          const cancelBtn = document.getElementById('dialogCancelBtn');
           const onOk = () => cleanup(true);
           const onCancel = () => cleanup(false);
           okBtn.addEventListener('click', onOk);
@@ -808,11 +804,10 @@
       }
 
       // =========================================================================
-      // 2. 堅牢な RFC4180 準拠 CSV パーサー
+      // 2. RFC4180 CSV パーサー
       // =========================================================================
       function parseCSV(text) {
         if (!text) return [];
-        // UTF-8 BOM除去
         const src = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
         const rows = [];
         let row = [];
@@ -822,35 +817,25 @@
         for (let i = 0; i < src.length; i++) {
           const ch = src[i];
           const next = src[i + 1];
-
           if (inQuotes) {
             if (ch === '"') {
-              if (next === '"') {
-                field += '"';
-                i++;
-              } else {
-                inQuotes = false;
-              }
+              if (next === '"') { field += '"'; i++; }
+              else inQuotes = false;
             } else {
               field += ch;
             }
           } else {
-            if (ch === '"') {
-              inQuotes = true;
-            } else if (ch === ',') {
-              row.push(field.trim());
-              field = '';
-            } else if (ch === '\r') {
+            if (ch === '"') inQuotes = true;
+            else if (ch === ',') { row.push(field.trim()); field = ''; }
+            else if (ch === '\r') {
               if (next === '\n') i++;
               row.push(field.trim());
               if (row.some(c => c !== '')) rows.push(row);
-              row = [];
-              field = '';
+              row = []; field = '';
             } else if (ch === '\n') {
               row.push(field.trim());
               if (row.some(c => c !== '')) rows.push(row);
-              row = [];
-              field = '';
+              row = []; field = '';
             } else {
               field += ch;
             }
@@ -864,9 +849,9 @@
       }
 
       // =========================================================================
-      // 3. 初期内蔵データ生成（添付スプレッドシートの正確な再現）
+      // 3. 期間配列・初期組み込みデータ
       // =========================================================================
-      function generateAllMonthsList() {
+      const ALL_MONTHS = (() => {
         const list = [];
         let y = START_YEAR, m = START_MONTH;
         while (y < END_YEAR || (y === END_YEAR && m <= END_MONTH)) {
@@ -875,45 +860,30 @@
           if (m > 12) { m = 1; y++; }
         }
         return list;
-      }
-
-      const ALL_MONTHS = generateAllMonthsList(); // 全362ヶ月
+      })();
 
       function createDefaultEvents() {
         const events = [];
-        let idCounter = 1;
-        const add = (ym, title, amount, category) => {
-          events.push({ id: `ev_${idCounter++}`, ym, title, amount, category });
-        };
+        let id = 1;
+        const add = (ym, title, amount, category) => events.push({ id: `ev_${id++}`, ym, title, amount, category });
 
-        // 2026年11月 単発イベント（2026-11収支 -260,347円に厳密一致）
         add('2026-11', '孫にパソコンプレゼント', 152280, '家族');
 
-        // 2027年〜2056年の定期・隔年イベント
         for (let y = 2027; y <= 2056; y++) {
-          // 毎年定期
           add(`${y}-02`, '車保険', 34670, '自動車');
           add(`${y}-05`, '自動車税', 10800, '自動車');
           add(`${y}-09`, 'マネーフォワード', 5300, 'サブスク');
           add(`${y}-10`, '保守党党費', 6000, 'その他');
           add(`${y}-12`, 'povo', 16700, '通信');
-
-          // 隔年イベント（奇数年: アパート更新）
           if (y % 2 === 1) {
             add(`${y}-02`, 'アパート更新', 42000, '住宅');
             add(`${y}-03`, 'アパート更新（家財保険）', 18000, '住宅');
           }
-          // 隔年イベント（偶数年: 車検）
           if (y % 2 === 0) {
             add(`${y}-05`, '車検', 70000, '自動車');
           }
         }
         return events.sort((a, b) => a.ym.localeCompare(b.ym));
-      }
-
-      function createDefaultMonthlyBaseOverrides() {
-        // 個別の月次プランCSVを読み込んだ場合の上書きマップ（初期は空＝計算ルール使用）
-        return {};
       }
 
       function getDefaultPlanForMonth(year, month) {
@@ -941,50 +911,12 @@
         }
 
         let livingCost = 302450;
-        if (ym <= '2027-06') {
-          livingCost = 307450;
-        } else if (ym <= '2037-05') {
-          livingCost = 302450;
-        } else if (ym <= '2038-12') {
-          livingCost = 260000;
-        } else {
-          // 2039年〜2056年: 毎年+800円インフレ（2056年は274,400円）
-          livingCost = 260000 + (year - 2038) * 800;
-        }
+        if (ym <= '2027-06') livingCost = 307450;
+        else if (ym <= '2037-05') livingCost = 302450;
+        else if (ym <= '2038-12') livingCost = 260000;
+        else livingCost = 260000 + (year - 2038) * 800; // 2039〜2056: 毎年+800円 (2056年=274,400円)
 
         return { pension, corpPension, salary, otherIncome, livingCost };
-      }
-
-      function createDefaultRakutsumuActuals() {
-        return [
-          { ym: '2026-06', netDeposit: 30000, evalValue: 29997, ratio: 681.8, lev: 0.29, status: '確定' },
-          { ym: '2026-07', netDeposit: 40000, evalValue: 39569, ratio: 399.7, lev: 0.50, status: '確定' },
-          { ym: '2026-08', netDeposit: 50000, evalValue: 50709, ratio: 305.5, lev: 0.65, status: '確定' },
-          { ym: '2026-09', netDeposit: 60000, evalValue: 56453, ratio: 159.8, lev: 1.25, status: '確定' },
-          { ym: '2026-10', netDeposit: 75000, evalValue: 68575, ratio: 149.2, lev: 1.34, status: '確定' },
-          { ym: '2026-11', netDeposit: 90000, evalValue: 80915, ratio: 152.9, lev: 1.31, status: '確定' },
-          { ym: '2026-12', netDeposit: 105000, evalValue: 103132, ratio: 193.36, lev: 1.03, status: '計画' }
-        ];
-      }
-
-      function createDefaultRakutsumuForecast() {
-        return {
-          standard: {
-            2026: 112266, 2027: 302705, 2028: 501777, 2029: 710313,
-            2030: 929224, 2031: 1159510, 2032: 1402260, 2033: 1658690,
-            2034: 1930000, 2035: 2217950, 2036: 2523800, 2037: 2849410
-          },
-          conservative: {
-            2026: 112030, 2027: 300907, 2028: 497296, 2029: 701837,
-            2030: 915225, 2031: 1138000, 2032: 1371000, 2033: 1615000,
-            2034: 1872000, 2035: 2143660, 2036: 2428440, 2037: 2728900
-          },
-          pessimistic: {
-            2026: 111670, 2027: 297976, 2028: 489788, 2029: 687461,
-            2030: 891373, 2031: 1102000, 2032: 1320000, 2033: 1545000,
-            2034: 1778000, 2035: 2019500, 2036: 2270250, 2037: 2530640
-          }
-        };
       }
 
       function createDefaultMfData() {
@@ -1019,39 +951,52 @@
 
       function createInitialState() {
         return {
-          scenario: 'standard',         // 'standard' | 'conservative' | 'pessimistic'
-          post80Mode: 'compound',       // 'compound' | 'hold'
-          chartGranularity: 'annual',   // 'annual' | 'monthly'
+          // らくつむ＆補填シミュレーションパラメータ
+          monthlyDeposit: 15000,         // 毎月積立額（円）
+          stopDepositYm: '2036-12',      // 積立停止月（80歳到達月まで積立、翌月2037-01から0円）
+          cashFloor: 1000000,            // 現金口座 下限防衛ライン（100万円）
+          topupCondition: 'afterStop',   // 'afterStop' | 'alwaysAfterReach'
+          scenario: 'standard',          // 'standard' | 'conservative' | 'pessimistic' | 'custom'
+          customAnnualRate: 4.32,        // カスタム税引後スワップ年利（%）
+          chartGranularity: 'annual',    // 'annual' | 'monthly'
+          subTableView: 'annual',        // 'annual' | 'monthly'
           autoSync: false,
           lastSyncTime: null,
           sheetUrls: {
             monthlyPlan: '',
             events: '',
             rakutsumuActual: '',
-            rakutsumuForecast: '',
+            rakutsumuCf: '',
             moneyForward: ''
           },
           baseStartCash: BASE_START_CASH_2026_10,
-          monthlyCsvOverrides: createDefaultMonthlyBaseOverrides(),
+          baseStartRaku: BASE_START_RAKU_2026_10,
+          monthlyCsvOverrides: {},
           events: createDefaultEvents(),
-          rakutsumuActuals: createDefaultRakutsumuActuals(),
-          rakutsumuForecast: createDefaultRakutsumuForecast(),
           mfData: createDefaultMfData(),
-          confirmedMonths: {} // { '2026-11': { cash, rakutsumu, income, expense, memo } }
+          // 初期確定実績（2026年11月：11/27時点の確定値をアンカーとして初期搭載）
+          confirmedMonths: {
+            '2026-11': {
+              cash: -592358,
+              rakutsumu: 80915,
+              income: 199383,
+              expense: 459730,
+              memo: '初期実績（11/27確定値）'
+            }
+          }
         };
       }
 
       // =========================================================================
-      // 4. 状態管理（localStorage永続化）
+      // 4. 状態管理
       // =========================================================================
       let state = loadState();
       let computedMonthly = [];
       let computedAnnual = [];
-      let activeTab = 'dashboard';
+      let simStats = {};
 
-      // Chart.jsインスタンス
       let mainBalanceChart = null;
-      let annualCashflowChart = null;
+      let swapTopupChart = null;
       let mfCategoryChart = null;
 
       function loadState() {
@@ -1064,12 +1009,11 @@
             ...def,
             ...parsed,
             sheetUrls: { ...def.sheetUrls, ...(parsed.sheetUrls || {}) },
-            rakutsumuForecast: parsed.rakutsumuForecast || def.rakutsumuForecast,
             mfData: parsed.mfData || def.mfData,
             confirmedMonths: parsed.confirmedMonths || {}
           };
         } catch (e) {
-          console.error('状態読み込みエラー:', e);
+          console.error('状態読込エラー:', e);
           return createInitialState();
         }
       }
@@ -1079,74 +1023,39 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch (e) {
           console.error('状態保存エラー:', e);
-          showToast('ブラウザの保存容量上限により保存に失敗しました', 'error');
+          showToast('保存容量上限のためローカル保存に失敗しました', 'error');
         }
       }
 
-      // =========================================================================
-      // 5. コア計算エンジン（ロールフォワード・らくつむ補間・年次集計）
-      // =========================================================================
-      function buildRakutsumuModelCurve() {
-        const forecastMap = state.rakutsumuForecast[state.scenario] || state.rakutsumuForecast.standard;
-        const yearEnd = {};
-
-        // 2026〜2037年の年末値
-        for (let y = 2026; y <= 2037; y++) {
-          yearEnd[y] = forecastMap[y] ?? (yearEnd[y - 1] || 112266);
-        }
-
-        // 2038〜2056年の年末値
-        for (let y = 2038; y <= 2056; y++) {
-          if (state.post80Mode === 'compound') {
-            yearEnd[y] = Math.round(yearEnd[y - 1] * 1.041);
-          } else {
-            yearEnd[y] = yearEnd[2037];
-          }
-        }
-
-        // らくつむ確定実績マップ
-        const actualMap = {};
-        (state.rakutsumuActuals || []).forEach(r => {
-          actualMap[r.ym] = r;
-        });
-
-        // 月次モデル値（補間＋実績優先）
-        const monthlyModel = {};
-        ALL_MONTHS.forEach(({ year, month, ym }) => {
-          // 確定実績がある月は実績評価額を優先
-          if (actualMap[ym] && actualMap[ym].status === '確定') {
-            monthlyModel[ym] = actualMap[ym].evalValue;
-            return;
-          }
-          // 2026-12 計画値または予測値
-          if (ym === '2026-12') {
-            monthlyModel[ym] = yearEnd[2026];
-            return;
-          }
-          const prevYearVal = yearEnd[year - 1] ?? (actualMap['2026-11']?.evalValue || 80915);
-          const currYearVal = yearEnd[year] ?? prevYearVal;
-          // 1〜12月を滑らかに補間
-          monthlyModel[ym] = Math.round(prevYearVal + (currYearVal - prevYearVal) * (month / 12));
-        });
-
-        return monthlyModel;
+      function getEffectiveAnnualRate() {
+        if (state.scenario === 'custom') return Math.max(0, Number(state.customAnnualRate) || 0);
+        return SCENARIO_RATES[state.scenario] ?? 4.32;
       }
 
+      // =========================================================================
+      // 5. コア計算エンジン（80歳積立停止・100万自動補填・スワップ減少）
+      // =========================================================================
       function recalculateAll() {
-        // 1. イベントを年月ごとに合算
         const eventSumByYm = {};
         (state.events || []).forEach(ev => {
           eventSumByYm[ev.ym] = (eventSumByYm[ev.ym] || 0) + (Number(ev.amount) || 0);
         });
 
-        // 2. らくつむモデルカーブ
-        const rakutsumuModel = buildRakutsumuModelCurve();
+        const annualRate = getEffectiveAnnualRate();
+        const monthlyRate = (annualRate / 100) / 12;
 
-        // 3. 362ヶ月を先頭からロールフォワード計算
         let prevCash = state.baseStartCash;
-        let rakutsumuDelta = 0; // 確定らくつむ残高が入力された場合、以降の予測へ差分を連動
+        let prevRaku = state.baseStartRaku;
+        let hasReachedFloor = (state.cashFloor > 0 && prevCash >= state.cashFloor);
 
         const monthlyRows = [];
+
+        // 統計集計用
+        let firstTopupRow = null;
+        let totalTopupAmount = 0;
+        let totalTopupCount = 0;
+        let peakSwapRow = null;
+        let rakuDepletedRow = null;
 
         ALL_MONTHS.forEach(({ year, month, ym, age }) => {
           const defPlan = getDefaultPlanForMonth(year, month);
@@ -1157,9 +1066,7 @@
           const salary = csvOv.salary !== undefined ? csvOv.salary : defPlan.salary;
           const otherIncome = csvOv.otherIncome !== undefined ? csvOv.otherIncome : defPlan.otherIncome;
           const livingCost = csvOv.livingCost !== undefined ? csvOv.livingCost : defPlan.livingCost;
-          const specialExpense = (csvOv.specialExpense !== undefined && csvOv.useCsvSpecial)
-            ? csvOv.specialExpense
-            : (eventSumByYm[ym] || 0);
+          const specialExpense = eventSumByYm[ym] || 0;
 
           let incomeTotal = pension + corpPension + salary + otherIncome;
           let expenseTotal = livingCost + specialExpense;
@@ -1178,43 +1085,93 @@
 
           const netCashflow = incomeTotal - expenseTotal;
 
-          // 現金残高（確定月はアンカーとして上書き）
-          let cashBalance;
-          if (isConfirmed && conf.cash !== null && conf.cash !== undefined && conf.cash !== '') {
-            cashBalance = Number(conf.cash);
-          } else {
-            cashBalance = prevCash + netCashflow;
-          }
-          prevCash = cashBalance;
+          // らくつむ積立（停止月まで毎月積立、翌月以降は0円）
+          const isDepositing = ym <= state.stopDepositYm;
+          const rakuDeposit = isDepositing ? Math.max(0, Number(state.monthlyDeposit) || 0) : 0;
 
-          // らくつむ残高（確定月はアンカーとして上書きし、以降のモデルへ差分連動）
-          let rakutsumuBalance;
-          const baseRaku = rakutsumuModel[ym] ?? 0;
-          if (isConfirmed && conf.rakutsumu !== null && conf.rakutsumu !== undefined && conf.rakutsumu !== '') {
-            rakutsumuBalance = Number(conf.rakutsumu);
-            rakutsumuDelta = rakutsumuBalance - baseRaku;
+          // 毎月の税引後スワップポイント（前月末らくつむ残高に比例）
+          const monthlySwap = prevRaku > 0 ? Math.round(prevRaku * monthlyRate) : 0;
+
+          let cashBeforeTopup = prevCash + netCashflow;
+          let rakuBeforeTopup = Math.max(0, prevRaku + rakuDeposit + monthlySwap);
+
+          let topupAmount = 0;
+          let cashBalance = cashBeforeTopup;
+          let rakutsumuBalance = rakuBeforeTopup;
+
+          if (isConfirmed) {
+            // 確定月は入力実績をアンカーとしてそのまま上書き
+            if (conf.cash !== null && conf.cash !== undefined && conf.cash !== '') {
+              cashBalance = Number(conf.cash);
+            }
+            if (conf.rakutsumu !== null && conf.rakutsumu !== undefined && conf.rakutsumu !== '') {
+              rakutsumuBalance = Math.max(0, Number(conf.rakutsumu));
+            }
+            if (state.cashFloor > 0 && cashBalance >= state.cashFloor) {
+              hasReachedFloor = true;
+            }
           } else {
-            rakutsumuBalance = Math.max(0, baseRaku + rakutsumuDelta);
+            // 一度でも下限ライン以上に到達したかを記録
+            if (state.cashFloor > 0 && cashBeforeTopup >= state.cashFloor) {
+              hasReachedFloor = true;
+            }
+
+            // 100万円自動補填の判定
+            const canTopup = state.cashFloor > 0 && (
+              state.topupCondition === 'afterStop'
+                ? (ym > state.stopDepositYm)
+                : hasReachedFloor
+            );
+
+            if (canTopup && cashBeforeTopup < state.cashFloor && rakuBeforeTopup > 0) {
+              const shortfall = state.cashFloor - cashBeforeTopup;
+              topupAmount = Math.min(shortfall, rakuBeforeTopup);
+              cashBalance = cashBeforeTopup + topupAmount;
+              rakutsumuBalance = rakuBeforeTopup - topupAmount;
+            }
           }
 
           const totalBalance = cashBalance + rakutsumuBalance;
 
-          monthlyRows.push({
+          const rowObj = {
             year, month, ym, age,
             isConfirmed,
             memo: conf?.memo || '',
-            pension, corpPension, salary, otherIncome, incomeTotal,
-            livingCost, specialExpense, expenseTotal,
-            netCashflow,
-            cashBalance,
-            rakutsumuBalance,
-            totalBalance
-          });
+            incomeTotal, expenseTotal, specialExpense, netCashflow,
+            rakuDeposit, monthlySwap, topupAmount,
+            cashBeforeTopup, rakuBeforeTopup,
+            cashBalance, rakutsumuBalance, totalBalance
+          };
+
+          // 統計更新
+          if (topupAmount > 0) {
+            if (!firstTopupRow) firstTopupRow = rowObj;
+            totalTopupAmount += topupAmount;
+            totalTopupCount++;
+          }
+          if (!peakSwapRow || monthlySwap > peakSwapRow.monthlySwap) {
+            peakSwapRow = rowObj;
+          }
+          if (totalTopupCount > 0 && !rakuDepletedRow && rakutsumuBalance <= 0) {
+            rakuDepletedRow = rowObj;
+          }
+
+          monthlyRows.push(rowObj);
+          prevCash = cashBalance;
+          prevRaku = rakutsumuBalance;
         });
 
         computedMonthly = monthlyRows;
+        simStats = {
+          annualRate,
+          firstTopupRow,
+          totalTopupAmount,
+          totalTopupCount,
+          peakSwapRow,
+          rakuDepletedRow
+        };
 
-        // 4. 年次サマリー集計（2026〜2056）
+        // 年次サマリー集計（2026〜2056）
         const annualMap = {};
         monthlyRows.forEach(r => {
           if (!annualMap[r.year]) {
@@ -1224,7 +1181,9 @@
               income: 0,
               expense: 0,
               specialExpense: 0,
-              net: 0,
+              rakuDeposit: 0,
+              annualSwap: 0,
+              annualTopup: 0,
               endCash: 0,
               endRakutsumu: 0,
               endTotal: 0
@@ -1234,8 +1193,9 @@
           a.income += r.incomeTotal;
           a.expense += r.expenseTotal;
           a.specialExpense += r.specialExpense;
-          a.net += r.netCashflow;
-          // 12月（またはその年の最終月）を残高とする
+          a.rakuDeposit += r.rakuDeposit;
+          a.annualSwap += r.monthlySwap;
+          a.annualTopup += r.topupAmount;
           a.endCash = r.cashBalance;
           a.endRakutsumu = r.rakutsumuBalance;
           a.endTotal = r.totalBalance;
@@ -1245,144 +1205,173 @@
       }
 
       // =========================================================================
-      // 6. 画面描画関数群
+      // 6. 描画関数群
       // =========================================================================
       function renderAll() {
         recalculateAll();
-        updateHeaderSyncBadge();
+        updateHeaderBadge();
         renderDashboard();
-        renderMonthlyTable();
         renderAnnualTable();
+        renderMonthlyTable();
         renderEventsTable();
         renderMfSection();
         renderSettingsSection();
       }
 
-      function updateHeaderSyncBadge() {
-        const badge = document.getElementById('headerSyncStatus');
-        const confCount = Object.keys(state.confirmedMonths).length;
-        if (state.lastSyncTime) {
-          badge.textContent = `最終同期: ${state.lastSyncTime}｜確定${confCount}ヶ月`;
-          badge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-emerald-900/70 text-emerald-200 border border-emerald-700';
+      function updateHeaderBadge() {
+        const badge = document.getElementById('headerLatestConfirmedBadge');
+        const keys = Object.keys(state.confirmedMonths).sort();
+        const latest = keys.length > 0 ? keys[keys.length - 1] : null;
+        if (latest) {
+          const p = parseYm(latest);
+          const syncStr = state.lastSyncTime ? `｜同期 ${state.lastSyncTime}` : '';
+          badge.textContent = `最新確定: ${latest}（${p ? getAge(p.year, p.month) : '-'}歳）${syncStr}`;
+          badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-800/80 text-emerald-100 border border-emerald-600';
         } else {
-          badge.textContent = `内蔵データ稼働中｜確定${confCount}ヶ月`;
-          badge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-300 border border-slate-700';
+          badge.textContent = '確定月なし（計画モデル稼働中）';
+          badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-700 text-slate-200 border border-slate-600';
         }
       }
 
       // --- TAB 1: ダッシュボード ---
       function renderDashboard() {
-        // シナリオ＆80歳以降ボタン状態更新
-        document.querySelectorAll('.scenario-btn').forEach(btn => {
-          const active = btn.dataset.scenario === state.scenario;
-          btn.className = `scenario-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-            active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+        // コントロールバーの状態同期
+        const ctrlStop = document.getElementById('ctrlStopYm');
+        if ([...ctrlStop.options].some(o => o.value === state.stopDepositYm)) {
+          ctrlStop.value = state.stopDepositYm;
+        }
+        document.getElementById('ctrlDepositLabel').textContent = fmtYen(state.monthlyDeposit);
+
+        document.querySelectorAll('.floor-btn').forEach(btn => {
+          const active = Number(btn.dataset.floor) === Number(state.cashFloor);
+          btn.className = `floor-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition ${
+            active ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`;
         });
-        document.querySelectorAll('.post80-btn').forEach(btn => {
-          const active = btn.dataset.post80 === state.post80Mode;
-          btn.className = `post80-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+
+        document.querySelectorAll('.scenario-btn').forEach(btn => {
+          const active = btn.dataset.scenario === state.scenario;
+          btn.className = `scenario-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition ${
             active ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`;
         });
+
+        document.querySelectorAll('.topup-cond-btn').forEach(btn => {
+          const active = btn.dataset.topupCond === state.topupCondition;
+          btn.className = `topup-cond-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition ${
+            active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+          }`;
+        });
+
         document.querySelectorAll('.granularity-btn').forEach(btn => {
           const active = btn.dataset.chartGranularity === state.chartGranularity;
-          btn.className = `granularity-btn px-3 py-1 rounded-lg text-xs font-semibold transition ${
+          btn.className = `granularity-btn px-3 py-1.5 rounded-lg text-xs font-bold transition ${
             active ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`;
         });
 
-        // 直近確定月（なければ2026-11起点）
-        const confirmedKeys = Object.keys(state.confirmedMonths).sort();
-        const latestYm = confirmedKeys.length > 0 ? confirmedKeys[confirmedKeys.length - 1] : '2026-11';
+        const stopP = parseYm(state.stopDepositYm);
+        const stopAge = stopP ? getAge(stopP.year, stopP.month) : 80;
+        document.getElementById('activeRuleSummary').textContent =
+          `${state.stopDepositYm}(${stopAge}歳)で積立停止｜下限${fmtMan(state.cashFloor)}補填｜年利${simStats.annualRate.toFixed(2)}%`;
+
+        // 5枚のKPIカードデータ
+        const confKeys = Object.keys(state.confirmedMonths).sort();
+        const latestYm = confKeys.length > 0 ? confKeys[confKeys.length - 1] : '2026-11';
         const latestRow = computedMonthly.find(r => r.ym === latestYm) || computedMonthly[0];
-        const statusLabel = latestRow.isConfirmed ? `${latestRow.ym} 確定実績` : `${latestRow.ym} 計画起点`;
+        const stopRow = computedMonthly.find(r => r.ym === state.stopDepositYm) || computedMonthly.find(r => r.ym === '2036-12');
+        const row100 = computedMonthly[computedMonthly.length - 1];
 
-        // 現金残高の期間最低値
-        let minCashRow = computedMonthly[0];
-        computedMonthly.forEach(r => {
-          if (r.cashBalance < minCashRow.cashBalance) minCashRow = r;
-        });
+        const firstTopupText = simStats.firstTopupRow
+          ? `${simStats.firstTopupRow.ym}（${simStats.firstTopupRow.age}歳）`
+          : '期間内発生なし';
+        const peakSwap = simStats.peakSwapRow ? simStats.peakSwapRow.monthlySwap : 0;
+        const peakSwapWhen = simStats.peakSwapRow ? `${simStats.peakSwapRow.ym}(${simStats.peakSwapRow.age}歳)` : '-';
+        const endSwap = row100 ? row100.monthlySwap : 0;
 
-        // 80歳(2036-12), 90歳(2046-12), 100歳(2056-12)
-        const row80 = computedMonthly.find(r => r.ym === '2036-12');
-        const row90 = computedMonthly.find(r => r.ym === '2046-12');
-        const row100 = computedMonthly.find(r => r.ym === '2056-12');
-
-        // 上段KPIカード
-        const kpiGrid = document.getElementById('kpiGrid');
-        kpiGrid.innerHTML = `
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold text-slate-500">総合残高（合算）</span>
-              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${latestRow.isConfirmed ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${escHtml(statusLabel)}</span>
+        document.getElementById('kpiGrid').innerHTML = `
+          <!-- KPI 1: 現在（最新確定月） -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-xs font-bold text-slate-500">① 現在残高</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">${latestRow.ym}(${latestRow.age}歳)</span>
             </div>
-            <div class="text-2xl sm:text-3xl font-bold num mt-1 ${latestRow.totalBalance < 0 ? 'text-rose-600' : 'text-slate-900'}">${fmtYen(latestRow.totalBalance)}</div>
-            <div class="text-xs text-slate-500 mt-1.5">${latestRow.age}歳時点｜現金＋らくつむ</div>
+            <div class="text-xl sm:text-2xl font-bold num mt-2 ${latestRow.totalBalance < 0 ? 'text-rose-600' : 'text-slate-900'}">${fmtYen(latestRow.totalBalance)}</div>
+            <div class="mt-2 pt-2 border-t border-slate-100 text-xs space-y-0.5 text-slate-600">
+              <div class="flex justify-between"><span>現金:</span><b class="num ${latestRow.cashBalance < 0 ? 'text-rose-600' : 'text-sky-700'}">${fmtYen(latestRow.cashBalance)}</b></div>
+              <div class="flex justify-between"><span>らくつむ:</span><b class="num text-indigo-700">${fmtYen(latestRow.rakutsumuBalance)}</b></div>
+            </div>
           </div>
 
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold text-slate-500">現金残高（マネーフォワード）</span>
-              <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+          <!-- KPI 2: 80歳（積立停止時） -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-xs font-bold text-sky-700">② 積立停止時見込</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">${stopRow.ym}(${stopRow.age}歳)</span>
             </div>
-            <div class="text-2xl sm:text-3xl font-bold num mt-1 ${latestRow.cashBalance < 0 ? 'text-rose-600' : 'text-sky-700'}">${fmtYen(latestRow.cashBalance)}</div>
-            <div class="text-xs text-slate-500 mt-1.5">当月収支: <span class="num font-semibold ${amtClass(latestRow.netCashflow)}">${fmtYen(latestRow.netCashflow, true)}</span></div>
+            <div class="text-xl sm:text-2xl font-bold num mt-2 text-slate-900">${fmtYen(stopRow.totalBalance)}</div>
+            <div class="mt-2 pt-2 border-t border-slate-100 text-xs space-y-0.5 text-slate-600">
+              <div class="flex justify-between"><span>現金:</span><b class="num text-sky-700">${fmtYen(stopRow.cashBalance)}</b></div>
+              <div class="flex justify-between"><span>らくつむ:</span><b class="num text-indigo-700">${fmtYen(stopRow.rakutsumuBalance)}</b></div>
+            </div>
           </div>
 
-          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold text-slate-500">らくつむ残高（分離口座）</span>
-              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+          <!-- KPI 3: 初回補填＆累計補填 -->
+          <div class="bg-white rounded-2xl border ${simStats.totalTopupCount > 0 ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200'} shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-xs font-bold text-amber-800">③ 100万円自動補填</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">${simStats.totalTopupCount}回発生</span>
             </div>
-            <div class="text-2xl sm:text-3xl font-bold num mt-1 text-indigo-700">${fmtYen(latestRow.rakutsumuBalance)}</div>
-            <div class="text-xs text-slate-500 mt-1.5">メキシコペソ積立・複利運用</div>
+            <div class="text-xl sm:text-2xl font-bold num mt-2 text-amber-700">${fmtYen(simStats.totalTopupAmount)}</div>
+            <div class="mt-2 pt-2 border-t border-amber-200/60 text-xs space-y-0.5 text-slate-600">
+              <div class="flex justify-between"><span>初回補填:</span><b class="text-slate-800">${firstTopupText}</b></div>
+              <div class="flex justify-between"><span>枯渇時期:</span><b class="${simStats.rakuDepletedRow ? 'text-rose-600' : 'text-emerald-700'}">${simStats.rakuDepletedRow ? `${simStats.rakuDepletedRow.ym}(${simStats.rakuDepletedRow.age}歳)` : '100歳まで維持'}</b></div>
+            </div>
           </div>
 
-          <div class="bg-white rounded-2xl border ${minCashRow.cashBalance < 0 ? 'border-rose-200 bg-rose-50/40' : 'border-slate-200'} shadow-sm p-4 sm:p-5">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold ${minCashRow.cashBalance < 0 ? 'text-rose-700' : 'text-slate-500'}">現金残高の期間最低値</span>
-              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${minCashRow.cashBalance < 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${minCashRow.cashBalance < 0 ? '赤字注意' : '黒字維持'}</span>
+          <!-- KPI 4: 月次スワップ推移 -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-xs font-bold text-indigo-700">④ 月次スワップ推移</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">年${simStats.annualRate.toFixed(2)}%</span>
             </div>
-            <div class="text-2xl sm:text-3xl font-bold num mt-1 ${minCashRow.cashBalance < 0 ? 'text-rose-600' : 'text-emerald-700'}">${fmtYen(minCashRow.cashBalance)}</div>
-            <div class="text-xs text-slate-600 mt-1.5">発生: <span class="font-semibold">${minCashRow.ym}（${minCashRow.age}歳）</span></div>
+            <div class="text-lg sm:text-xl font-bold num mt-2 text-indigo-700 flex items-baseline gap-1 flex-wrap">
+              <span>${fmtNum(peakSwap)}</span>
+              <span class="text-xs text-slate-400">→</span>
+              <span class="${endSwap === 0 ? 'text-rose-600' : 'text-emerald-700'}">${fmtYen(endSwap)}</span>
+            </div>
+            <div class="mt-2 pt-2 border-t border-slate-100 text-xs space-y-0.5 text-slate-600">
+              <div class="flex justify-between"><span>ピーク月:</span><b class="num text-slate-800">${peakSwapWhen}</b></div>
+              <div class="flex justify-between"><span>100歳時:</span><b class="num text-slate-800">${fmtYen(endSwap)}/月</b></div>
+            </div>
+          </div>
+
+          <!-- KPI 5: 100歳最終残高 -->
+          <div class="bg-white rounded-2xl border border-emerald-200 bg-emerald-50/30 shadow-sm p-4 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-1">
+              <span class="text-xs font-bold text-emerald-800">⑤ 100歳 最終残高</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">2056-12</span>
+            </div>
+            <div class="text-xl sm:text-2xl font-bold num mt-2 ${row100.totalBalance < 0 ? 'text-rose-600' : 'text-emerald-800'}">${fmtYen(row100.totalBalance)}</div>
+            <div class="mt-2 pt-2 border-t border-emerald-200/60 text-xs space-y-0.5 text-slate-600">
+              <div class="flex justify-between"><span>現金:</span><b class="num ${row100.cashBalance < 0 ? 'text-rose-600' : 'text-sky-700'}">${fmtYen(row100.cashBalance)}</b></div>
+              <div class="flex justify-between"><span>らくつむ:</span><b class="num text-indigo-700">${fmtYen(row100.rakutsumuBalance)}</b></div>
+            </div>
           </div>
         `;
 
-        // 節目年齢カード
-        const renderMilestone = (title, row, accent) => {
-          if (!row) return '';
-          return `
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold ${accent}">${title}</span>
-                <span class="text-[11px] text-slate-400 num">${row.ym}</span>
-              </div>
-              <div class="text-xl font-bold num mt-1.5 ${row.totalBalance < 0 ? 'text-rose-600' : 'text-slate-900'}">${fmtYen(row.totalBalance)}</div>
-              <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between text-[11px] text-slate-500">
-                <span>現金: <b class="num ${row.cashBalance < 0 ? 'text-rose-600' : 'text-slate-700'}">${fmtNum(row.cashBalance)}</b></span>
-                <span>らくつむ: <b class="num text-indigo-700">${fmtNum(row.rakutsumuBalance)}</b></span>
-              </div>
-            </div>
-          `;
-        };
-
-        const row70End = computedMonthly.find(r => r.ym === '2026-12');
-        document.getElementById('milestoneGrid').innerHTML =
-          renderMilestone('70歳到達（2026年末）', row70End, 'text-slate-700') +
-          renderMilestone('80歳到達（2036年末）', row80, 'text-sky-700') +
-          renderMilestone('90歳到達（2046年末）', row90, 'text-indigo-700') +
-          renderMilestone('100歳到達（2056年末）', row100, 'text-emerald-700');
+        document.getElementById('swapChartBadge').textContent =
+          `ピーク月スワップ: ${fmtYen(peakSwap)}（${peakSwapWhen}） → 100歳時: ${fmtYen(endSwap)}`;
 
         renderMainBalanceChart();
-        renderAnnualCashflowChart();
+        renderSwapTopupChart();
       }
 
       function renderMainBalanceChart() {
         const ctx = document.getElementById('mainBalanceChart').getContext('2d');
         const isMonthly = state.chartGranularity === 'monthly';
 
-        let labels, totalData, cashData, rakuData, ages;
+        let labels, ages, totalData, cashData, rakuData;
         if (isMonthly) {
           labels = computedMonthly.map(r => r.ym);
           ages = computedMonthly.map(r => r.age);
@@ -1397,56 +1386,57 @@
           rakuData = computedAnnual.map(a => a.endRakutsumu);
         }
 
+        const datasets = [
+          {
+            label: '総合残高（現金＋らくつむ）',
+            data: totalData,
+            borderColor: '#059669',
+            backgroundColor: 'rgba(5, 150, 105, 0.08)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.2,
+            pointRadius: isMonthly ? 0 : 3,
+            pointHoverRadius: 5
+          },
+          {
+            label: '現金残高（マネーフォワード）',
+            data: cashData,
+            borderColor: '#0284c7',
+            backgroundColor: 'transparent',
+            borderWidth: 2.5,
+            tension: 0.2,
+            pointRadius: isMonthly ? 0 : 2.5,
+            pointHoverRadius: 5
+          },
+          {
+            label: 'らくつむ残高（分離口座）',
+            data: rakuData,
+            borderColor: '#4f46e5',
+            backgroundColor: 'transparent',
+            borderWidth: 2.2,
+            tension: 0.2,
+            pointRadius: isMonthly ? 0 : 2.5,
+            pointHoverRadius: 5
+          }
+        ];
+
+        if (state.cashFloor > 0) {
+          datasets.push({
+            label: `現金防衛ライン（${fmtMan(state.cashFloor)}）`,
+            data: labels.map(() => state.cashFloor),
+            borderColor: '#d97706',
+            borderWidth: 1.8,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            fill: false
+          });
+        }
+
         if (mainBalanceChart) mainBalanceChart.destroy();
         mainBalanceChart = new Chart(ctx, {
           type: 'line',
-          data: {
-            labels,
-            datasets: [
-              {
-                label: '総合残高（現金＋らくつむ）',
-                data: totalData,
-                borderColor: '#059669',
-                backgroundColor: 'rgba(5, 150, 105, 0.08)',
-                borderWidth: 2.8,
-                fill: true,
-                tension: 0.25,
-                pointRadius: isMonthly ? 0 : 3,
-                pointHoverRadius: 5
-              },
-              {
-                label: '現金残高（マネーフォワード）',
-                data: cashData,
-                borderColor: '#0284c7',
-                backgroundColor: 'transparent',
-                borderWidth: 2.2,
-                tension: 0.25,
-                pointRadius: isMonthly ? 0 : 2.5,
-                pointHoverRadius: 5
-              },
-              {
-                label: 'らくつむ残高（分離口座）',
-                data: rakuData,
-                borderColor: '#4f46e5',
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                borderDash: [5, 4],
-                tension: 0.25,
-                pointRadius: isMonthly ? 0 : 2,
-                pointHoverRadius: 5
-              },
-              {
-                label: '0円基準線',
-                data: labels.map(() => 0),
-                borderColor: '#e11d48',
-                borderWidth: 1.2,
-                borderDash: [3, 3],
-                pointRadius: 0,
-                pointHoverRadius: 0,
-                fill: false
-              }
-            ]
-          },
+          data: { labels, datasets },
           options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -1454,17 +1444,12 @@
             plugins: {
               legend: {
                 position: 'top',
-                labels: {
-                  usePointStyle: true,
-                  boxWidth: 8,
-                  font: { size: 11, family: 'Inter, Noto Sans JP' },
-                  filter: item => item.text !== '0円基準線'
-                }
+                labels: { usePointStyle: true, boxWidth: 9, font: { size: 12, weight: '600' } }
               },
               tooltip: {
-                backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
                 padding: 12,
-                titleFont: { size: 12, weight: 'bold' },
+                titleFont: { size: 13, weight: 'bold' },
                 bodyFont: { size: 12, family: 'JetBrains Mono, Noto Sans JP' },
                 callbacks: {
                   title: (items) => {
@@ -1473,25 +1458,16 @@
                       ? `${labels[idx]}（${ages[idx]}歳）`
                       : `${computedAnnual[idx].year}年12月末（${ages[idx]}歳）`;
                   },
-                  label: (ctx) => {
-                    if (ctx.dataset.label === '0円基準線') return null;
-                    return ` ${ctx.dataset.label}: ${fmtYen(ctx.parsed.y)}`;
-                  }
+                  label: (c) => ` ${c.dataset.label}: ${fmtYen(c.parsed.y)}`
                 }
               }
             },
             scales: {
-              x: {
-                ticks: {
-                  maxTicksLimit: isMonthly ? 15 : 16,
-                  font: { size: 10 }
-                },
-                grid: { display: false }
-              },
+              x: { ticks: { maxTicksLimit: 16, font: { size: 11 } }, grid: { display: false } },
               y: {
                 ticks: {
                   font: { size: 11, family: 'JetBrains Mono' },
-                  callback: (val) => `${(val / 10000).toLocaleString('ja-JP')}万`
+                  callback: (v) => `${(v / 10000).toLocaleString('ja-JP')}万`
                 },
                 grid: { color: '#f1f5f9' }
               }
@@ -1500,37 +1476,61 @@
         });
       }
 
-      function renderAnnualCashflowChart() {
-        const ctx = document.getElementById('annualCashflowChart').getContext('2d');
-        const labels = computedAnnual.map(a => `${a.year}年(${a.ageEnd}歳)`);
+      function renderSwapTopupChart() {
+        const ctx = document.getElementById('swapTopupChart').getContext('2d');
+        const isMonthly = state.chartGranularity === 'monthly';
 
-        if (annualCashflowChart) annualCashflowChart.destroy();
-        annualCashflowChart = new Chart(ctx, {
+        let labels, ages, swapData, topupData, swapLabel, topupLabel;
+        if (isMonthly) {
+          labels = computedMonthly.map(r => r.ym);
+          ages = computedMonthly.map(r => r.age);
+          swapData = computedMonthly.map(r => r.monthlySwap);
+          topupData = computedMonthly.map(r => r.topupAmount);
+          swapLabel = '月次スワップ（税引後・左軸）';
+          topupLabel = '月次自動補填額（右軸）';
+        } else {
+          // 年次表示では「年末時点の月次スワップ額」と「年間補填合計額」を対比
+          labels = computedAnnual.map(a => `${a.year}年(${a.ageEnd}歳)`);
+          ages = computedAnnual.map(a => a.ageEnd);
+          swapData = computedAnnual.map(a => {
+            const dec = computedMonthly.find(r => r.year === a.year && r.month === 12);
+            return dec ? dec.monthlySwap : 0;
+          });
+          topupData = computedAnnual.map(a => a.annualTopup);
+          swapLabel = '月次スワップ額（各年12月・左軸）';
+          topupLabel = '年間自動補填額（合計・右軸）';
+        }
+
+        if (swapTopupChart) swapTopupChart.destroy();
+        swapTopupChart = new Chart(ctx, {
           type: 'bar',
           data: {
             labels,
             datasets: [
               {
-                label: '年収入',
-                data: computedAnnual.map(a => a.income),
-                backgroundColor: 'rgba(14, 165, 233, 0.78)',
-                borderRadius: 4
-              },
-              {
-                label: '年支出（基本＋特別）',
-                data: computedAnnual.map(a => a.expense),
-                backgroundColor: 'rgba(244, 63, 94, 0.72)',
-                borderRadius: 4
-              },
-              {
-                label: 'うち特別出費',
                 type: 'line',
-                data: computedAnnual.map(a => a.specialExpense),
-                borderColor: '#f59e0b',
-                backgroundColor: '#f59e0b',
-                borderWidth: 2,
-                pointRadius: 2.5,
-                tension: 0.2
+                label: swapLabel,
+                data: swapData,
+                yAxisID: 'ySwap',
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79, 70, 229, 0.12)',
+                borderWidth: 2.8,
+                fill: true,
+                tension: 0.25,
+                pointRadius: isMonthly ? 0 : 3,
+                pointHoverRadius: 5,
+                order: 1
+              },
+              {
+                type: 'bar',
+                label: topupLabel,
+                data: topupData,
+                yAxisID: 'yTopup',
+                backgroundColor: 'rgba(245, 158, 11, 0.78)',
+                borderColor: '#d97706',
+                borderWidth: 1,
+                borderRadius: 4,
+                order: 2
               }
             ]
           },
@@ -1541,31 +1541,73 @@
             plugins: {
               legend: {
                 position: 'top',
-                labels: { usePointStyle: true, font: { size: 11 } }
+                labels: { usePointStyle: true, font: { size: 12, weight: '600' } }
               },
               tooltip: {
-                backgroundColor: 'rgba(15, 23, 42, 0.94)',
-                padding: 10,
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                padding: 12,
                 callbacks: {
+                  title: (items) => {
+                    const idx = items[0].dataIndex;
+                    return isMonthly
+                      ? `${labels[idx]}（${ages[idx]}歳）`
+                      : `${computedAnnual[idx].year}年（${ages[idx]}歳）`;
+                  },
                   label: (c) => ` ${c.dataset.label}: ${fmtYen(c.parsed.y)}`
                 }
               }
             },
             scales: {
-              x: { ticks: { maxTicksLimit: 16, font: { size: 10 } }, grid: { display: false } },
-              y: {
-                ticks: {
-                  font: { size: 11, family: 'JetBrains Mono' },
-                  callback: (val) => `${(val / 10000).toLocaleString('ja-JP')}万`
-                },
+              x: { ticks: { maxTicksLimit: 16, font: { size: 11 } }, grid: { display: false } },
+              ySwap: {
+                type: 'linear',
+                position: 'left',
+                beginAtZero: true,
+                title: { display: true, text: '月次スワップ（円）', font: { size: 11, weight: 'bold' }, color: '#4f46e5' },
+                ticks: { font: { size: 11, family: 'JetBrains Mono' }, callback: v => `${v.toLocaleString()}円` },
                 grid: { color: '#f1f5f9' }
+              },
+              yTopup: {
+                type: 'linear',
+                position: 'right',
+                beginAtZero: true,
+                title: { display: true, text: isMonthly ? '月次補填額（円）' : '年間補填額（円）', font: { size: 11, weight: 'bold' }, color: '#b45309' },
+                ticks: { font: { size: 11, family: 'JetBrains Mono' }, callback: v => `${(v / 10000).toLocaleString()}万` },
+                grid: { drawOnChartArea: false }
               }
             }
           }
         });
       }
 
-      // --- TAB 2: 月次プラン（362ヶ月） ---
+      // --- TAB 2: 年次サマリー ＆ 月次明細 ---
+      function renderAnnualTable() {
+        document.getElementById('annualConditionBadge').textContent =
+          `積立停止: ${state.stopDepositYm}｜補填ライン: ${fmtMan(state.cashFloor)}｜年利: ${simStats.annualRate.toFixed(2)}%`;
+
+        document.getElementById('annualTableBody').innerHTML = computedAnnual.map(a => {
+          const isMilestone = [70, 80, 90, 100].includes(a.ageEnd);
+          const hasTopup = a.annualTopup > 0;
+          return `
+            <tr class="${hasTopup ? 'bg-amber-50/40 hover:bg-amber-50/80' : (isMilestone ? 'bg-sky-50/40 hover:bg-sky-50' : 'hover:bg-slate-50')} transition-colors">
+              <td class="px-3 py-2.5 font-bold num text-slate-900 whitespace-nowrap">${a.year}年</td>
+              <td class="px-2.5 py-2.5 text-center whitespace-nowrap">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${isMilestone ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}">${a.ageEnd}歳</span>
+              </td>
+              <td class="px-3 py-2.5 text-right num text-slate-700">${fmtNum(a.income)}</td>
+              <td class="px-3 py-2.5 text-right num text-slate-700">${fmtNum(a.expense)}</td>
+              <td class="px-3 py-2.5 text-right num ${a.specialExpense > 0 ? 'text-rose-600' : 'text-slate-400'}">${fmtNum(a.specialExpense)}</td>
+              <td class="px-3 py-2.5 text-right num ${a.rakuDeposit > 0 ? 'text-indigo-700 font-semibold' : 'text-slate-400'}">${fmtNum(a.rakuDeposit)}</td>
+              <td class="px-3 py-2.5 text-right num text-indigo-700 font-semibold">${fmtNum(a.annualSwap)}</td>
+              <td class="px-3 py-2.5 text-right num ${hasTopup ? 'text-amber-700 font-bold bg-amber-100/60' : 'text-slate-400'}">${hasTopup ? fmtNum(a.annualTopup) : '-'}</td>
+              <td class="px-3 py-2.5 text-right num font-bold ${a.endCash < 0 ? 'text-rose-600 bg-rose-50/70' : 'text-sky-800 bg-sky-50/40'}">${fmtNum(a.endCash)}</td>
+              <td class="px-3 py-2.5 text-right num font-bold text-indigo-800 bg-indigo-50/40">${fmtNum(a.endRakutsumu)}</td>
+              <td class="px-3 py-2.5 text-right num font-bold ${a.endTotal < 0 ? 'text-rose-600 bg-rose-50/70' : 'text-emerald-800 bg-emerald-50/40'}">${fmtNum(a.endTotal)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
       function initYearFilterOptions() {
         const sel = document.getElementById('monthlyYearFilter');
         if (sel.options.length > 1) return;
@@ -1580,10 +1622,12 @@
       function renderMonthlyTable() {
         initYearFilterOptions();
         const yearFilter = document.getElementById('monthlyYearFilter').value;
+        const topupOnly = document.getElementById('monthlyTopupOnly').checked;
         const confirmedOnly = document.getElementById('monthlyConfirmedOnly').checked;
 
         const filtered = computedMonthly.filter(r => {
           if (yearFilter !== 'ALL' && String(r.year) !== yearFilter) return false;
+          if (topupOnly && r.topupAmount <= 0) return false;
           if (confirmedOnly && !r.isConfirmed) return false;
           return true;
         });
@@ -1592,41 +1636,44 @@
         const tbody = document.getElementById('monthlyTableBody');
 
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="16" class="py-10 text-center text-slate-400">該当する月次データがありません</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="13" class="py-10 text-center text-slate-400">条件に一致する月次データがありません</td></tr>`;
           return;
         }
 
-        const html = filtered.map(r => {
+        tbody.innerHTML = filtered.map(r => {
+          const hasTopup = r.topupAmount > 0;
           const rowBg = r.isConfirmed
             ? 'bg-emerald-50/70 hover:bg-emerald-50'
-            : (r.cashBalance < 0 ? 'bg-rose-50/30 hover:bg-rose-50/60' : 'hover:bg-slate-50');
-          const badge = r.isConfirmed
+            : (hasTopup ? 'bg-amber-50/70 hover:bg-amber-100/60' : 'hover:bg-slate-50');
+
+          let badges = r.isConfirmed
             ? `<span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-600 text-white">確定</span>`
-            : `<span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">計画</span>`;
+            : `<span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">計画</span>`;
+          if (hasTopup) {
+            badges += ` <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-white">補填</span>`;
+          }
 
           return `
             <tr class="${rowBg} transition-colors">
-              <td class="px-3 py-2 font-semibold num whitespace-nowrap text-slate-800">${r.ym}</td>
-              <td class="px-2.5 py-2 text-center whitespace-nowrap text-slate-600">${r.age}歳</td>
-              <td class="px-2.5 py-2 text-center whitespace-nowrap">${badge}</td>
-              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.pension)}</td>
-              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.corpPension)}</td>
-              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.salary)}</td>
-              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.otherIncome)}</td>
-              <td class="px-3 py-2 text-right num font-semibold text-slate-800 bg-slate-50/80">${fmtNum(r.incomeTotal)}</td>
-              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.livingCost)}</td>
-              <td class="px-3 py-2 text-right num ${r.specialExpense > 0 ? 'text-amber-700 font-semibold' : 'text-slate-400'}">${fmtNum(r.specialExpense)}</td>
-              <td class="px-3 py-2 text-right num font-semibold text-slate-800 bg-slate-50/80">${fmtNum(r.expenseTotal)}</td>
-              <td class="px-3 py-2 text-right num font-semibold ${amtClass(r.netCashflow)}">${fmtNum(r.netCashflow, true)}</td>
-              <td class="px-3 py-2 text-right num font-bold ${r.cashBalance < 0 ? 'text-rose-600 bg-rose-50/80' : 'text-sky-800 bg-sky-50/50'}">${fmtNum(r.cashBalance)}</td>
-              <td class="px-3 py-2 text-right num font-semibold text-indigo-700 bg-indigo-50/40">${fmtNum(r.rakutsumuBalance)}</td>
-              <td class="px-3 py-2 text-right num font-bold ${r.totalBalance < 0 ? 'text-rose-600 bg-rose-50/80' : 'text-emerald-800 bg-emerald-50/40'}">${fmtNum(r.totalBalance)}</td>
-              <td class="px-3 py-2 text-center whitespace-nowrap">
+              <td class="px-3 py-2 font-bold num whitespace-nowrap text-slate-900">${r.ym}</td>
+              <td class="px-2 py-2 text-center whitespace-nowrap text-slate-700">${r.age}歳</td>
+              <td class="px-2 py-2 text-center whitespace-nowrap">${badges}</td>
+              <td class="px-3 py-2 text-right num text-slate-700">${fmtNum(r.incomeTotal)}</td>
+              <td class="px-3 py-2 text-right num text-slate-700">
+                ${fmtNum(r.expenseTotal)}
+                ${r.specialExpense > 0 ? `<span class="block text-[10px] text-rose-600 font-semibold">(特 ${fmtNum(r.specialExpense)})</span>` : ''}
+              </td>
+              <td class="px-3 py-2 text-right num ${amtClass(r.netCashflow)}">${fmtNum(r.netCashflow, true)}</td>
+              <td class="px-3 py-2 text-right num ${r.rakuDeposit > 0 ? 'text-indigo-700' : 'text-slate-400'}">${r.rakuDeposit > 0 ? fmtNum(r.rakuDeposit) : '停止'}</td>
+              <td class="px-3 py-2 text-right num font-semibold text-indigo-700">${fmtNum(r.monthlySwap)}</td>
+              <td class="px-3 py-2 text-right num ${hasTopup ? 'text-amber-800 font-bold bg-amber-100/80' : 'text-slate-400'}">${hasTopup ? '+' + fmtNum(r.topupAmount) : '-'}</td>
+              <td class="px-3 py-2 text-right num font-bold ${r.cashBalance < 0 ? 'text-rose-600 bg-rose-50' : 'text-sky-800 bg-sky-50/40'}">${fmtNum(r.cashBalance)}</td>
+              <td class="px-3 py-2 text-right num font-bold text-indigo-800 bg-indigo-50/40">${fmtNum(r.rakutsumuBalance)}</td>
+              <td class="px-3 py-2 text-right num font-bold ${r.totalBalance < 0 ? 'text-rose-600 bg-rose-50' : 'text-emerald-800 bg-emerald-50/40'}">${fmtNum(r.totalBalance)}</td>
+              <td class="px-2.5 py-2 text-center whitespace-nowrap">
                 <button type="button" data-confirm-ym="${r.ym}"
-                  class="btn-row-confirm px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
-                    r.isConfirmed
-                      ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                      : 'bg-slate-800 text-white hover:bg-slate-700'
+                  class="btn-row-confirm px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                    r.isConfirmed ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-800 text-white hover:bg-slate-700'
                   }">
                   ${r.isConfirmed ? '編集' : '確定上書き'}
                 </button>
@@ -1634,39 +1681,9 @@
             </tr>
           `;
         }).join('');
-
-        tbody.innerHTML = html;
       }
 
-      // --- TAB 3: 年次サマリー ---
-      function renderAnnualTable() {
-        const scenNames = { standard: '①標準', conservative: '②保守', pessimistic: '③悲観' };
-        const p80Names = { compound: '80歳以降複利(4.1%)', hold: '80歳以降据置' };
-        document.getElementById('annualScenarioTag').textContent =
-          `らくつむ条件: ${scenNames[state.scenario]} / ${p80Names[state.post80Mode]}`;
-
-        const tbody = document.getElementById('annualTableBody');
-        tbody.innerHTML = computedAnnual.map(a => {
-          const isMilestone = [70, 75, 80, 85, 90, 95, 100].includes(a.ageEnd);
-          return `
-            <tr class="${isMilestone ? 'bg-amber-50/40 font-medium' : 'hover:bg-slate-50'} transition-colors">
-              <td class="px-3.5 py-2.5 font-bold num text-slate-900 whitespace-nowrap">${a.year}年</td>
-              <td class="px-3 py-2.5 text-center whitespace-nowrap">
-                <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${isMilestone ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}">${a.ageEnd}歳</span>
-              </td>
-              <td class="px-3.5 py-2.5 text-right num text-slate-700">${fmtNum(a.income)}</td>
-              <td class="px-3.5 py-2.5 text-right num text-slate-700">${fmtNum(a.expense)}</td>
-              <td class="px-3.5 py-2.5 text-right num ${a.specialExpense > 0 ? 'text-amber-700' : 'text-slate-400'}">${fmtNum(a.specialExpense)}</td>
-              <td class="px-3.5 py-2.5 text-right num font-semibold ${amtClass(a.net)}">${fmtNum(a.net, true)}</td>
-              <td class="px-3.5 py-2.5 text-right num font-bold ${a.endCash < 0 ? 'text-rose-600 bg-rose-50/70' : 'text-sky-800 bg-sky-50/40'}">${fmtNum(a.endCash)}</td>
-              <td class="px-3.5 py-2.5 text-right num font-semibold text-indigo-700 bg-indigo-50/40">${fmtNum(a.endRakutsumu)}</td>
-              <td class="px-3.5 py-2.5 text-right num font-bold ${a.endTotal < 0 ? 'text-rose-600 bg-rose-50/70' : 'text-emerald-800 bg-emerald-50/40'}">${fmtNum(a.endTotal)}</td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      // --- TAB 4: イベント ＆ MF実績 ---
+      // --- TAB 3: イベント ＆ MF実績 ---
       function renderEventsTable() {
         const kw = (document.getElementById('eventSearchInput').value || '').trim().toLowerCase();
         const cat = document.getElementById('eventCategoryFilter').value;
@@ -1692,12 +1709,12 @@
           const age = p ? `${getAge(p.year, p.month)}歳` : '-';
           return `
             <tr class="hover:bg-slate-50">
-              <td class="px-3 py-2 num whitespace-nowrap text-slate-700">${escHtml(ev.ym)} <span class="text-[11px] text-slate-400">(${age})</span></td>
-              <td class="px-3 py-2 font-medium text-slate-800">${escHtml(ev.title)}</td>
-              <td class="px-2.5 py-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px]">${escHtml(ev.category)}</span></td>
-              <td class="px-3 py-2 text-right num font-semibold text-amber-700 whitespace-nowrap">${fmtYen(ev.amount)}</td>
+              <td class="px-3 py-2 num whitespace-nowrap font-semibold text-slate-800">${escHtml(ev.ym)} <span class="text-xs text-slate-500">(${age})</span></td>
+              <td class="px-3 py-2 font-medium text-slate-900">${escHtml(ev.title)}</td>
+              <td class="px-2.5 py-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-medium">${escHtml(ev.category)}</span></td>
+              <td class="px-3 py-2 text-right num font-bold text-amber-700 whitespace-nowrap">${fmtYen(ev.amount)}</td>
               <td class="px-2.5 py-2 text-center">
-                <button type="button" data-del-ev="${escHtml(ev.id)}" class="btn-del-event text-rose-500 hover:text-rose-700 font-bold px-2 py-0.5 rounded hover:bg-rose-50 transition">削除</button>
+                <button type="button" data-del-ev="${escHtml(ev.id)}" class="btn-del-event text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded hover:bg-rose-50 transition">削除</button>
               </td>
             </tr>
           `;
@@ -1725,15 +1742,15 @@
         document.getElementById('mfSubtitle').textContent = current.label || `${mf.selectedMonth} 実績`;
         document.getElementById('mfSummaryCards').innerHTML = `
           <div class="rounded-xl bg-sky-50 border border-sky-200 p-2.5">
-            <div class="text-[11px] text-sky-700 font-semibold">収入計</div>
+            <div class="text-[11px] text-sky-800 font-bold">収入計</div>
             <div class="text-sm sm:text-base font-bold num text-sky-900 mt-0.5">${fmtNum(current.income)}円</div>
           </div>
           <div class="rounded-xl bg-rose-50 border border-rose-200 p-2.5">
-            <div class="text-[11px] text-rose-700 font-semibold">支出計</div>
+            <div class="text-[11px] text-rose-800 font-bold">支出計</div>
             <div class="text-sm sm:text-base font-bold num text-rose-700 mt-0.5">-${fmtNum(current.expense)}円</div>
           </div>
           <div class="rounded-xl bg-slate-100 border border-slate-200 p-2.5">
-            <div class="text-[11px] text-slate-600 font-semibold">収支</div>
+            <div class="text-[11px] text-slate-700 font-bold">収支</div>
             <div class="text-sm sm:text-base font-bold num mt-0.5 ${amtClass(current.net)}">${fmtNum(current.net, true)}円</div>
           </div>
         `;
@@ -1743,13 +1760,12 @@
 
         document.getElementById('mfTableBody').innerHTML = cats.map(c => `
           <tr class="hover:bg-slate-50">
-            <td class="px-3 py-1.5 font-medium text-slate-700">${escHtml(c.name)}</td>
-            <td class="px-3 py-1.5 text-right num text-rose-600 font-semibold">-${fmtNum(c.amount)}円</td>
-            <td class="px-3 py-1.5 text-right num text-slate-500">${((c.amount / totalExp) * 100).toFixed(1)}%</td>
+            <td class="px-3 py-1.5 font-semibold text-slate-800">${escHtml(c.name)}</td>
+            <td class="px-3 py-1.5 text-right num text-rose-600 font-bold">-${fmtNum(c.amount)}円</td>
+            <td class="px-3 py-1.5 text-right num text-slate-600">${((c.amount / totalExp) * 100).toFixed(1)}%</td>
           </tr>
         `).join('');
 
-        // 横棒グラフ（上位10カテゴリ）
         const topCats = cats.slice(0, 10);
         const ctx = document.getElementById('mfCategoryChart').getContext('2d');
         if (mfCategoryChart) mfCategoryChart.destroy();
@@ -1760,7 +1776,7 @@
             datasets: [{
               label: '支出額（円）',
               data: topCats.map(c => c.amount),
-              backgroundColor: 'rgba(244, 63, 94, 0.78)',
+              backgroundColor: 'rgba(244, 63, 94, 0.8)',
               borderRadius: 4
             }]
           },
@@ -1770,80 +1786,48 @@
             maintainAspectRatio: false,
             plugins: {
               legend: { display: false },
-              tooltip: {
-                callbacks: {
-                  label: (c) => ` -${fmtYen(c.parsed.x)}`
-                }
-              }
+              tooltip: { callbacks: { label: (c) => ` -${fmtYen(c.parsed.x)}` } }
             },
             scales: {
-              x: {
-                ticks: { font: { size: 10, family: 'JetBrains Mono' }, callback: v => `${(v / 1000).toLocaleString()}k` },
-                grid: { color: '#f1f5f9' }
-              },
-              y: {
-                ticks: { font: { size: 11 } },
-                grid: { display: false }
-              }
+              x: { ticks: { font: { size: 10, family: 'JetBrains Mono' }, callback: v => `${(v / 1000).toLocaleString()}k` }, grid: { color: '#f1f5f9' } },
+              y: { ticks: { font: { size: 11 } }, grid: { display: false } }
             }
           }
         });
       }
 
-      // --- TAB 5: 連携・らくつむ・バックアップ ---
+      // --- TAB 4: 設定・連携・バックアップ ---
       function renderSettingsSection() {
+        document.getElementById('setMonthlyDeposit').value = state.monthlyDeposit;
+        document.getElementById('setStopYm').value = state.stopDepositYm;
+        document.getElementById('setCashFloor').value = state.cashFloor;
+        document.getElementById('setCustomRate').value = state.customAnnualRate;
+
         document.getElementById('urlMonthlyPlan').value = state.sheetUrls.monthlyPlan || '';
         document.getElementById('urlEvents').value = state.sheetUrls.events || '';
         document.getElementById('urlRakutsumuActual').value = state.sheetUrls.rakutsumuActual || '';
-        document.getElementById('urlRakutsumuForecast').value = state.sheetUrls.rakutsumuForecast || '';
+        document.getElementById('urlRakutsumuCf').value = state.sheetUrls.rakutsumuCf || '';
         document.getElementById('urlMoneyForward').value = state.sheetUrls.moneyForward || '';
         document.getElementById('autoSyncToggle').checked = Boolean(state.autoSync);
 
-        // らくつむ実績テーブル
-        document.getElementById('rakutsumuActualTableBody').innerHTML = (state.rakutsumuActuals || []).map(r => `
-          <tr class="hover:bg-slate-50">
-            <td class="px-3 py-2 num font-semibold text-slate-800">${escHtml(r.ym)}</td>
-            <td class="px-2.5 py-2 text-center">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === '確定' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${escHtml(r.status)}</span>
-            </td>
-            <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.netDeposit)}</td>
-            <td class="px-3 py-2 text-right num font-bold text-indigo-700">${fmtNum(r.evalValue)}</td>
-            <td class="px-2.5 py-2 text-right num text-slate-600">${r.ratio ? r.ratio.toFixed(1) + '%' : '-'}</td>
-            <td class="px-2.5 py-2 text-right num text-slate-600">${r.lev ? r.lev.toFixed(2) + 'x' : '-'}</td>
-          </tr>
-        `).join('');
-
-        // らくつむ予測テーブル
-        const f = state.rakutsumuForecast;
-        const years = Object.keys(f.standard || {}).map(Number).sort((a, b) => a - b);
-        document.getElementById('rakutsumuForecastTableBody').innerHTML = years.map(y => `
-          <tr class="hover:bg-slate-50">
-            <td class="px-3 py-2 num font-semibold text-slate-800">${y}年 <span class="text-[11px] text-slate-400">(${getAge(y, 12)}歳)</span></td>
-            <td class="px-3 py-2 text-right num ${state.scenario === 'standard' ? 'font-bold text-indigo-700 bg-indigo-50/50' : 'text-slate-600'}">${fmtNum(f.standard[y])}</td>
-            <td class="px-3 py-2 text-right num ${state.scenario === 'conservative' ? 'font-bold text-indigo-700 bg-indigo-50/50' : 'text-slate-600'}">${fmtNum(f.conservative[y])}</td>
-            <td class="px-3 py-2 text-right num ${state.scenario === 'pessimistic' ? 'font-bold text-indigo-700 bg-indigo-50/50' : 'text-slate-600'}">${fmtNum(f.pessimistic[y])}</td>
-          </tr>
-        `).join('');
-
-        // 確定履歴テーブル
         const keys = Object.keys(state.confirmedMonths).sort();
         const histBody = document.getElementById('confirmedHistoryBody');
         if (keys.length === 0) {
-          histBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">確定済みの月はありません（ヘッダーまたは月次表の「確定上書き」から登録できます）</td></tr>`;
+          histBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">確定済みの月はありません</td></tr>`;
         } else {
           histBody.innerHTML = keys.map(ym => {
             const c = state.confirmedMonths[ym];
             const p = parseYm(ym);
             return `
               <tr class="hover:bg-slate-50">
-                <td class="px-3 py-2 num font-bold text-emerald-700">${ym} (${p ? getAge(p.year, p.month) : '-'}歳)</td>
-                <td class="px-3 py-2 text-right num font-semibold ${amtClass(c.cash)}">${fmtYen(c.cash)}</td>
-                <td class="px-3 py-2 text-right num text-indigo-700">${c.rakutsumu !== null && c.rakutsumu !== '' && c.rakutsumu !== undefined ? fmtYen(c.rakutsumu) : 'モデル連動'}</td>
-                <td class="px-3 py-2 text-right num text-slate-600">${c.income !== null && c.income !== '' && c.income !== undefined ? fmtYen(c.income) : '計画値'}</td>
-                <td class="px-3 py-2 text-right num text-slate-600">${c.expense !== null && c.expense !== '' && c.expense !== undefined ? fmtYen(c.expense) : '計画値'}</td>
-                <td class="px-3 py-2 text-slate-600">${escHtml(c.memo || '-')}</td>
-                <td class="px-3 py-2 text-center">
-                  <button type="button" data-unconfirm-ym="${ym}" class="btn-unconfirm text-rose-600 hover:text-rose-800 font-semibold px-2 py-0.5 rounded hover:bg-rose-50">解除</button>
+                <td class="px-3 py-2.5 num font-bold text-emerald-800">${ym} (${p ? getAge(p.year, p.month) : '-'}歳)</td>
+                <td class="px-3 py-2.5 text-right num font-bold ${amtClass(c.cash)}">${fmtYen(c.cash)}</td>
+                <td class="px-3 py-2.5 text-right num font-bold text-indigo-700">${c.rakutsumu !== null && c.rakutsumu !== '' && c.rakutsumu !== undefined ? fmtYen(c.rakutsumu) : '自動計算'}</td>
+                <td class="px-3 py-2.5 text-right num text-slate-700">${c.income !== null && c.income !== '' && c.income !== undefined ? fmtYen(c.income) : '計画値'}</td>
+                <td class="px-3 py-2.5 text-right num text-slate-700">${c.expense !== null && c.expense !== '' && c.expense !== undefined ? fmtYen(c.expense) : '計画値'}</td>
+                <td class="px-3 py-2.5 text-slate-700">${escHtml(c.memo || '-')}</td>
+                <td class="px-3 py-2.5 text-center">
+                  <button type="button" data-unconfirm-ym="${ym}" class="btn-unconfirm text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded hover:bg-rose-50">解除</button>
                 </td>
               </tr>
             `;
@@ -1852,12 +1836,11 @@
       }
 
       // =========================================================================
-      // 7. 月末残高確定モーダル制御
+      // 7. 月末確定モーダル制御
       // =========================================================================
       function openConfirmModal(targetYm = null, prefill = null) {
         const modal = document.getElementById('confirmModal');
         const ymSel = document.getElementById('cmYm');
-
         if (ymSel.options.length === 0) {
           ALL_MONTHS.forEach(m => {
             const opt = document.createElement('option');
@@ -1866,11 +1849,10 @@
             ymSel.appendChild(opt);
           });
         }
-
-        const defaultYm = targetYm || '2026-11';
+        const keys = Object.keys(state.confirmedMonths).sort();
+        const defaultYm = targetYm || (keys.length > 0 ? keys[keys.length - 1] : '2026-11');
         ymSel.value = defaultYm;
         populateConfirmModalFields(defaultYm, prefill);
-
         modal.classList.remove('hidden');
         modal.classList.add('flex');
       }
@@ -1878,11 +1860,9 @@
       function populateConfirmModalFields(ym, prefill = null) {
         const row = computedMonthly.find(r => r.ym === ym);
         const existing = state.confirmedMonths[ym];
-
         document.getElementById('cmPlanHint').innerHTML = row
           ? `現在計算値: 現金 <b class="num">${fmtNum(row.cashBalance)}</b> / らくつむ <b class="num">${fmtNum(row.rakutsumuBalance)}</b>`
           : '';
-
         document.getElementById('cmCash').value = existing?.cash ?? (row ? Math.round(row.cashBalance) : '');
         document.getElementById('cmRakutsumu').value = existing?.rakutsumu ?? (row ? Math.round(row.rakutsumuBalance) : '');
         document.getElementById('cmIncome').value = prefill?.income ?? (existing?.income ?? '');
@@ -1901,7 +1881,7 @@
       }
 
       // =========================================================================
-      // 8. 各シートCSVインポーター（Googleスプレッドシート＆ローカル共通）
+      // 8. CSVインポーター ＆ Googleスプレッドシート即時同期
       // =========================================================================
       function findColIndex(headers, keywords) {
         return headers.findIndex(h => {
@@ -1912,385 +1892,327 @@
 
       function importMonthlyPlanCSV(csvText) {
         const rows = parseCSV(csvText);
-        if (rows.length < 2) throw new Error('月次プランCSVにデータ行がありません');
-        const headers = rows[0];
-        const idxYm = findColIndex(headers, ['年月', 'date', '月']);
-        const idxPension = findColIndex(headers, ['年金']);
-        const idxCorp = findColIndex(headers, ['企業年金']);
-        const idxSalary = findColIndex(headers, ['給料', '給与']);
-        const idxOther = findColIndex(headers, ['その他収入', 'その他']);
-        const idxLiving = findColIndex(headers, ['基本生活費', '生活費']);
-        const idxSpecial = findColIndex(headers, ['特別出費', '特別']);
-
-        if (idxYm === -1) throw new Error('「年月」列が見つかりません');
+        if (rows.length < 2) throw new Error('月次プランCSVにデータがありません');
+        const h = rows[0];
+        const iYm = findColIndex(h, ['年月', 'date', '月']);
+        const iPen = findColIndex(h, ['年金']);
+        const iCorp = findColIndex(h, ['企業年金']);
+        const iSal = findColIndex(h, ['給料', '給与']);
+        const iOth = findColIndex(h, ['その他収入', 'その他']);
+        const iLiv = findColIndex(h, ['基本生活費', '生活費']);
+        if (iYm === -1) throw new Error('「年月」列が見つかりません');
 
         const overrides = {};
         let count = 0;
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          const p = parseYm(r[idxYm]);
+          const p = parseYm(r[iYm]);
           if (!p) continue;
-          const ym = formatYm(p.year, p.month);
           const ov = {};
-          if (idxPension !== -1 && r[idxPension] !== '') ov.pension = parseAmount(r[idxPension]);
-          if (idxCorp !== -1 && r[idxCorp] !== '') ov.corpPension = parseAmount(r[idxCorp]);
-          if (idxSalary !== -1 && r[idxSalary] !== '') ov.salary = parseAmount(r[idxSalary]);
-          if (idxOther !== -1 && r[idxOther] !== '') ov.otherIncome = parseAmount(r[idxOther]);
-          if (idxLiving !== -1 && r[idxLiving] !== '') ov.livingCost = parseAmount(r[idxLiving]);
-          if (idxSpecial !== -1 && r[idxSpecial] !== '') {
-            ov.specialExpense = parseAmount(r[idxSpecial]);
-            ov.useCsvSpecial = false; // イベント連動を優先（イベントCSV未読込時のみ補助）
-          }
-          overrides[ym] = ov;
+          if (iPen !== -1 && r[iPen] !== '') ov.pension = parseAmount(r[iPen]);
+          if (iCorp !== -1 && r[iCorp] !== '') ov.corpPension = parseAmount(r[iCorp]);
+          if (iSal !== -1 && r[iSal] !== '') ov.salary = parseAmount(r[iSal]);
+          if (iOth !== -1 && r[iOth] !== '') ov.otherIncome = parseAmount(r[iOth]);
+          if (iLiv !== -1 && r[iLiv] !== '') ov.livingCost = parseAmount(r[iLiv]);
+          overrides[formatYm(p.year, p.month)] = ov;
           count++;
         }
-        if (count === 0) throw new Error('有効な年月データが見つかりませんでした');
+        if (count === 0) throw new Error('有効な年月データがありません');
         state.monthlyCsvOverrides = overrides;
         return `${count}ヶ月分の月次プランを反映`;
       }
 
       function importEventsCSV(csvText) {
         const rows = parseCSV(csvText);
-        if (rows.length < 2) throw new Error('イベントCSVにデータ行がありません');
-        const headers = rows[0];
-        const idxYm = findColIndex(headers, ['年月', '日付', '時期', '予定']);
-        const idxTitle = findColIndex(headers, ['内容', '項目', 'イベント', '品目', '名称']);
-        const idxAmt = findColIndex(headers, ['金額', '予算', '費用', '出費']);
-        const idxCat = findColIndex(headers, ['カテゴリ', '分類', '種別']);
-
-        if (idxYm === -1 || idxAmt === -1) throw new Error('「年月」または「金額」列が見つかりません');
+        if (rows.length < 2) throw new Error('イベントCSVにデータがありません');
+        const h = rows[0];
+        const iYm = findColIndex(h, ['年月', '日付', '時期', '予定']);
+        const iTitle = findColIndex(h, ['内容', '項目', 'イベント', '品目', '名称']);
+        const iAmt = findColIndex(h, ['金額', '予算', '費用', '出費']);
+        const iCat = findColIndex(h, ['カテゴリ', '分類', '種別']);
+        if (iYm === -1 || iAmt === -1) throw new Error('「年月」または「金額」列が見つかりません');
 
         const events = [];
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          const p = parseYm(r[idxYm]);
+          const p = parseYm(r[iYm]);
           if (!p) continue;
-          const amt = Math.abs(parseAmount(r[idxAmt]));
+          const amt = Math.abs(parseAmount(r[iAmt]));
           if (amt <= 0) continue;
           events.push({
             id: `csv_ev_${i}_${Date.now()}`,
             ym: formatYm(p.year, p.month),
-            title: idxTitle !== -1 ? (r[idxTitle] || 'イベント') : 'イベント',
+            title: iTitle !== -1 ? (r[iTitle] || 'イベント') : 'イベント',
             amount: amt,
-            category: idxCat !== -1 ? (r[idxCat] || 'その他') : 'その他'
+            category: iCat !== -1 ? (r[iCat] || 'その他') : 'その他'
           });
         }
-        if (events.length === 0) throw new Error('有効なイベント行が見つかりませんでした');
+        if (events.length === 0) throw new Error('有効なイベント行がありません');
         state.events = events;
         return `${events.length}件のイベントを反映`;
       }
 
       function importRakutsumuActualCSV(csvText) {
         const rows = parseCSV(csvText);
-        if (rows.length < 2) throw new Error('らくつむ実績CSVにデータ行がありません');
-        const headers = rows[0];
-        const idxYm = findColIndex(headers, ['年月', '日付', '月']);
-        const idxDep = findColIndex(headers, ['純入金', '累計入金', '入金']);
-        const idxEval = findColIndex(headers, ['評価額', '純資産', '残高']);
-        const idxRatio = findColIndex(headers, ['有効比率', '維持率']);
-        const idxLev = findColIndex(headers, ['レバ', '実効']);
-        const idxStatus = findColIndex(headers, ['区分', 'ステータス', '確定']);
+        if (rows.length < 2) throw new Error('らくつむ実績CSVにデータがありません');
+        const h = rows[0];
+        const iYm = findColIndex(h, ['年月', '日付', '月']);
+        const iEval = findColIndex(h, ['評価額', '純資産', '残高']);
+        const iStatus = findColIndex(h, ['区分', 'ステータス', '確定']);
+        if (iYm === -1 || iEval === -1) throw new Error('「年月」または「評価額」列が見つかりません');
 
-        if (idxYm === -1 || idxEval === -1) throw new Error('「年月」または「評価額」列が見つかりません');
-
-        const list = [];
+        let updated = 0;
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          const p = parseYm(r[idxYm]);
+          const p = parseYm(r[iYm]);
           if (!p) continue;
-          const evalVal = parseAmount(r[idxEval]);
-          if (evalVal === 0 && !r[idxEval]) continue;
-          list.push({
-            ym: formatYm(p.year, p.month),
-            netDeposit: idxDep !== -1 ? parseAmount(r[idxDep]) : 0,
-            evalValue: evalVal,
-            ratio: idxRatio !== -1 ? parseAmount(r[idxRatio]) : 0,
-            lev: idxLev !== -1 ? parseAmount(r[idxLev]) : 0,
-            status: idxStatus !== -1 ? (r[idxStatus] || '確定') : '確定'
-          });
+          const status = iStatus !== -1 ? r[iStatus] : '確定';
+          if (status && !String(status).includes('確定')) continue;
+          const ym = formatYm(p.year, p.month);
+          if (ym < '2026-11') continue;
+          const evalVal = parseAmount(r[iEval]);
+          if (evalVal <= 0) continue;
+          const existing = state.confirmedMonths[ym] || { cash: null, income: null, expense: null, memo: 'らくつむ実績CSV同期' };
+          state.confirmedMonths[ym] = { ...existing, rakutsumu: evalVal };
+          updated++;
         }
-        if (list.length === 0) throw new Error('有効ならくつむ実績行が見つかりませんでした');
-        state.rakutsumuActuals = list;
-        return `${list.length}ヶ月分のらくつむ実績を反映`;
+        return `${updated}ヶ月分のらくつむ確定残高を反映`;
       }
 
-      function importRakutsumuForecastCSV(csvText) {
+      function importRakutsumuCfCSV(csvText) {
         const rows = parseCSV(csvText);
-        if (rows.length < 2) throw new Error('らくつむ予測CSVにデータ行がありません');
-        const headers = rows[0];
-        const idxYear = findColIndex(headers, ['年', '西暦', 'year']);
-        const idxStd = findColIndex(headers, ['標準', 'standard']);
-        const idxCon = findColIndex(headers, ['保守', 'conservative']);
-        const idxPes = findColIndex(headers, ['悲観', 'pessimistic']);
-
-        if (idxYear === -1 || idxStd === -1) throw new Error('「年」または「標準」列が見つかりません');
-
-        const std = {}, con = {}, pes = {};
-        let count = 0;
-        for (let i = 1; i < rows.length; i++) {
-          const r = rows[i];
-          const ymMatch = String(r[idxYear] || '').match(/(20\d{2})/);
-          if (!ymMatch) continue;
-          const y = parseInt(ymMatch[1], 10);
-          std[y] = parseAmount(r[idxStd]);
-          if (idxCon !== -1) con[y] = parseAmount(r[idxCon]);
-          if (idxPes !== -1) pes[y] = parseAmount(r[idxPes]);
-          count++;
+        if (rows.length < 2) throw new Error('CF表連携サマリーCSVにデータがありません');
+        // 毎月積立額などの設定行があれば抽出
+        let found = 0;
+        for (let i = 0; i < rows.length; i++) {
+          const line = rows[i].join(' ');
+          if (line.includes('毎月積立') || line.includes('積立額')) {
+            const nums = rows[i].map(parseAmount).filter(n => n >= 1000 && n <= 200000);
+            if (nums.length > 0) { state.monthlyDeposit = nums[0]; found++; }
+          }
         }
-        if (count === 0) throw new Error('有効な年次予測が見つかりませんでした');
-        state.rakutsumuForecast = {
-          standard: { ...state.rakutsumuForecast.standard, ...std },
-          conservative: { ...state.rakutsumuForecast.conservative, ...con },
-          pessimistic: { ...state.rakutsumuForecast.pessimistic, ...pes }
-        };
-        return `${count}年分のらくつむ予測を反映`;
+        return found > 0 ? `CF表連携サマリーから積立設定(${fmtYen(state.monthlyDeposit)})を反映` : 'CF表連携サマリーを読込完了';
       }
 
       function importMoneyForwardCSV(csvText) {
         const rows = parseCSV(csvText);
-        if (rows.length < 2) throw new Error('マネーフォワードCSVにデータ行がありません');
-        const headers = rows[0];
-        const idxCalc = findColIndex(headers, ['計算対象']);
-        const idxDate = findColIndex(headers, ['日付']);
-        const idxAmt = findColIndex(headers, ['金額']);
-        const idxCat = findColIndex(headers, ['大項目', 'カテゴリ']);
-        const idxTransfer = findColIndex(headers, ['振替']);
-
-        if (idxDate === -1 || idxAmt === -1) throw new Error('「日付」または「金額」列が見つかりません');
+        if (rows.length < 2) throw new Error('マネーフォワードCSVにデータがありません');
+        const h = rows[0];
+        const iCalc = findColIndex(h, ['計算対象']);
+        const iDate = findColIndex(h, ['日付']);
+        const iAmt = findColIndex(h, ['金額']);
+        const iCat = findColIndex(h, ['大項目', 'カテゴリ']);
+        const iTrans = findColIndex(h, ['振替']);
+        if (iDate === -1 || iAmt === -1) throw new Error('「日付」または「金額」列が見つかりません');
 
         const months = {};
         let txCount = 0;
-
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
-          if (idxCalc !== -1 && r[idxCalc] === '0') continue;
-          if (idxTransfer !== -1 && r[idxTransfer] === '1') continue;
-
-          const p = parseYm(r[idxDate]);
+          if (iCalc !== -1 && r[iCalc] === '0') continue;
+          if (iTrans !== -1 && r[iTrans] === '1') continue;
+          const p = parseYm(r[iDate]);
           if (!p) continue;
           const ym = formatYm(p.year, p.month);
-          const amt = parseAmount(r[idxAmt]);
-          const cat = idxCat !== -1 ? (r[idxCat] || '未分類') : 'その他';
+          const amt = parseAmount(r[iAmt]);
+          const cat = iCat !== -1 ? (r[iCat] || '未分類') : 'その他';
 
-          if (!months[ym]) {
-            months[ym] = { label: `${p.year}年${p.month}月（CSV集計）`, income: 0, expense: 0, net: 0, catMap: {} };
-          }
-          if (amt >= 0) {
-            months[ym].income += amt;
-          } else {
-            const absAmt = Math.abs(amt);
-            months[ym].expense += absAmt;
-            months[ym].catMap[cat] = (months[ym].catMap[cat] || 0) + absAmt;
+          if (!months[ym]) months[ym] = { label: `${p.year}年${p.month}月（CSV集計）`, income: 0, expense: 0, net: 0, catMap: {} };
+          if (amt >= 0) months[ym].income += amt;
+          else {
+            const abs = Math.abs(amt);
+            months[ym].expense += abs;
+            months[ym].catMap[cat] = (months[ym].catMap[cat] || 0) + abs;
           }
           months[ym].net += amt;
           txCount++;
         }
-
         const keys = Object.keys(months).sort();
-        if (keys.length === 0) throw new Error('集計可能な明細が見つかりませんでした');
+        if (keys.length === 0) throw new Error('集計可能な明細が見つかりません');
 
-        const formattedMonths = {};
+        const formatted = {};
         keys.forEach(k => {
           const m = months[k];
-          formattedMonths[k] = {
-            label: m.label,
-            income: m.income,
-            expense: m.expense,
-            net: m.net,
+          formatted[k] = {
+            label: m.label, income: m.income, expense: m.expense, net: m.net,
             categories: Object.entries(m.catMap).map(([name, amount]) => ({ name, amount }))
           };
         });
-
-        state.mfData = {
-          selectedMonth: keys[keys.length - 1],
-          months: formattedMonths
-        };
+        state.mfData = { selectedMonth: keys[keys.length - 1], months: formatted };
         return `${txCount}件のMF明細（${keys.length}ヶ月分）を集計`;
       }
 
-      // =========================================================================
-      // 9. Googleスプレッドシート即時同期（キャッシュ回避フェッチ＆CORS案内）
-      // =========================================================================
       async function syncAllGoogleSheets() {
-        const urls = state.sheetUrls;
+        const u = state.sheetUrls;
         const targets = [
-          { key: 'monthlyPlan', name: '月次プラン', url: urls.monthlyPlan, importer: importMonthlyPlanCSV },
-          { key: 'events', name: 'イベント', url: urls.events, importer: importEventsCSV },
-          { key: 'rakutsumuActual', name: 'らくつむ実績', url: urls.rakutsumuActual, importer: importRakutsumuActualCSV },
-          { key: 'rakutsumuForecast', name: 'らくつむ予測', url: urls.rakutsumuForecast, importer: importRakutsumuForecastCSV },
-          { key: 'moneyForward', name: 'マネーフォワード', url: urls.moneyForward, importer: importMoneyForwardCSV }
+          { name: '月次プラン', url: u.monthlyPlan, importer: importMonthlyPlanCSV },
+          { name: 'イベント', url: u.events, importer: importEventsCSV },
+          { name: 'らくつむ実績', url: u.rakutsumuActual, importer: importRakutsumuActualCSV },
+          { name: 'CF表連携', url: u.rakutsumuCf, importer: importRakutsumuCfCSV },
+          { name: 'MF明細', url: u.moneyForward, importer: importMoneyForwardCSV }
         ].filter(t => t.url && t.url.trim() !== '');
 
         if (targets.length === 0) {
-          showToast('「⚙️ 連携・らくつむ・バックアップ」タブでスプレッドシートの公開CSV URLを設定してください', 'warning');
+          showToast('「⚙️ 連携・設定・バックアップ」タブで公開CSV URLを登録してください', 'warning');
           switchTab('settings');
           return;
         }
 
-        const syncIcon = document.getElementById('syncIcon');
+        const icon = document.getElementById('syncIcon');
         const logBox = document.getElementById('syncLogBox');
-        syncIcon.classList.add('animate-spin-fast', 'inline-block');
+        icon.classList.add('animate-spin-fast', 'inline-block');
         logBox.classList.remove('hidden');
-        logBox.innerHTML = `<div class="text-sky-400">[${new Date().toLocaleTimeString('ja-JP')}] 同期を開始します（${targets.length}シート）...</div>`;
+        logBox.innerHTML = `<div class="text-sky-400">[${new Date().toLocaleTimeString('ja-JP')}] ${targets.length}シートの同期を開始...</div>`;
 
-        let successCount = 0;
-        let errorCount = 0;
-
+        let ok = 0, ng = 0;
         for (const t of targets) {
           try {
             const sep = t.url.includes('?') ? '&' : '?';
-            const fetchUrl = `${t.url.trim()}${sep}t=${Date.now()}`;
-            const res = await fetch(fetchUrl, { cache: 'no-store' });
-            if (!res.ok) throw new Error(`HTTP ${res.status} (${res.statusText})`);
+            const res = await fetch(`${t.url.trim()}${sep}_t=${Date.now()}`, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const text = await res.text();
-            if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
-              throw new Error('CSVではなくHTMLが返されました。「ウェブに公開 → CSV形式」のURLかご確認ください。');
-            }
+            if (text.trim().startsWith('<')) throw new Error('CSVではなくHTMLが返されました（公開CSV URLをご確認ください）');
             const msg = t.importer(text);
-            successCount++;
+            ok++;
             logBox.innerHTML += `<div class="text-emerald-400">✔ [${t.name}] ${escHtml(msg)}</div>`;
           } catch (err) {
-            errorCount++;
-            let hint = err.message;
-            if (err.name === 'TypeError' || /Failed to fetch|NetworkError/i.test(err.message)) {
-              hint = '通信またはCORSエラー：スプレッドシートが「ウェブに公開（CSV）」になっているか確認してください（編集用URLはCORSでブロックされます）。';
-            }
-            logBox.innerHTML += `<div class="text-rose-400">✖ [${t.name}] ${escHtml(hint)}</div>`;
+            ng++;
+            logBox.innerHTML += `<div class="text-rose-400">✖ [${t.name}] ${escHtml(err.message)}</div>`;
           }
         }
+        icon.classList.remove('animate-spin-fast');
 
-        syncIcon.classList.remove('animate-spin-fast');
-
-        if (successCount > 0) {
+        if (ok > 0) {
           const now = new Date();
           state.lastSyncTime = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
           saveState();
           renderAll();
         }
-
-        if (errorCount === 0) {
-          showToast(`全${successCount}シートの同期が完了し、残高・グラフを更新しました`, 'success');
-        } else if (successCount > 0) {
-          showToast(`${successCount}シート成功 / ${errorCount}シート失敗（連携タブのログを確認してください）`, 'warning');
-        } else {
-          showToast('スプレッドシート同期に失敗しました。公開CSV URL設定をご確認ください。', 'error');
-        }
+        if (ng === 0) showToast(`全${ok}シートの同期が完了しました`, 'success');
+        else if (ok > 0) showToast(`${ok}件成功 / ${ng}件失敗（ログを確認してください）`, 'warning');
+        else showToast('同期に失敗しました。公開CSV URLをご確認ください。', 'error');
       }
 
       // =========================================================================
-      // 10. タブ切替＆イベントリスナー登録
+      // 9. タブ切替 ＆ イベントバインド
       // =========================================================================
       function switchTab(tabId) {
-        activeTab = tabId;
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
         const target = document.getElementById(`tab-${tabId}`);
         if (target) target.classList.remove('hidden');
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
           const active = btn.dataset.tab === tabId;
-          btn.className = `tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
-            active ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+          btn.className = `tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
+            active ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-700'
           }`;
         });
 
-        // チャートのリサイズ再描画
         if (tabId === 'dashboard') {
-          setTimeout(() => {
-            mainBalanceChart?.resize();
-            annualCashflowChart?.resize();
-          }, 50);
+          setTimeout(() => { mainBalanceChart?.resize(); swapTopupChart?.resize(); }, 50);
         } else if (tabId === 'events') {
           setTimeout(() => mfCategoryChart?.resize(), 50);
         }
       }
 
+      function switchSubTable(view) {
+        state.subTableView = view;
+        const isAnnual = view === 'annual';
+        document.getElementById('annualTableSection').classList.toggle('hidden', !isAnnual);
+        document.getElementById('monthlyTableSection').classList.toggle('hidden', isAnnual);
+        const fWrap = document.getElementById('monthlyFiltersWrap');
+        fWrap.classList.toggle('hidden', isAnnual);
+        fWrap.classList.toggle('flex', !isAnnual);
+
+        document.getElementById('btnSubAnnual').className = `subtable-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${
+          isAnnual ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+        }`;
+        document.getElementById('btnSubMonthly').className = `subtable-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition ${
+          !isAnnual ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+        }`;
+      }
+
       function bindEvents() {
-        // タブ切替
         document.querySelectorAll('.tab-btn').forEach(btn => {
           btn.addEventListener('click', () => switchTab(btn.dataset.tab));
         });
 
-        // シナリオ切替
+        // ダッシュボード：コントロールバー
+        document.getElementById('ctrlStopYm').addEventListener('change', (e) => {
+          state.stopDepositYm = e.target.value;
+          saveState(); renderAll();
+        });
+        document.querySelectorAll('.floor-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.cashFloor = Number(btn.dataset.floor);
+            saveState(); renderAll();
+          });
+        });
         document.querySelectorAll('.scenario-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             state.scenario = btn.dataset.scenario;
-            saveState();
-            renderAll();
+            saveState(); renderAll();
           });
         });
-
-        // 80歳以降運用モード切替
-        document.querySelectorAll('.post80-btn').forEach(btn => {
+        document.querySelectorAll('.topup-cond-btn').forEach(btn => {
           btn.addEventListener('click', () => {
-            state.post80Mode = btn.dataset.post80;
-            saveState();
-            renderAll();
+            state.topupCondition = btn.dataset.topupCond;
+            saveState(); renderAll();
           });
         });
-
-        // グラフ粒度切替
         document.querySelectorAll('.granularity-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             state.chartGranularity = btn.dataset.chartGranularity;
-            saveState();
-            renderDashboard();
+            saveState(); renderDashboard();
           });
         });
 
-        // ヘッダーボタン
+        // ヘッダー
         document.getElementById('btnOpenConfirmModal').addEventListener('click', () => openConfirmModal());
         document.getElementById('btnSyncSheets').addEventListener('click', () => syncAllGoogleSheets());
 
-        // 月次テーブルフィルター＆行内ボタン
+        // TAB 2 サブ切替＆フィルタ
+        document.getElementById('btnSubAnnual').addEventListener('click', () => switchSubTable('annual'));
+        document.getElementById('btnSubMonthly').addEventListener('click', () => switchSubTable('monthly'));
         document.getElementById('monthlyYearFilter').addEventListener('change', renderMonthlyTable);
+        document.getElementById('monthlyTopupOnly').addEventListener('change', renderMonthlyTable);
         document.getElementById('monthlyConfirmedOnly').addEventListener('change', renderMonthlyTable);
         document.getElementById('monthlyTableBody').addEventListener('click', (e) => {
           const btn = e.target.closest('.btn-row-confirm');
           if (btn) openConfirmModal(btn.dataset.confirmYm);
         });
 
-        // 確定モーダル操作
+        // 確定モーダル
         document.getElementById('cmYm').addEventListener('change', (e) => populateConfirmModalFields(e.target.value));
         document.getElementById('btnCloseConfirmModal').addEventListener('click', closeConfirmModal);
         document.getElementById('btnCancelConfirmModal').addEventListener('click', closeConfirmModal);
-        document.getElementById('confirmModal').addEventListener('click', (e) => {
-          if (e.target.id === 'confirmModal') closeConfirmModal();
-        });
+        document.getElementById('confirmModal').addEventListener('click', (e) => { if (e.target.id === 'confirmModal') closeConfirmModal(); });
 
         document.getElementById('confirmMonthForm').addEventListener('submit', (e) => {
           e.preventDefault();
           const ym = document.getElementById('cmYm').value;
           const cashVal = document.getElementById('cmCash').value;
+          if (cashVal === '') { showToast('確定現金残高を入力してください', 'warning'); return; }
           const rakuVal = document.getElementById('cmRakutsumu').value;
           const incVal = document.getElementById('cmIncome').value;
           const expVal = document.getElementById('cmExpense').value;
-          const memoVal = document.getElementById('cmMemo').value.trim();
-
-          if (cashVal === '') {
-            showToast('確定現金残高を入力してください', 'warning');
-            return;
-          }
 
           state.confirmedMonths[ym] = {
             cash: Number(cashVal),
             rakutsumu: rakuVal !== '' ? Number(rakuVal) : null,
             income: incVal !== '' ? Number(incVal) : null,
             expense: expVal !== '' ? Number(expVal) : null,
-            memo: memoVal
+            memo: document.getElementById('cmMemo').value.trim()
           };
-          saveState();
-          closeConfirmModal();
-          renderAll();
-          showToast(`${ym} の月末残高を確定し、全期間の残高を連動更新しました`, 'success');
+          saveState(); closeConfirmModal(); renderAll();
+          showToast(`${ym} を確定上書きし、翌月以降の全残高・補填・スワップを連動更新しました`, 'success');
         });
 
         document.getElementById('btnDeleteConfirmInModal').addEventListener('click', () => {
           const ym = document.getElementById('cmYm').value;
           delete state.confirmedMonths[ym];
-          saveState();
-          closeConfirmModal();
-          renderAll();
-          showToast(`${ym} の確定データを解除しました`, 'info');
+          saveState(); closeConfirmModal(); renderAll();
+          showToast(`${ym} の確定を解除しました`, 'info');
         });
 
         // イベント追加・検索・削除
@@ -2301,128 +2223,101 @@
           const amount = Number(document.getElementById('evAmount').value);
           const category = document.getElementById('evCategory').value;
           if (!ym || !title || isNaN(amount) || amount <= 0) return;
-
-          state.events.push({
-            id: `ev_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-            ym, title, amount, category
-          });
+          state.events.push({ id: `ev_${Date.now()}`, ym, title, amount, category });
           document.getElementById('evTitle').value = '';
           document.getElementById('evAmount').value = '';
-          saveState();
-          renderAll();
-          showToast(`イベント「${title}（${fmtYen(amount)}）」を追加し全残高へ反映しました`, 'success');
+          saveState(); renderAll();
+          showToast(`イベント「${title}」を追加し全期間へ反映しました`, 'success');
         });
-
         document.getElementById('eventSearchInput').addEventListener('input', renderEventsTable);
         document.getElementById('eventCategoryFilter').addEventListener('change', renderEventsTable);
         document.getElementById('eventsTableBody').addEventListener('click', (e) => {
           const btn = e.target.closest('.btn-del-event');
           if (!btn) return;
-          const id = btn.dataset.delEv;
-          state.events = state.events.filter(ev => ev.id !== id);
-          saveState();
-          renderAll();
-          showToast('イベントを削除し、全期間の特別出費と残高を再計算しました', 'info');
+          state.events = state.events.filter(ev => ev.id !== btn.dataset.delEv);
+          saveState(); renderAll();
+          showToast('イベントを削除し全残高を再計算しました', 'info');
         });
 
-        // MF実績：月選択＆確定転記＆CSVドロップ
+        // MF実績
         document.getElementById('mfMonthSelector').addEventListener('change', (e) => {
           state.mfData.selectedMonth = e.target.value;
-          saveState();
-          renderMfSection();
+          saveState(); renderMfSection();
         });
-
         document.getElementById('btnTransferMfToConfirm').addEventListener('click', () => {
           const ym = state.mfData.selectedMonth;
           const cur = state.mfData.months[ym];
           if (!cur) return;
-          openConfirmModal(ym, {
-            income: Math.round(cur.income),
-            expense: Math.round(cur.expense),
-            memo: `MF実績(${cur.label})より転記`
-          });
+          openConfirmModal(ym, { income: Math.round(cur.income), expense: Math.round(cur.expense), memo: `MF実績(${cur.label})より転記` });
         });
 
-        const mfDropZone = document.getElementById('mfDropZone');
-        const mfFileInput = document.getElementById('mfFileInput');
-        mfDropZone.addEventListener('click', () => mfFileInput.click());
-        mfDropZone.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          mfDropZone.classList.add('border-sky-500', 'bg-sky-50');
+        const mfDrop = document.getElementById('mfDropZone');
+        const mfInput = document.getElementById('mfFileInput');
+        mfDrop.addEventListener('click', () => mfInput.click());
+        mfDrop.addEventListener('dragover', (e) => { e.preventDefault(); mfDrop.classList.add('border-sky-500', 'bg-sky-50'); });
+        mfDrop.addEventListener('dragleave', () => mfDrop.classList.remove('border-sky-500', 'bg-sky-50'));
+        mfDrop.addEventListener('drop', (e) => {
+          e.preventDefault(); mfDrop.classList.remove('border-sky-500', 'bg-sky-50');
+          if (e.dataTransfer.files?.[0]) handleLocalCsvFile(e.dataTransfer.files[0], 'moneyForward');
         });
-        mfDropZone.addEventListener('dragleave', () => {
-          mfDropZone.classList.remove('border-sky-500', 'bg-sky-50');
-        });
-        mfDropZone.addEventListener('drop', (e) => {
-          e.preventDefault();
-          mfDropZone.classList.remove('border-sky-500', 'bg-sky-50');
-          const file = e.dataTransfer.files?.[0];
-          if (file) handleLocalCsvFile(file, 'moneyForward');
-        });
-        mfFileInput.addEventListener('change', (e) => {
-          const file = e.target.files?.[0];
-          if (file) handleLocalCsvFile(file, 'moneyForward');
+        mfInput.addEventListener('change', (e) => {
+          if (e.target.files?.[0]) handleLocalCsvFile(e.target.files[0], 'moneyForward');
           e.target.value = '';
         });
 
-        // 設定タブ：URL保存＆同期
-        const saveUrlsFromForm = () => {
+        // TAB 4: パラメータ設定
+        document.getElementById('paramSettingsForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          state.monthlyDeposit = Math.max(0, Number(document.getElementById('setMonthlyDeposit').value) || 0);
+          state.stopDepositYm = document.getElementById('setStopYm').value;
+          state.cashFloor = Math.max(0, Number(document.getElementById('setCashFloor').value) || 0);
+          state.customAnnualRate = Math.max(0, Number(document.getElementById('setCustomRate').value) || 0);
+          saveState(); renderAll();
+          showToast('らくつむ・補填パラメータを更新し、全期間を再計算しました', 'success');
+        });
+
+        // URL設定
+        const saveUrls = () => {
           state.sheetUrls = {
             monthlyPlan: document.getElementById('urlMonthlyPlan').value.trim(),
             events: document.getElementById('urlEvents').value.trim(),
             rakutsumuActual: document.getElementById('urlRakutsumuActual').value.trim(),
-            rakutsumuForecast: document.getElementById('urlRakutsumuForecast').value.trim(),
+            rakutsumuCf: document.getElementById('urlRakutsumuCf').value.trim(),
             moneyForward: document.getElementById('urlMoneyForward').value.trim()
           };
           saveState();
         };
-
         document.getElementById('sheetUrlsForm').addEventListener('submit', (e) => {
-          e.preventDefault();
-          saveUrlsFromForm();
-          showToast('スプレッドシートURL設定を保存しました', 'success');
+          e.preventDefault(); saveUrls(); showToast('公開CSV URL設定を保存しました', 'success');
         });
+        document.getElementById('btnSyncFromSettings').addEventListener('click', () => { saveUrls(); syncAllGoogleSheets(); });
+        document.getElementById('autoSyncToggle').addEventListener('change', (e) => { state.autoSync = e.target.checked; saveState(); });
 
-        document.getElementById('btnSyncFromSettings').addEventListener('click', () => {
-          saveUrlsFromForm();
-          syncAllGoogleSheets();
-        });
-
-        document.getElementById('autoSyncToggle').addEventListener('change', (e) => {
-          state.autoSync = e.target.checked;
-          saveState();
-        });
-
-        // ローカルCSV個別読み込み
         document.querySelectorAll('.local-csv-input').forEach(inp => {
           inp.addEventListener('change', (e) => {
-            const file = e.target.files?.[0];
-            if (file) handleLocalCsvFile(file, inp.dataset.csvType);
+            if (e.target.files?.[0]) handleLocalCsvFile(e.target.files[0], inp.dataset.csvType);
             e.target.value = '';
           });
         });
 
-        // 確定履歴解除
         document.getElementById('confirmedHistoryBody').addEventListener('click', (e) => {
           const btn = e.target.closest('.btn-unconfirm');
           if (!btn) return;
-          const ym = btn.dataset.unconfirmYm;
-          delete state.confirmedMonths[ym];
-          saveState();
-          renderAll();
-          showToast(`${ym} の確定を解除しました`, 'info');
+          delete state.confirmedMonths[btn.dataset.unconfirmYm];
+          saveState(); renderAll();
+          showToast(`${btn.dataset.unconfirmYm} の確定を解除しました`, 'info');
         });
 
-        // JSONエクスポート / インポート / 初期化
+        // JSONエクスポート・インポート・初期化
         document.getElementById('btnExportJson').addEventListener('click', () => {
           const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `financial_plan_backup_${new Date().toISOString().slice(0, 10)}.json`;
+          a.download = `financial_dashboard_backup_${new Date().toISOString().slice(0, 10)}.json`;
           a.click();
           URL.revokeObjectURL(url);
-          showToast('JSONバックアップをダウンロードしました', 'success');
+          showToast('JSONバックアップを書き出しました', 'success');
         });
 
         document.getElementById('importJsonInput').addEventListener('change', (e) => {
@@ -2432,13 +2327,12 @@
           reader.onload = () => {
             try {
               const parsed = JSON.parse(reader.result);
-              if (!parsed || typeof parsed !== 'object') throw new Error('不正なJSON形式');
+              if (!parsed || typeof parsed !== 'object') throw new Error('不正なJSON');
               state = { ...createInitialState(), ...parsed };
-              saveState();
-              renderAll();
+              saveState(); renderAll();
               showToast('JSONバックアップを復元しました', 'success');
             } catch (err) {
-              showToast(`JSON復元に失敗しました: ${err.message}`, 'error');
+              showToast(`復元エラー: ${err.message}`, 'error');
             }
           };
           reader.readAsText(file, 'UTF-8');
@@ -2446,15 +2340,12 @@
         });
 
         document.getElementById('btnResetAll').addEventListener('click', async () => {
-          const ok = await showConfirmDialog(
-            '全データの初期化',
-            '確定済み月末残高・イベント編集・URL設定をすべて初期状態（内蔵データ）に戻します。よろしいですか？'
-          );
+          const ok = await showConfirmDialog('初期データへのリセット', 'すべての確定履歴・イベント・設定を初期状態に戻します。よろしいですか？');
           if (!ok) return;
           localStorage.removeItem(STORAGE_KEY);
           state = createInitialState();
           renderAll();
-          showToast('全データを初期状態にリセットしました', 'info');
+          showToast('初期データにリセットしました', 'info');
         });
       }
 
@@ -2467,33 +2358,28 @@
             if (type === 'monthlyPlan') msg = importMonthlyPlanCSV(text);
             else if (type === 'events') msg = importEventsCSV(text);
             else if (type === 'rakutsumuActual') msg = importRakutsumuActualCSV(text);
-            else if (type === 'rakutsumuForecast') msg = importRakutsumuForecastCSV(text);
+            else if (type === 'rakutsumuCf') msg = importRakutsumuCfCSV(text);
             else if (type === 'moneyForward') msg = importMoneyForwardCSV(text);
-            saveState();
-            renderAll();
-            showToast(`ローカルCSV読込完了: ${msg}`, 'success');
+            saveState(); renderAll();
+            showToast(`CSV読込完了: ${msg}`, 'success');
           } catch (err) {
             showToast(`CSV解析エラー: ${err.message}`, 'error');
           }
         };
-        // Shift-JISの可能性もあるためまずUTF-8で読み込み
         reader.readAsText(file, 'UTF-8');
       }
 
       // =========================================================================
-      // 11. アプリケーション起動
+      // 10. 起動
       // =========================================================================
-      function init() {
+      window.addEventListener('DOMContentLoaded', () => {
         bindEvents();
+        switchSubTable(state.subTableView || 'annual');
         renderAll();
-
-        // 起動時自動同期がONでURLが登録されていれば自動実行
         if (state.autoSync && Object.values(state.sheetUrls).some(u => u && u.trim() !== '')) {
           syncAllGoogleSheets();
         }
-      }
-
-      window.addEventListener('DOMContentLoaded', init);
+      });
     })();
   </script>
 </body>
