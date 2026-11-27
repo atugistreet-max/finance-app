@@ -1,1 +1,2500 @@
 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>総合財務管理ダッシュボード（2026〜2056｜69歳〜100歳）</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts: Inter & Noto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '"Noto Sans JP"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', '"Inter"', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* 等幅数値表示とスクロールバー調整 */
+    .num {
+      font-family: 'JetBrains Mono', 'Inter', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    .table-scroll::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    .table-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-fast {
+      animation: spin 0.8s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- ==================== ヘッダー ==================== -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-inner shrink-0">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-base sm:text-lg font-bold tracking-tight leading-tight">総合財務管理ダッシュボード</h1>
+            <p class="text-xs text-slate-400 flex items-center gap-2 flex-wrap">
+              <span>2026年11月〜2056年12月（69歳〜100歳・全362ヶ月）</span>
+              <span id="headerSyncStatus" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-300 border border-slate-700">内蔵データ稼働中</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btnOpenConfirmModal" type="button"
+          class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition">
+          <span>📝</span>
+          <span>月末残高を確定・上書き</span>
+        </button>
+        <button id="btnSyncSheets" type="button"
+          class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition">
+          <span id="syncIcon">🔄</span>
+          <span>スプレッドシート即時同期</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- タブナビゲーション -->
+    <nav class="bg-slate-800/90 border-t border-slate-700/80">
+      <div class="max-w-7xl mx-auto px-2 sm:px-6 overflow-x-auto">
+        <div class="flex space-x-1 py-1.5 min-w-max" role="tablist">
+          <button data-tab="dashboard" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition bg-sky-600 text-white">📊 ダッシュボード</button>
+          <button data-tab="monthly" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-700/60">📅 月次プラン（362ヶ月）</button>
+          <button data-tab="annual" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-700/60">📈 年次サマリー（2026〜2056）</button>
+          <button data-tab="events" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-700/60">🛒 イベント ＆ MF実績</button>
+          <button data-tab="settings" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-700/60">⚙️ 連携・らくつむ・バックアップ</button>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ==================== メインコンテンツ ==================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- ==================== TAB 1: ダッシュボード ==================== -->
+    <section id="tab-dashboard" class="tab-panel space-y-6">
+      <!-- シナリオ＆運用モード切替バー -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">らくつむ予測シナリオ:</span>
+          <div class="inline-flex rounded-xl bg-slate-100 p-1">
+            <button type="button" data-scenario="standard" class="scenario-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">① 標準</button>
+            <button type="button" data-scenario="conservative" class="scenario-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">② 保守</button>
+            <button type="button" data-scenario="pessimistic" class="scenario-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">③ 悲観</button>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">80歳以降（2038〜2056）運用:</span>
+          <div class="inline-flex rounded-xl bg-slate-100 p-1">
+            <button type="button" data-post80="compound" class="post80-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">① 複利運用（年4.1%）</button>
+            <button type="button" data-post80="hold" class="post80-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">② 残高据置（スワップ受取）</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 上部KPIカード群 -->
+      <div id="kpiGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- JSで動的描画 -->
+      </div>
+
+      <!-- 節目年齢（80/90/100歳）＆現金最低値アラート -->
+      <div id="milestoneGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- JSで動的描画 -->
+      </div>
+
+      <!-- メイン推移グラフ -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">資産残高の長期推移（2026年11月〜2056年12月）</h2>
+            <p class="text-xs text-slate-500">総合残高 ＝ 現金残高（マネーフォワード／長期CF） ＋ らくつむ残高（メキシコペソ積立）</p>
+          </div>
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 self-start sm:self-auto">
+            <button type="button" data-chart-granularity="annual" class="granularity-btn px-3 py-1 rounded-lg text-xs font-semibold transition">年末推移（31点）</button>
+            <button type="button" data-chart-granularity="monthly" class="granularity-btn px-3 py-1 rounded-lg text-xs font-semibold transition">全月次（362ヶ月）</button>
+          </div>
+        </div>
+        <div class="relative w-full h-72 sm:h-96">
+          <canvas id="mainBalanceChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 年次収支＆特別出費グラフ -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+        <div class="mb-4">
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">年次収支（収入 vs 支出）＆ 特別出費</h2>
+          <p class="text-xs text-slate-500">各年の総収入・総支出と、イベントによる特別出費の推移（年齢付き）</p>
+        </div>
+        <div class="relative w-full h-72 sm:h-80">
+          <canvas id="annualCashflowChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: 月次プラン（362ヶ月） ==================== -->
+    <section id="tab-monthly" class="tab-panel hidden space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="text-xs font-semibold text-slate-600 flex items-center gap-2">
+            表示年:
+            <select id="monthlyYearFilter" class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-sky-500">
+              <option value="ALL">全期間（2026〜2056・362ヶ月）</option>
+            </select>
+          </label>
+          <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer select-none bg-slate-100 px-3 py-1.5 rounded-lg">
+            <input id="monthlyConfirmedOnly" type="checkbox" class="rounded text-emerald-600 focus:ring-emerald-500" />
+            <span>確定月のみ表示</span>
+          </label>
+        </div>
+        <div class="text-xs text-slate-500">
+          表示件数: <span id="monthlyCountBadge" class="font-bold text-slate-800 num">362</span> ヶ月
+          <span class="ml-2 text-emerald-700">※確定月は起点（アンカー）となり翌月以降を自動連動</span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="table-scroll overflow-x-auto max-h-[70vh]">
+          <table class="min-w-full text-xs sm:text-sm border-collapse">
+            <thead class="bg-slate-800 text-slate-100 sticky top-0 z-10">
+              <tr>
+                <th class="px-3 py-3 text-left font-semibold whitespace-nowrap">年月</th>
+                <th class="px-2.5 py-3 text-center font-semibold whitespace-nowrap">年齢</th>
+                <th class="px-2.5 py-3 text-center font-semibold whitespace-nowrap">区分</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">年金</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">企業年金</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">給料</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">その他収入</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-slate-700/70">収入計</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">基本生活費</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">特別出費</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-slate-700/70">支出計</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap">収支</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-sky-900/60">現金残高</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-indigo-900/60">らくつむ残高</th>
+                <th class="px-3 py-3 text-right font-semibold whitespace-nowrap bg-emerald-900/60">総合残高</th>
+                <th class="px-3 py-3 text-center font-semibold whitespace-nowrap">操作</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyTableBody" class="divide-y divide-slate-100">
+              <!-- JS描画 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: 年次サマリー（2026〜2056） ==================== -->
+    <section id="tab-annual" class="tab-panel hidden space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">年次サマリー（2026年〜2056年｜70歳〜100歳）</h2>
+          <p class="text-xs text-slate-500">※2026年は11月・12月の2ヶ月間集計。年齢は各年12月末時点の年齢を表示。</p>
+        </div>
+        <span id="annualScenarioTag" class="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 self-start sm:self-auto"></span>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="table-scroll overflow-x-auto max-h-[72vh]">
+          <table class="min-w-full text-xs sm:text-sm border-collapse">
+            <thead class="bg-slate-800 text-slate-100 sticky top-0 z-10">
+              <tr>
+                <th class="px-3.5 py-3 text-left font-semibold whitespace-nowrap">西暦</th>
+                <th class="px-3 py-3 text-center font-semibold whitespace-nowrap">年齢（12月末）</th>
+                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap">年収入</th>
+                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap">年支出</th>
+                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap">うち特別出費</th>
+                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap">年収支</th>
+                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap bg-sky-900/60">年末現金残高</th>
+                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap bg-indigo-900/60">年末らくつむ残高</th>
+                <th class="px-3.5 py-3 text-right font-semibold whitespace-nowrap bg-emerald-900/60">年末総合残高</th>
+              </tr>
+            </thead>
+            <tbody id="annualTableBody" class="divide-y divide-slate-100">
+              <!-- JS描画 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: イベント ＆ MF実績 ==================== -->
+    <section id="tab-events" class="tab-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- 左：大きな買い物・イベント管理 -->
+      <div class="lg:col-span-7 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">🛒 大きな買い物・イベント管理</h2>
+              <p class="text-xs text-slate-500">追加・削除すると即座に月次プランの「特別出費」と全残高へ連動します。</p>
+            </div>
+            <span id="eventTotalCount" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 num">0件</span>
+          </div>
+
+          <!-- 新規イベント追加フォーム -->
+          <form id="addEventForm" class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">年月 (YYYY-MM)</label>
+              <input id="evYm" type="month" min="2026-11" max="2056-12" value="2027-06" required
+                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">イベント内容</label>
+              <input id="evTitle" type="text" placeholder="例：家電買い替え" required
+                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">金額（円）</label>
+              <input id="evAmount" type="number" min="0" step="100" placeholder="50000" required
+                class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm num focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">カテゴリ</label>
+              <select id="evCategory" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                <option value="家族">家族</option>
+                <option value="住宅">住宅</option>
+                <option value="自動車">自動車</option>
+                <option value="通信">通信</option>
+                <option value="サブスク">サブスク</option>
+                <option value="医療・介護">医療・介護</option>
+                <option value="旅行・趣味">旅行・趣味</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+            <div class="sm:col-span-12 flex justify-end pt-1">
+              <button type="submit" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-sm transition">
+                ＋ イベントを追加して残高に反映
+              </button>
+            </div>
+          </form>
+
+          <!-- フィルター -->
+          <div class="flex flex-wrap items-center gap-2">
+            <input id="eventSearchInput" type="text" placeholder="キーワードや年月(例: 2027)で検索..."
+              class="flex-1 min-w-[180px] rounded-lg border border-slate-300 px-3 py-1.5 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            <select id="eventCategoryFilter" class="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs bg-white">
+              <option value="ALL">全カテゴリ</option>
+              <option value="家族">家族</option>
+              <option value="住宅">住宅</option>
+              <option value="自動車">自動車</option>
+              <option value="通信">通信</option>
+              <option value="サブスク">サブスク</option>
+              <option value="医療・介護">医療・介護</option>
+              <option value="旅行・趣味">旅行・趣味</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+
+          <!-- イベントテーブル -->
+          <div class="table-scroll overflow-x-auto max-h-[52vh] border border-slate-200 rounded-xl">
+            <table class="min-w-full text-xs sm:text-sm border-collapse">
+              <thead class="bg-slate-100 text-slate-700 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 text-left font-semibold">年月（年齢）</th>
+                  <th class="px-3 py-2 text-left font-semibold">内容</th>
+                  <th class="px-2.5 py-2 text-left font-semibold">カテゴリ</th>
+                  <th class="px-3 py-2 text-right font-semibold">金額</th>
+                  <th class="px-2.5 py-2 text-center font-semibold">削除</th>
+                </tr>
+              </thead>
+              <tbody id="eventsTableBody" class="divide-y divide-slate-100">
+                <!-- JS描画 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：マネーフォワード月次実績分析 -->
+      <div class="lg:col-span-5 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">💳 マネーフォワード月次実績分析</h2>
+              <p id="mfSubtitle" class="text-xs text-slate-500">2026年11月（11/1〜11/27実績）</p>
+            </div>
+            <button id="btnTransferMfToConfirm" type="button"
+              class="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition">
+              確定入力へ転記 →
+            </button>
+          </div>
+
+          <!-- MFサマリーKPI -->
+          <div id="mfSummaryCards" class="grid grid-cols-3 gap-2.5">
+            <!-- JS描画 -->
+          </div>
+
+          <!-- MF月選択（複数月読み込み時） -->
+          <div id="mfMonthSelectorWrap" class="hidden items-center justify-between bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+            <span class="text-xs font-semibold text-slate-600">集計対象月:</span>
+            <select id="mfMonthSelector" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium"></select>
+          </div>
+
+          <!-- MF CSVドロップゾーン -->
+          <div id="mfDropZone"
+            class="border-2 border-dashed border-slate-300 hover:border-sky-500 rounded-xl p-3 text-center transition cursor-pointer bg-slate-50/70">
+            <input id="mfFileInput" type="file" accept=".csv,text/csv" class="hidden" />
+            <p class="text-xs text-slate-600 font-medium">📂 マネーフォワード明細CSVをここにドロップ / クリックして選択</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">読み込みと同時にカテゴリ別集計＆グラフを即時更新します</p>
+          </div>
+
+          <!-- カテゴリ別横棒グラフ -->
+          <div class="relative w-full h-64">
+            <canvas id="mfCategoryChart"></canvas>
+          </div>
+
+          <!-- カテゴリ別集計表 -->
+          <div class="table-scroll overflow-x-auto max-h-60 border border-slate-200 rounded-xl">
+            <table class="min-w-full text-xs border-collapse">
+              <thead class="bg-slate-100 text-slate-700 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 text-left font-semibold">大項目（支出）</th>
+                  <th class="px-3 py-2 text-right font-semibold">金額</th>
+                  <th class="px-3 py-2 text-right font-semibold">構成比</th>
+                </tr>
+              </thead>
+              <tbody id="mfTableBody" class="divide-y divide-slate-100">
+                <!-- JS描画 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: 連携・らくつむ・バックアップ ==================== -->
+    <section id="tab-settings" class="tab-panel hidden space-y-6">
+      <!-- Googleスプレッドシート公開CSV URL設定 -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">🔗 Googleスプレッドシート 公開CSV URL連携</h2>
+            <p class="text-xs text-slate-500">各シートの「ウェブに公開（CSV形式）」URLを登録すると、ヘッダーの同期ボタンで最新データを即時反映できます。</p>
+          </div>
+          <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-xl cursor-pointer select-none">
+            <input id="autoSyncToggle" type="checkbox" class="rounded text-sky-600 focus:ring-sky-500" />
+            <span>起動時に自動同期する</span>
+          </label>
+        </div>
+
+        <form id="sheetUrlsForm" class="space-y-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(a) 長期プラン：月次プラン CSV URL</label>
+              <input id="urlMonthlyPlan" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(b) 長期プラン：大きな買い物・イベント CSV URL</label>
+              <input id="urlEvents" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(c) らくつむ：月次実績管理 CSV URL</label>
+              <input id="urlRakutsumuActual" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(d) らくつむ：将来スワップ複利予測 CSV URL</label>
+              <input id="urlRakutsumuForecast" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">(e) マネーフォワード：明細 CSV URL</label>
+              <input id="urlMoneyForward" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            <button type="submit" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition">
+              💾 URL設定を保存
+            </button>
+            <button id="btnSyncFromSettings" type="button" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition">
+              🔄 保存して今すぐ全シート同期
+            </button>
+          </div>
+        </form>
+
+        <!-- 同期ログ表示エリア -->
+        <div id="syncLogBox" class="hidden rounded-xl bg-slate-900 text-slate-200 p-3.5 text-xs font-mono space-y-1 max-h-40 overflow-y-auto"></div>
+
+        <!-- 公開手順ガイド -->
+        <details class="bg-sky-50/70 border border-sky-200 rounded-xl p-3.5 text-xs text-slate-700">
+          <summary class="font-bold text-sky-900 cursor-pointer select-none">📘 GoogleスプレッドシートのCSV公開URL取得手順（CORS対策）</summary>
+          <ol class="list-decimal list-inside mt-2 space-y-1 leading-relaxed">
+            <li>Googleスプレッドシートを開き、上部メニューの <strong>「ファイル」→「共有」→「ウェブに公開」</strong> をクリックします。</li>
+            <li>「リンク」タブで、対象となる<strong>個別のシート名</strong>を選択し、形式を <strong>「カンマ区切り形式（.csv）」</strong> に変更して「公開」を押します。</li>
+            <li>生成されたURL（末尾が <code class="bg-white px-1 py-0.5 rounded border">output=csv</code>）を上の対応する入力欄に貼り付けて保存します。</li>
+            <li>※「再公開」設定で「変更時に自動的に再公開する」にチェックを入れておくと、シートを書き換えた直後に本アプリの同期ボタンで即反映されます。</li>
+          </ol>
+        </details>
+
+        <!-- ローカルCSV読み込み -->
+        <div class="pt-3 border-t border-slate-200 space-y-3">
+          <h3 class="text-sm font-bold text-slate-800">📂 ローカルCSVファイルからの即時読み込み</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-semibold text-slate-700">(a) 月次プラン CSV</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+              <input type="file" accept=".csv" data-csv-type="monthlyPlan" class="local-csv-input hidden" />
+            </label>
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-semibold text-slate-700">(b) イベント CSV</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+              <input type="file" accept=".csv" data-csv-type="events" class="local-csv-input hidden" />
+            </label>
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-semibold text-slate-700">(c) らくつむ実績 CSV</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+              <input type="file" accept=".csv" data-csv-type="rakutsumuActual" class="local-csv-input hidden" />
+            </label>
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-semibold text-slate-700">(d) らくつむ予測 CSV</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+              <input type="file" accept=".csv" data-csv-type="rakutsumuForecast" class="local-csv-input hidden" />
+            </label>
+            <label class="flex flex-col items-center justify-center p-3 rounded-xl border border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 cursor-pointer text-center transition">
+              <span class="text-xs font-semibold text-slate-700">(e) MF明細 CSV</span>
+              <span class="text-[11px] text-slate-400 mt-0.5">クリックで選択</span>
+              <input type="file" accept=".csv" data-csv-type="moneyForward" class="local-csv-input hidden" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- らくつむ実績 ＆ 将来スワップ複利予測テーブル -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- らくつむ月次実績 -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">🇲🇽 らくつむ月次実績管理</h3>
+            <p class="text-xs text-slate-500">メキシコペソ積立口座の実績推移（現金残高とは分離管理）</p>
+          </div>
+          <div class="table-scroll overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="min-w-full text-xs border-collapse">
+              <thead class="bg-slate-100 text-slate-700">
+                <tr>
+                  <th class="px-3 py-2 text-left font-semibold">年月</th>
+                  <th class="px-2.5 py-2 text-center font-semibold">区分</th>
+                  <th class="px-3 py-2 text-right font-semibold">累計純入金</th>
+                  <th class="px-3 py-2 text-right font-semibold">月末評価額</th>
+                  <th class="px-2.5 py-2 text-right font-semibold">有効比率</th>
+                  <th class="px-2.5 py-2 text-right font-semibold">レバ</th>
+                </tr>
+              </thead>
+              <tbody id="rakutsumuActualTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- らくつむ将来予測 -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">📈 将来スワップ複利予測（2026〜2037）</h3>
+            <p class="text-xs text-slate-500">各シナリオの年末純資産目安（2037年＝80歳目標）</p>
+          </div>
+          <div class="table-scroll overflow-x-auto max-h-72 border border-slate-200 rounded-xl">
+            <table class="min-w-full text-xs border-collapse">
+              <thead class="bg-slate-100 text-slate-700 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 text-left font-semibold">西暦（年齢）</th>
+                  <th class="px-3 py-2 text-right font-semibold">① 標準</th>
+                  <th class="px-3 py-2 text-right font-semibold">② 保守</th>
+                  <th class="px-3 py-2 text-right font-semibold">③ 悲観</th>
+                </tr>
+              </thead>
+              <tbody id="rakutsumuForecastTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 確定履歴の管理 ＆ JSONバックアップ -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">🛡️ 月末確定履歴 ＆ データバックアップ</h3>
+            <p class="text-xs text-slate-500">確定した月末残高はブラウザ（localStorage）に自動保存されます。JSONでバックアップ・復元も可能です。</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnExportJson" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition">
+              ⬇️ JSONエクスポート
+            </button>
+            <label class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold cursor-pointer transition border border-slate-300">
+              ⬆️ JSONインポート
+              <input id="importJsonInput" type="file" accept=".json,application/json" class="hidden" />
+            </label>
+            <button id="btnResetAll" type="button" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition">
+              🗑️ 全データ初期化
+            </button>
+          </div>
+        </div>
+
+        <div id="confirmedHistoryWrap" class="table-scroll overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="min-w-full text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700">
+              <tr>
+                <th class="px-3 py-2 text-left font-semibold">確定年月（年齢）</th>
+                <th class="px-3 py-2 text-right font-semibold">確定現金残高</th>
+                <th class="px-3 py-2 text-right font-semibold">確定らくつむ残高</th>
+                <th class="px-3 py-2 text-right font-semibold">確定収入</th>
+                <th class="px-3 py-2 text-right font-semibold">確定支出</th>
+                <th class="px-3 py-2 text-left font-semibold">メモ</th>
+                <th class="px-3 py-2 text-center font-semibold">解除</th>
+              </tr>
+            </thead>
+            <tbody id="confirmedHistoryBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== フッター ==================== -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <span>総合財務管理アプリ（2026年11月〜2056年12月｜69歳〜100歳）</span>
+      <span>データはブラウザのローカルストレージに安全に保存されます（外部送信なし）</span>
+    </div>
+  </footer>
+
+  <!-- ==================== モーダル：月末残高の確定・上書き ==================== -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+      <div class="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold">📝 月末残高の確定・上書き</h3>
+          <p class="text-xs text-slate-300 mt-0.5">確定した月を起点に、翌月〜2056年12月の全残高を即時再計算します。</p>
+        </div>
+        <button id="btnCloseConfirmModal" type="button" class="text-slate-400 hover:text-white text-xl leading-none px-1">&times;</button>
+      </div>
+
+      <form id="confirmMonthForm" class="p-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">対象年月</label>
+            <select id="cmYm" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+          </div>
+          <div class="flex flex-col justify-end">
+            <div id="cmPlanHint" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-600">
+              計画値読込中...
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">確定 現金残高（円）<span class="text-rose-500">*</span></label>
+            <input id="cmCash" type="number" step="1" required placeholder="例: -592358"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <p class="text-[11px] text-slate-400 mt-0.5">マネーフォワード月末実績</p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">確定 らくつむ残高（円）</label>
+            <input id="cmRakutsumu" type="number" step="1" placeholder="空欄ならモデル値維持"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+            <p class="text-[11px] text-slate-400 mt-0.5">らくつむ月末評価額（任意）</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">当月の確定収入（任意）</label>
+            <input id="cmIncome" type="number" step="1" placeholder="空欄なら計画値を使用"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">当月の確定支出（任意・正の値）</label>
+            <input id="cmExpense" type="number" step="1" min="0" placeholder="空欄なら計画値を使用"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">メモ（任意）</label>
+          <input id="cmMemo" type="text" placeholder="例：11月末マネーフォワード確定"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+          <button id="btnDeleteConfirmInModal" type="button" class="hidden px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition">
+            この月の確定を解除
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button id="btnCancelConfirmModal" type="button" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+              キャンセル
+            </button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition">
+              確定して全期間へ連動
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 汎用確認ダイアログ（confirm()代替） ==================== -->
+  <div id="dialogModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4 border border-slate-200">
+      <h3 id="dialogTitle" class="text-base font-bold text-slate-900">確認</h3>
+      <p id="dialogMessage" class="text-xs sm:text-sm text-slate-600 leading-relaxed"></p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="dialogCancelBtn" type="button" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">キャンセル</button>
+        <button id="dialogOkBtn" type="button" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold">実行する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== トースト通知コンテナ ==================== -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-[calc(100%-2rem)] pointer-events-none"></div>
+
+  <!-- ==================== JavaScript アプリケーション本体 ==================== -->
+  <script>
+    (() => {
+      'use strict';
+
+      // =========================================================================
+      // 1. 定数・ユーティリティ
+      // =========================================================================
+      const STORAGE_KEY = 'financial_dashboard_2026_2056_v1';
+      const START_YEAR = 2026;
+      const START_MONTH = 11;
+      const END_YEAR = 2056;
+      const END_MONTH = 12;
+      const BASE_START_CASH_2026_10 = -332011; // 2026年10月末基準の逆算起点
+
+      /**
+       * 年齢計算: 2026年12月を70歳とし、毎年12月に+1歳
+       * 2026-11 = 69歳, 2026-12〜2027-11 = 70歳, ..., 2056-12 = 100歳
+       */
+      function getAge(year, month) {
+        return (year - 1957) + (month === 12 ? 1 : 0);
+      }
+
+      /** YYYY-MM 形式を生成 */
+      function formatYm(year, month) {
+        return `${year}-${String(month).padStart(2, '0')}`;
+      }
+
+      /** YYYY-MM を {year, month} に分解 */
+      function parseYm(ym) {
+        const m = String(ym || '').trim().match(/(\d{4})[^\d]?(\d{1,2})/);
+        if (!m) return null;
+        return { year: parseInt(m[1], 10), month: parseInt(m[2], 10) };
+      }
+
+      /** 数値フォーマット（カンマ区切り・円記号オプション） */
+      function fmtYen(val, showSign = false) {
+        if (val === null || val === undefined || isNaN(val)) return '-';
+        const rounded = Math.round(val);
+        const sign = showSign && rounded > 0 ? '+' : '';
+        return `${sign}${rounded.toLocaleString('ja-JP')}円`;
+      }
+
+      function fmtNum(val, showSign = false) {
+        if (val === null || val === undefined || isNaN(val)) return '-';
+        const rounded = Math.round(val);
+        const sign = showSign && rounded > 0 ? '+' : '';
+        return `${sign}${rounded.toLocaleString('ja-JP')}`;
+      }
+
+      /** 数値文字列（カンマ・円・全角等含む）を安全に数値化 */
+      function parseAmount(str) {
+        if (typeof str === 'number') return isNaN(str) ? 0 : str;
+        if (str === null || str === undefined) return 0;
+        const cleaned = String(str)
+          .replace(/[¥￥,、円\s%％]/g, '')
+          .replace(/▲|△/g, '-')
+          .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+          .replace(/ー|−|―/g, '-');
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : num;
+      }
+
+      /** 金額に応じた色クラス */
+      function amtClass(val, neutralZero = false) {
+        if (val < 0) return 'text-rose-600 font-semibold';
+        if (val > 0 && !neutralZero) return 'text-emerald-700';
+        return 'text-slate-700';
+      }
+
+      /** HTMLエスケープ */
+      function escHtml(str) {
+        return String(str ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      /** トースト通知 */
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const colors = {
+          success: 'bg-emerald-600 text-white border-emerald-700',
+          error: 'bg-rose-600 text-white border-rose-700',
+          warning: 'bg-amber-500 text-white border-amber-600',
+          info: 'bg-slate-800 text-white border-slate-900'
+        };
+        const el = document.createElement('div');
+        el.className = `pointer-events-auto rounded-xl px-4 py-3 text-xs sm:text-sm font-medium shadow-lg border transition-all duration-300 ${colors[type] || colors.info}`;
+        el.textContent = message;
+        container.appendChild(el);
+        setTimeout(() => {
+          el.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => el.remove(), 300);
+        }, 4200);
+      }
+
+      /** カスタム確認ダイアログ（confirm()の代替） */
+      function showConfirmDialog(title, message) {
+        return new Promise((resolve) => {
+          const modal = document.getElementById('dialogModal');
+          document.getElementById('dialogTitle').textContent = title;
+          document.getElementById('dialogMessage').textContent = message;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+
+          const cleanup = (result) => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            resolve(result);
+          };
+          const okBtn = document.getElementById('dialogOkBtn');
+          const cancelBtn = document.getElementById('dialogCancelBtn');
+          const onOk = () => cleanup(true);
+          const onCancel = () => cleanup(false);
+          okBtn.addEventListener('click', onOk);
+          cancelBtn.addEventListener('click', onCancel);
+        });
+      }
+
+      // =========================================================================
+      // 2. 堅牢な RFC4180 準拠 CSV パーサー
+      // =========================================================================
+      function parseCSV(text) {
+        if (!text) return [];
+        // UTF-8 BOM除去
+        const src = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+        const rows = [];
+        let row = [];
+        let field = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < src.length; i++) {
+          const ch = src[i];
+          const next = src[i + 1];
+
+          if (inQuotes) {
+            if (ch === '"') {
+              if (next === '"') {
+                field += '"';
+                i++;
+              } else {
+                inQuotes = false;
+              }
+            } else {
+              field += ch;
+            }
+          } else {
+            if (ch === '"') {
+              inQuotes = true;
+            } else if (ch === ',') {
+              row.push(field.trim());
+              field = '';
+            } else if (ch === '\r') {
+              if (next === '\n') i++;
+              row.push(field.trim());
+              if (row.some(c => c !== '')) rows.push(row);
+              row = [];
+              field = '';
+            } else if (ch === '\n') {
+              row.push(field.trim());
+              if (row.some(c => c !== '')) rows.push(row);
+              row = [];
+              field = '';
+            } else {
+              field += ch;
+            }
+          }
+        }
+        if (field.length > 0 || row.length > 0) {
+          row.push(field.trim());
+          if (row.some(c => c !== '')) rows.push(row);
+        }
+        return rows;
+      }
+
+      // =========================================================================
+      // 3. 初期内蔵データ生成（添付スプレッドシートの正確な再現）
+      // =========================================================================
+      function generateAllMonthsList() {
+        const list = [];
+        let y = START_YEAR, m = START_MONTH;
+        while (y < END_YEAR || (y === END_YEAR && m <= END_MONTH)) {
+          list.push({ year: y, month: m, ym: formatYm(y, m), age: getAge(y, m) });
+          m++;
+          if (m > 12) { m = 1; y++; }
+        }
+        return list;
+      }
+
+      const ALL_MONTHS = generateAllMonthsList(); // 全362ヶ月
+
+      function createDefaultEvents() {
+        const events = [];
+        let idCounter = 1;
+        const add = (ym, title, amount, category) => {
+          events.push({ id: `ev_${idCounter++}`, ym, title, amount, category });
+        };
+
+        // 2026年11月 単発イベント（2026-11収支 -260,347円に厳密一致）
+        add('2026-11', '孫にパソコンプレゼント', 152280, '家族');
+
+        // 2027年〜2056年の定期・隔年イベント
+        for (let y = 2027; y <= 2056; y++) {
+          // 毎年定期
+          add(`${y}-02`, '車保険', 34670, '自動車');
+          add(`${y}-05`, '自動車税', 10800, '自動車');
+          add(`${y}-09`, 'マネーフォワード', 5300, 'サブスク');
+          add(`${y}-10`, '保守党党費', 6000, 'その他');
+          add(`${y}-12`, 'povo', 16700, '通信');
+
+          // 隔年イベント（奇数年: アパート更新）
+          if (y % 2 === 1) {
+            add(`${y}-02`, 'アパート更新', 42000, '住宅');
+            add(`${y}-03`, 'アパート更新（家財保険）', 18000, '住宅');
+          }
+          // 隔年イベント（偶数年: 車検）
+          if (y % 2 === 0) {
+            add(`${y}-05`, '車検', 70000, '自動車');
+          }
+        }
+        return events.sort((a, b) => a.ym.localeCompare(b.ym));
+      }
+
+      function createDefaultMonthlyBaseOverrides() {
+        // 個別の月次プランCSVを読み込んだ場合の上書きマップ（初期は空＝計算ルール使用）
+        return {};
+      }
+
+      function getDefaultPlanForMonth(year, month) {
+        const ym = formatYm(year, month);
+        const pension = (month % 2 === 0) ? 426147 : 0;
+        const corpPension = (month === 6 || month === 12) ? 59783 : 0;
+
+        let salary = 0;
+        if (ym === '2026-11') salary = 194222;
+        else if (ym === '2026-12' || ym === '2027-01') salary = 180000;
+        else if (ym >= '2027-02' && ym <= '2029-01') salary = 170000;
+        else if (ym >= '2029-02' && ym <= '2036-12') salary = 120000;
+        else salary = 0;
+
+        let otherIncome = 0;
+        if (ym === '2026-11') {
+          otherIncome = 5161;
+        } else if (year === 2027) {
+          if (month === 3 || month === 6 || month === 9) otherIncome = 15000;
+        } else if (year >= 2028 && year <= 2036) {
+          if (month % 2 === 0) otherIncome += 20000;
+          if (month === 3 || month === 9) otherIncome += 15000;
+        } else if (year >= 2037) {
+          otherIncome = 11000 + (month % 2 === 0 ? 20000 : 0);
+        }
+
+        let livingCost = 302450;
+        if (ym <= '2027-06') {
+          livingCost = 307450;
+        } else if (ym <= '2037-05') {
+          livingCost = 302450;
+        } else if (ym <= '2038-12') {
+          livingCost = 260000;
+        } else {
+          // 2039年〜2056年: 毎年+800円インフレ（2056年は274,400円）
+          livingCost = 260000 + (year - 2038) * 800;
+        }
+
+        return { pension, corpPension, salary, otherIncome, livingCost };
+      }
+
+      function createDefaultRakutsumuActuals() {
+        return [
+          { ym: '2026-06', netDeposit: 30000, evalValue: 29997, ratio: 681.8, lev: 0.29, status: '確定' },
+          { ym: '2026-07', netDeposit: 40000, evalValue: 39569, ratio: 399.7, lev: 0.50, status: '確定' },
+          { ym: '2026-08', netDeposit: 50000, evalValue: 50709, ratio: 305.5, lev: 0.65, status: '確定' },
+          { ym: '2026-09', netDeposit: 60000, evalValue: 56453, ratio: 159.8, lev: 1.25, status: '確定' },
+          { ym: '2026-10', netDeposit: 75000, evalValue: 68575, ratio: 149.2, lev: 1.34, status: '確定' },
+          { ym: '2026-11', netDeposit: 90000, evalValue: 80915, ratio: 152.9, lev: 1.31, status: '確定' },
+          { ym: '2026-12', netDeposit: 105000, evalValue: 103132, ratio: 193.36, lev: 1.03, status: '計画' }
+        ];
+      }
+
+      function createDefaultRakutsumuForecast() {
+        return {
+          standard: {
+            2026: 112266, 2027: 302705, 2028: 501777, 2029: 710313,
+            2030: 929224, 2031: 1159510, 2032: 1402260, 2033: 1658690,
+            2034: 1930000, 2035: 2217950, 2036: 2523800, 2037: 2849410
+          },
+          conservative: {
+            2026: 112030, 2027: 300907, 2028: 497296, 2029: 701837,
+            2030: 915225, 2031: 1138000, 2032: 1371000, 2033: 1615000,
+            2034: 1872000, 2035: 2143660, 2036: 2428440, 2037: 2728900
+          },
+          pessimistic: {
+            2026: 111670, 2027: 297976, 2028: 489788, 2029: 687461,
+            2030: 891373, 2031: 1102000, 2032: 1320000, 2033: 1545000,
+            2034: 1778000, 2035: 2019500, 2036: 2270250, 2037: 2530640
+          }
+        };
+      }
+
+      function createDefaultMfData() {
+        return {
+          selectedMonth: '2026-11',
+          months: {
+            '2026-11': {
+              label: '2026年11月（11/1〜11/27実績）',
+              income: 201148,
+              expense: 289989,
+              net: -88841,
+              categories: [
+                { name: 'その他', amount: 131005 },
+                { name: '住宅', amount: 45330 },
+                { name: '食費', amount: 36673 },
+                { name: '税・社会保障', amount: 20900 },
+                { name: '水道・光熱費', amount: 17811 },
+                { name: '自動車', amount: 9912 },
+                { name: '特別な支出', amount: 7570 },
+                { name: '日用品', amount: 5458 },
+                { name: '保険', amount: 4220 },
+                { name: '趣味・娯楽', amount: 2990 },
+                { name: '健康・医療', amount: 2880 },
+                { name: '教養・教育', amount: 2799 },
+                { name: '現金・カード', amount: 2375 },
+                { name: '通信費', amount: 66 }
+              ]
+            }
+          }
+        };
+      }
+
+      function createInitialState() {
+        return {
+          scenario: 'standard',         // 'standard' | 'conservative' | 'pessimistic'
+          post80Mode: 'compound',       // 'compound' | 'hold'
+          chartGranularity: 'annual',   // 'annual' | 'monthly'
+          autoSync: false,
+          lastSyncTime: null,
+          sheetUrls: {
+            monthlyPlan: '',
+            events: '',
+            rakutsumuActual: '',
+            rakutsumuForecast: '',
+            moneyForward: ''
+          },
+          baseStartCash: BASE_START_CASH_2026_10,
+          monthlyCsvOverrides: createDefaultMonthlyBaseOverrides(),
+          events: createDefaultEvents(),
+          rakutsumuActuals: createDefaultRakutsumuActuals(),
+          rakutsumuForecast: createDefaultRakutsumuForecast(),
+          mfData: createDefaultMfData(),
+          confirmedMonths: {} // { '2026-11': { cash, rakutsumu, income, expense, memo } }
+        };
+      }
+
+      // =========================================================================
+      // 4. 状態管理（localStorage永続化）
+      // =========================================================================
+      let state = loadState();
+      let computedMonthly = [];
+      let computedAnnual = [];
+      let activeTab = 'dashboard';
+
+      // Chart.jsインスタンス
+      let mainBalanceChart = null;
+      let annualCashflowChart = null;
+      let mfCategoryChart = null;
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return createInitialState();
+          const parsed = JSON.parse(raw);
+          const def = createInitialState();
+          return {
+            ...def,
+            ...parsed,
+            sheetUrls: { ...def.sheetUrls, ...(parsed.sheetUrls || {}) },
+            rakutsumuForecast: parsed.rakutsumuForecast || def.rakutsumuForecast,
+            mfData: parsed.mfData || def.mfData,
+            confirmedMonths: parsed.confirmedMonths || {}
+          };
+        } catch (e) {
+          console.error('状態読み込みエラー:', e);
+          return createInitialState();
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.error('状態保存エラー:', e);
+          showToast('ブラウザの保存容量上限により保存に失敗しました', 'error');
+        }
+      }
+
+      // =========================================================================
+      // 5. コア計算エンジン（ロールフォワード・らくつむ補間・年次集計）
+      // =========================================================================
+      function buildRakutsumuModelCurve() {
+        const forecastMap = state.rakutsumuForecast[state.scenario] || state.rakutsumuForecast.standard;
+        const yearEnd = {};
+
+        // 2026〜2037年の年末値
+        for (let y = 2026; y <= 2037; y++) {
+          yearEnd[y] = forecastMap[y] ?? (yearEnd[y - 1] || 112266);
+        }
+
+        // 2038〜2056年の年末値
+        for (let y = 2038; y <= 2056; y++) {
+          if (state.post80Mode === 'compound') {
+            yearEnd[y] = Math.round(yearEnd[y - 1] * 1.041);
+          } else {
+            yearEnd[y] = yearEnd[2037];
+          }
+        }
+
+        // らくつむ確定実績マップ
+        const actualMap = {};
+        (state.rakutsumuActuals || []).forEach(r => {
+          actualMap[r.ym] = r;
+        });
+
+        // 月次モデル値（補間＋実績優先）
+        const monthlyModel = {};
+        ALL_MONTHS.forEach(({ year, month, ym }) => {
+          // 確定実績がある月は実績評価額を優先
+          if (actualMap[ym] && actualMap[ym].status === '確定') {
+            monthlyModel[ym] = actualMap[ym].evalValue;
+            return;
+          }
+          // 2026-12 計画値または予測値
+          if (ym === '2026-12') {
+            monthlyModel[ym] = yearEnd[2026];
+            return;
+          }
+          const prevYearVal = yearEnd[year - 1] ?? (actualMap['2026-11']?.evalValue || 80915);
+          const currYearVal = yearEnd[year] ?? prevYearVal;
+          // 1〜12月を滑らかに補間
+          monthlyModel[ym] = Math.round(prevYearVal + (currYearVal - prevYearVal) * (month / 12));
+        });
+
+        return monthlyModel;
+      }
+
+      function recalculateAll() {
+        // 1. イベントを年月ごとに合算
+        const eventSumByYm = {};
+        (state.events || []).forEach(ev => {
+          eventSumByYm[ev.ym] = (eventSumByYm[ev.ym] || 0) + (Number(ev.amount) || 0);
+        });
+
+        // 2. らくつむモデルカーブ
+        const rakutsumuModel = buildRakutsumuModelCurve();
+
+        // 3. 362ヶ月を先頭からロールフォワード計算
+        let prevCash = state.baseStartCash;
+        let rakutsumuDelta = 0; // 確定らくつむ残高が入力された場合、以降の予測へ差分を連動
+
+        const monthlyRows = [];
+
+        ALL_MONTHS.forEach(({ year, month, ym, age }) => {
+          const defPlan = getDefaultPlanForMonth(year, month);
+          const csvOv = state.monthlyCsvOverrides[ym] || {};
+
+          const pension = csvOv.pension !== undefined ? csvOv.pension : defPlan.pension;
+          const corpPension = csvOv.corpPension !== undefined ? csvOv.corpPension : defPlan.corpPension;
+          const salary = csvOv.salary !== undefined ? csvOv.salary : defPlan.salary;
+          const otherIncome = csvOv.otherIncome !== undefined ? csvOv.otherIncome : defPlan.otherIncome;
+          const livingCost = csvOv.livingCost !== undefined ? csvOv.livingCost : defPlan.livingCost;
+          const specialExpense = (csvOv.specialExpense !== undefined && csvOv.useCsvSpecial)
+            ? csvOv.specialExpense
+            : (eventSumByYm[ym] || 0);
+
+          let incomeTotal = pension + corpPension + salary + otherIncome;
+          let expenseTotal = livingCost + specialExpense;
+
+          const conf = state.confirmedMonths[ym];
+          const isConfirmed = Boolean(conf);
+
+          if (isConfirmed) {
+            if (conf.income !== null && conf.income !== undefined && conf.income !== '') {
+              incomeTotal = Number(conf.income);
+            }
+            if (conf.expense !== null && conf.expense !== undefined && conf.expense !== '') {
+              expenseTotal = Number(conf.expense);
+            }
+          }
+
+          const netCashflow = incomeTotal - expenseTotal;
+
+          // 現金残高（確定月はアンカーとして上書き）
+          let cashBalance;
+          if (isConfirmed && conf.cash !== null && conf.cash !== undefined && conf.cash !== '') {
+            cashBalance = Number(conf.cash);
+          } else {
+            cashBalance = prevCash + netCashflow;
+          }
+          prevCash = cashBalance;
+
+          // らくつむ残高（確定月はアンカーとして上書きし、以降のモデルへ差分連動）
+          let rakutsumuBalance;
+          const baseRaku = rakutsumuModel[ym] ?? 0;
+          if (isConfirmed && conf.rakutsumu !== null && conf.rakutsumu !== undefined && conf.rakutsumu !== '') {
+            rakutsumuBalance = Number(conf.rakutsumu);
+            rakutsumuDelta = rakutsumuBalance - baseRaku;
+          } else {
+            rakutsumuBalance = Math.max(0, baseRaku + rakutsumuDelta);
+          }
+
+          const totalBalance = cashBalance + rakutsumuBalance;
+
+          monthlyRows.push({
+            year, month, ym, age,
+            isConfirmed,
+            memo: conf?.memo || '',
+            pension, corpPension, salary, otherIncome, incomeTotal,
+            livingCost, specialExpense, expenseTotal,
+            netCashflow,
+            cashBalance,
+            rakutsumuBalance,
+            totalBalance
+          });
+        });
+
+        computedMonthly = monthlyRows;
+
+        // 4. 年次サマリー集計（2026〜2056）
+        const annualMap = {};
+        monthlyRows.forEach(r => {
+          if (!annualMap[r.year]) {
+            annualMap[r.year] = {
+              year: r.year,
+              ageEnd: getAge(r.year, 12),
+              income: 0,
+              expense: 0,
+              specialExpense: 0,
+              net: 0,
+              endCash: 0,
+              endRakutsumu: 0,
+              endTotal: 0
+            };
+          }
+          const a = annualMap[r.year];
+          a.income += r.incomeTotal;
+          a.expense += r.expenseTotal;
+          a.specialExpense += r.specialExpense;
+          a.net += r.netCashflow;
+          // 12月（またはその年の最終月）を残高とする
+          a.endCash = r.cashBalance;
+          a.endRakutsumu = r.rakutsumuBalance;
+          a.endTotal = r.totalBalance;
+        });
+
+        computedAnnual = Object.values(annualMap).sort((a, b) => a.year - b.year);
+      }
+
+      // =========================================================================
+      // 6. 画面描画関数群
+      // =========================================================================
+      function renderAll() {
+        recalculateAll();
+        updateHeaderSyncBadge();
+        renderDashboard();
+        renderMonthlyTable();
+        renderAnnualTable();
+        renderEventsTable();
+        renderMfSection();
+        renderSettingsSection();
+      }
+
+      function updateHeaderSyncBadge() {
+        const badge = document.getElementById('headerSyncStatus');
+        const confCount = Object.keys(state.confirmedMonths).length;
+        if (state.lastSyncTime) {
+          badge.textContent = `最終同期: ${state.lastSyncTime}｜確定${confCount}ヶ月`;
+          badge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-emerald-900/70 text-emerald-200 border border-emerald-700';
+        } else {
+          badge.textContent = `内蔵データ稼働中｜確定${confCount}ヶ月`;
+          badge.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-slate-800 text-slate-300 border border-slate-700';
+        }
+      }
+
+      // --- TAB 1: ダッシュボード ---
+      function renderDashboard() {
+        // シナリオ＆80歳以降ボタン状態更新
+        document.querySelectorAll('.scenario-btn').forEach(btn => {
+          const active = btn.dataset.scenario === state.scenario;
+          btn.className = `scenario-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+          }`;
+        });
+        document.querySelectorAll('.post80-btn').forEach(btn => {
+          const active = btn.dataset.post80 === state.post80Mode;
+          btn.className = `post80-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+            active ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
+          }`;
+        });
+        document.querySelectorAll('.granularity-btn').forEach(btn => {
+          const active = btn.dataset.chartGranularity === state.chartGranularity;
+          btn.className = `granularity-btn px-3 py-1 rounded-lg text-xs font-semibold transition ${
+            active ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+          }`;
+        });
+
+        // 直近確定月（なければ2026-11起点）
+        const confirmedKeys = Object.keys(state.confirmedMonths).sort();
+        const latestYm = confirmedKeys.length > 0 ? confirmedKeys[confirmedKeys.length - 1] : '2026-11';
+        const latestRow = computedMonthly.find(r => r.ym === latestYm) || computedMonthly[0];
+        const statusLabel = latestRow.isConfirmed ? `${latestRow.ym} 確定実績` : `${latestRow.ym} 計画起点`;
+
+        // 現金残高の期間最低値
+        let minCashRow = computedMonthly[0];
+        computedMonthly.forEach(r => {
+          if (r.cashBalance < minCashRow.cashBalance) minCashRow = r;
+        });
+
+        // 80歳(2036-12), 90歳(2046-12), 100歳(2056-12)
+        const row80 = computedMonthly.find(r => r.ym === '2036-12');
+        const row90 = computedMonthly.find(r => r.ym === '2046-12');
+        const row100 = computedMonthly.find(r => r.ym === '2056-12');
+
+        // 上段KPIカード
+        const kpiGrid = document.getElementById('kpiGrid');
+        kpiGrid.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-slate-500">総合残高（合算）</span>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${latestRow.isConfirmed ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${escHtml(statusLabel)}</span>
+            </div>
+            <div class="text-2xl sm:text-3xl font-bold num mt-1 ${latestRow.totalBalance < 0 ? 'text-rose-600' : 'text-slate-900'}">${fmtYen(latestRow.totalBalance)}</div>
+            <div class="text-xs text-slate-500 mt-1.5">${latestRow.age}歳時点｜現金＋らくつむ</div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-slate-500">現金残高（マネーフォワード）</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+            </div>
+            <div class="text-2xl sm:text-3xl font-bold num mt-1 ${latestRow.cashBalance < 0 ? 'text-rose-600' : 'text-sky-700'}">${fmtYen(latestRow.cashBalance)}</div>
+            <div class="text-xs text-slate-500 mt-1.5">当月収支: <span class="num font-semibold ${amtClass(latestRow.netCashflow)}">${fmtYen(latestRow.netCashflow, true)}</span></div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold text-slate-500">らくつむ残高（分離口座）</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+            </div>
+            <div class="text-2xl sm:text-3xl font-bold num mt-1 text-indigo-700">${fmtYen(latestRow.rakutsumuBalance)}</div>
+            <div class="text-xs text-slate-500 mt-1.5">メキシコペソ積立・複利運用</div>
+          </div>
+
+          <div class="bg-white rounded-2xl border ${minCashRow.cashBalance < 0 ? 'border-rose-200 bg-rose-50/40' : 'border-slate-200'} shadow-sm p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-semibold ${minCashRow.cashBalance < 0 ? 'text-rose-700' : 'text-slate-500'}">現金残高の期間最低値</span>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${minCashRow.cashBalance < 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${minCashRow.cashBalance < 0 ? '赤字注意' : '黒字維持'}</span>
+            </div>
+            <div class="text-2xl sm:text-3xl font-bold num mt-1 ${minCashRow.cashBalance < 0 ? 'text-rose-600' : 'text-emerald-700'}">${fmtYen(minCashRow.cashBalance)}</div>
+            <div class="text-xs text-slate-600 mt-1.5">発生: <span class="font-semibold">${minCashRow.ym}（${minCashRow.age}歳）</span></div>
+          </div>
+        `;
+
+        // 節目年齢カード
+        const renderMilestone = (title, row, accent) => {
+          if (!row) return '';
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold ${accent}">${title}</span>
+                <span class="text-[11px] text-slate-400 num">${row.ym}</span>
+              </div>
+              <div class="text-xl font-bold num mt-1.5 ${row.totalBalance < 0 ? 'text-rose-600' : 'text-slate-900'}">${fmtYen(row.totalBalance)}</div>
+              <div class="mt-2 pt-2 border-t border-slate-100 flex justify-between text-[11px] text-slate-500">
+                <span>現金: <b class="num ${row.cashBalance < 0 ? 'text-rose-600' : 'text-slate-700'}">${fmtNum(row.cashBalance)}</b></span>
+                <span>らくつむ: <b class="num text-indigo-700">${fmtNum(row.rakutsumuBalance)}</b></span>
+              </div>
+            </div>
+          `;
+        };
+
+        const row70End = computedMonthly.find(r => r.ym === '2026-12');
+        document.getElementById('milestoneGrid').innerHTML =
+          renderMilestone('70歳到達（2026年末）', row70End, 'text-slate-700') +
+          renderMilestone('80歳到達（2036年末）', row80, 'text-sky-700') +
+          renderMilestone('90歳到達（2046年末）', row90, 'text-indigo-700') +
+          renderMilestone('100歳到達（2056年末）', row100, 'text-emerald-700');
+
+        renderMainBalanceChart();
+        renderAnnualCashflowChart();
+      }
+
+      function renderMainBalanceChart() {
+        const ctx = document.getElementById('mainBalanceChart').getContext('2d');
+        const isMonthly = state.chartGranularity === 'monthly';
+
+        let labels, totalData, cashData, rakuData, ages;
+        if (isMonthly) {
+          labels = computedMonthly.map(r => r.ym);
+          ages = computedMonthly.map(r => r.age);
+          totalData = computedMonthly.map(r => r.totalBalance);
+          cashData = computedMonthly.map(r => r.cashBalance);
+          rakuData = computedMonthly.map(r => r.rakutsumuBalance);
+        } else {
+          labels = computedAnnual.map(a => `${a.year}年(${a.ageEnd}歳)`);
+          ages = computedAnnual.map(a => a.ageEnd);
+          totalData = computedAnnual.map(a => a.endTotal);
+          cashData = computedAnnual.map(a => a.endCash);
+          rakuData = computedAnnual.map(a => a.endRakutsumu);
+        }
+
+        if (mainBalanceChart) mainBalanceChart.destroy();
+        mainBalanceChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: '総合残高（現金＋らくつむ）',
+                data: totalData,
+                borderColor: '#059669',
+                backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                borderWidth: 2.8,
+                fill: true,
+                tension: 0.25,
+                pointRadius: isMonthly ? 0 : 3,
+                pointHoverRadius: 5
+              },
+              {
+                label: '現金残高（マネーフォワード）',
+                data: cashData,
+                borderColor: '#0284c7',
+                backgroundColor: 'transparent',
+                borderWidth: 2.2,
+                tension: 0.25,
+                pointRadius: isMonthly ? 0 : 2.5,
+                pointHoverRadius: 5
+              },
+              {
+                label: 'らくつむ残高（分離口座）',
+                data: rakuData,
+                borderColor: '#4f46e5',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                borderDash: [5, 4],
+                tension: 0.25,
+                pointRadius: isMonthly ? 0 : 2,
+                pointHoverRadius: 5
+              },
+              {
+                label: '0円基準線',
+                data: labels.map(() => 0),
+                borderColor: '#e11d48',
+                borderWidth: 1.2,
+                borderDash: [3, 3],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                fill: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  usePointStyle: true,
+                  boxWidth: 8,
+                  font: { size: 11, family: 'Inter, Noto Sans JP' },
+                  filter: item => item.text !== '0円基準線'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                padding: 12,
+                titleFont: { size: 12, weight: 'bold' },
+                bodyFont: { size: 12, family: 'JetBrains Mono, Noto Sans JP' },
+                callbacks: {
+                  title: (items) => {
+                    const idx = items[0].dataIndex;
+                    return isMonthly
+                      ? `${labels[idx]}（${ages[idx]}歳）`
+                      : `${computedAnnual[idx].year}年12月末（${ages[idx]}歳）`;
+                  },
+                  label: (ctx) => {
+                    if (ctx.dataset.label === '0円基準線') return null;
+                    return ` ${ctx.dataset.label}: ${fmtYen(ctx.parsed.y)}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  maxTicksLimit: isMonthly ? 15 : 16,
+                  font: { size: 10 }
+                },
+                grid: { display: false }
+              },
+              y: {
+                ticks: {
+                  font: { size: 11, family: 'JetBrains Mono' },
+                  callback: (val) => `${(val / 10000).toLocaleString('ja-JP')}万`
+                },
+                grid: { color: '#f1f5f9' }
+              }
+            }
+          }
+        });
+      }
+
+      function renderAnnualCashflowChart() {
+        const ctx = document.getElementById('annualCashflowChart').getContext('2d');
+        const labels = computedAnnual.map(a => `${a.year}年(${a.ageEnd}歳)`);
+
+        if (annualCashflowChart) annualCashflowChart.destroy();
+        annualCashflowChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: '年収入',
+                data: computedAnnual.map(a => a.income),
+                backgroundColor: 'rgba(14, 165, 233, 0.78)',
+                borderRadius: 4
+              },
+              {
+                label: '年支出（基本＋特別）',
+                data: computedAnnual.map(a => a.expense),
+                backgroundColor: 'rgba(244, 63, 94, 0.72)',
+                borderRadius: 4
+              },
+              {
+                label: 'うち特別出費',
+                type: 'line',
+                data: computedAnnual.map(a => a.specialExpense),
+                borderColor: '#f59e0b',
+                backgroundColor: '#f59e0b',
+                borderWidth: 2,
+                pointRadius: 2.5,
+                tension: 0.2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: { usePointStyle: true, font: { size: 11 } }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                padding: 10,
+                callbacks: {
+                  label: (c) => ` ${c.dataset.label}: ${fmtYen(c.parsed.y)}`
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { maxTicksLimit: 16, font: { size: 10 } }, grid: { display: false } },
+              y: {
+                ticks: {
+                  font: { size: 11, family: 'JetBrains Mono' },
+                  callback: (val) => `${(val / 10000).toLocaleString('ja-JP')}万`
+                },
+                grid: { color: '#f1f5f9' }
+              }
+            }
+          }
+        });
+      }
+
+      // --- TAB 2: 月次プラン（362ヶ月） ---
+      function initYearFilterOptions() {
+        const sel = document.getElementById('monthlyYearFilter');
+        if (sel.options.length > 1) return;
+        for (let y = START_YEAR; y <= END_YEAR; y++) {
+          const opt = document.createElement('option');
+          opt.value = String(y);
+          opt.textContent = `${y}年（${getAge(y, 12)}歳到達年）`;
+          sel.appendChild(opt);
+        }
+      }
+
+      function renderMonthlyTable() {
+        initYearFilterOptions();
+        const yearFilter = document.getElementById('monthlyYearFilter').value;
+        const confirmedOnly = document.getElementById('monthlyConfirmedOnly').checked;
+
+        const filtered = computedMonthly.filter(r => {
+          if (yearFilter !== 'ALL' && String(r.year) !== yearFilter) return false;
+          if (confirmedOnly && !r.isConfirmed) return false;
+          return true;
+        });
+
+        document.getElementById('monthlyCountBadge').textContent = filtered.length;
+        const tbody = document.getElementById('monthlyTableBody');
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="16" class="py-10 text-center text-slate-400">該当する月次データがありません</td></tr>`;
+          return;
+        }
+
+        const html = filtered.map(r => {
+          const rowBg = r.isConfirmed
+            ? 'bg-emerald-50/70 hover:bg-emerald-50'
+            : (r.cashBalance < 0 ? 'bg-rose-50/30 hover:bg-rose-50/60' : 'hover:bg-slate-50');
+          const badge = r.isConfirmed
+            ? `<span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-600 text-white">確定</span>`
+            : `<span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500">計画</span>`;
+
+          return `
+            <tr class="${rowBg} transition-colors">
+              <td class="px-3 py-2 font-semibold num whitespace-nowrap text-slate-800">${r.ym}</td>
+              <td class="px-2.5 py-2 text-center whitespace-nowrap text-slate-600">${r.age}歳</td>
+              <td class="px-2.5 py-2 text-center whitespace-nowrap">${badge}</td>
+              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.pension)}</td>
+              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.corpPension)}</td>
+              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.salary)}</td>
+              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.otherIncome)}</td>
+              <td class="px-3 py-2 text-right num font-semibold text-slate-800 bg-slate-50/80">${fmtNum(r.incomeTotal)}</td>
+              <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.livingCost)}</td>
+              <td class="px-3 py-2 text-right num ${r.specialExpense > 0 ? 'text-amber-700 font-semibold' : 'text-slate-400'}">${fmtNum(r.specialExpense)}</td>
+              <td class="px-3 py-2 text-right num font-semibold text-slate-800 bg-slate-50/80">${fmtNum(r.expenseTotal)}</td>
+              <td class="px-3 py-2 text-right num font-semibold ${amtClass(r.netCashflow)}">${fmtNum(r.netCashflow, true)}</td>
+              <td class="px-3 py-2 text-right num font-bold ${r.cashBalance < 0 ? 'text-rose-600 bg-rose-50/80' : 'text-sky-800 bg-sky-50/50'}">${fmtNum(r.cashBalance)}</td>
+              <td class="px-3 py-2 text-right num font-semibold text-indigo-700 bg-indigo-50/40">${fmtNum(r.rakutsumuBalance)}</td>
+              <td class="px-3 py-2 text-right num font-bold ${r.totalBalance < 0 ? 'text-rose-600 bg-rose-50/80' : 'text-emerald-800 bg-emerald-50/40'}">${fmtNum(r.totalBalance)}</td>
+              <td class="px-3 py-2 text-center whitespace-nowrap">
+                <button type="button" data-confirm-ym="${r.ym}"
+                  class="btn-row-confirm px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
+                    r.isConfirmed
+                      ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                      : 'bg-slate-800 text-white hover:bg-slate-700'
+                  }">
+                  ${r.isConfirmed ? '編集' : '確定上書き'}
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        tbody.innerHTML = html;
+      }
+
+      // --- TAB 3: 年次サマリー ---
+      function renderAnnualTable() {
+        const scenNames = { standard: '①標準', conservative: '②保守', pessimistic: '③悲観' };
+        const p80Names = { compound: '80歳以降複利(4.1%)', hold: '80歳以降据置' };
+        document.getElementById('annualScenarioTag').textContent =
+          `らくつむ条件: ${scenNames[state.scenario]} / ${p80Names[state.post80Mode]}`;
+
+        const tbody = document.getElementById('annualTableBody');
+        tbody.innerHTML = computedAnnual.map(a => {
+          const isMilestone = [70, 75, 80, 85, 90, 95, 100].includes(a.ageEnd);
+          return `
+            <tr class="${isMilestone ? 'bg-amber-50/40 font-medium' : 'hover:bg-slate-50'} transition-colors">
+              <td class="px-3.5 py-2.5 font-bold num text-slate-900 whitespace-nowrap">${a.year}年</td>
+              <td class="px-3 py-2.5 text-center whitespace-nowrap">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${isMilestone ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}">${a.ageEnd}歳</span>
+              </td>
+              <td class="px-3.5 py-2.5 text-right num text-slate-700">${fmtNum(a.income)}</td>
+              <td class="px-3.5 py-2.5 text-right num text-slate-700">${fmtNum(a.expense)}</td>
+              <td class="px-3.5 py-2.5 text-right num ${a.specialExpense > 0 ? 'text-amber-700' : 'text-slate-400'}">${fmtNum(a.specialExpense)}</td>
+              <td class="px-3.5 py-2.5 text-right num font-semibold ${amtClass(a.net)}">${fmtNum(a.net, true)}</td>
+              <td class="px-3.5 py-2.5 text-right num font-bold ${a.endCash < 0 ? 'text-rose-600 bg-rose-50/70' : 'text-sky-800 bg-sky-50/40'}">${fmtNum(a.endCash)}</td>
+              <td class="px-3.5 py-2.5 text-right num font-semibold text-indigo-700 bg-indigo-50/40">${fmtNum(a.endRakutsumu)}</td>
+              <td class="px-3.5 py-2.5 text-right num font-bold ${a.endTotal < 0 ? 'text-rose-600 bg-rose-50/70' : 'text-emerald-800 bg-emerald-50/40'}">${fmtNum(a.endTotal)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // --- TAB 4: イベント ＆ MF実績 ---
+      function renderEventsTable() {
+        const kw = (document.getElementById('eventSearchInput').value || '').trim().toLowerCase();
+        const cat = document.getElementById('eventCategoryFilter').value;
+
+        const filtered = (state.events || [])
+          .filter(ev => {
+            if (cat !== 'ALL' && ev.category !== cat) return false;
+            if (kw && !(`${ev.ym} ${ev.title} ${ev.category}`).toLowerCase().includes(kw)) return false;
+            return true;
+          })
+          .sort((a, b) => a.ym.localeCompare(b.ym));
+
+        document.getElementById('eventTotalCount').textContent = `${filtered.length}件`;
+        const tbody = document.getElementById('eventsTableBody');
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400">該当するイベントがありません</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(ev => {
+          const p = parseYm(ev.ym);
+          const age = p ? `${getAge(p.year, p.month)}歳` : '-';
+          return `
+            <tr class="hover:bg-slate-50">
+              <td class="px-3 py-2 num whitespace-nowrap text-slate-700">${escHtml(ev.ym)} <span class="text-[11px] text-slate-400">(${age})</span></td>
+              <td class="px-3 py-2 font-medium text-slate-800">${escHtml(ev.title)}</td>
+              <td class="px-2.5 py-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px]">${escHtml(ev.category)}</span></td>
+              <td class="px-3 py-2 text-right num font-semibold text-amber-700 whitespace-nowrap">${fmtYen(ev.amount)}</td>
+              <td class="px-2.5 py-2 text-center">
+                <button type="button" data-del-ev="${escHtml(ev.id)}" class="btn-del-event text-rose-500 hover:text-rose-700 font-bold px-2 py-0.5 rounded hover:bg-rose-50 transition">削除</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function renderMfSection() {
+        const mf = state.mfData;
+        const monthKeys = Object.keys(mf.months || {}).sort().reverse();
+        const selWrap = document.getElementById('mfMonthSelectorWrap');
+        const selEl = document.getElementById('mfMonthSelector');
+
+        if (monthKeys.length > 1) {
+          selWrap.classList.remove('hidden');
+          selWrap.classList.add('flex');
+          selEl.innerHTML = monthKeys.map(k => `<option value="${k}" ${k === mf.selectedMonth ? 'selected' : ''}>${k}</option>`).join('');
+        } else {
+          selWrap.classList.add('hidden');
+          selWrap.classList.remove('flex');
+        }
+
+        const current = mf.months[mf.selectedMonth] || mf.months[monthKeys[0]];
+        if (!current) return;
+
+        document.getElementById('mfSubtitle').textContent = current.label || `${mf.selectedMonth} 実績`;
+        document.getElementById('mfSummaryCards').innerHTML = `
+          <div class="rounded-xl bg-sky-50 border border-sky-200 p-2.5">
+            <div class="text-[11px] text-sky-700 font-semibold">収入計</div>
+            <div class="text-sm sm:text-base font-bold num text-sky-900 mt-0.5">${fmtNum(current.income)}円</div>
+          </div>
+          <div class="rounded-xl bg-rose-50 border border-rose-200 p-2.5">
+            <div class="text-[11px] text-rose-700 font-semibold">支出計</div>
+            <div class="text-sm sm:text-base font-bold num text-rose-700 mt-0.5">-${fmtNum(current.expense)}円</div>
+          </div>
+          <div class="rounded-xl bg-slate-100 border border-slate-200 p-2.5">
+            <div class="text-[11px] text-slate-600 font-semibold">収支</div>
+            <div class="text-sm sm:text-base font-bold num mt-0.5 ${amtClass(current.net)}">${fmtNum(current.net, true)}円</div>
+          </div>
+        `;
+
+        const cats = [...(current.categories || [])].sort((a, b) => b.amount - a.amount);
+        const totalExp = cats.reduce((s, c) => s + c.amount, 0) || 1;
+
+        document.getElementById('mfTableBody').innerHTML = cats.map(c => `
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-1.5 font-medium text-slate-700">${escHtml(c.name)}</td>
+            <td class="px-3 py-1.5 text-right num text-rose-600 font-semibold">-${fmtNum(c.amount)}円</td>
+            <td class="px-3 py-1.5 text-right num text-slate-500">${((c.amount / totalExp) * 100).toFixed(1)}%</td>
+          </tr>
+        `).join('');
+
+        // 横棒グラフ（上位10カテゴリ）
+        const topCats = cats.slice(0, 10);
+        const ctx = document.getElementById('mfCategoryChart').getContext('2d');
+        if (mfCategoryChart) mfCategoryChart.destroy();
+        mfCategoryChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: topCats.map(c => c.name),
+            datasets: [{
+              label: '支出額（円）',
+              data: topCats.map(c => c.amount),
+              backgroundColor: 'rgba(244, 63, 94, 0.78)',
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (c) => ` -${fmtYen(c.parsed.x)}`
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: { font: { size: 10, family: 'JetBrains Mono' }, callback: v => `${(v / 1000).toLocaleString()}k` },
+                grid: { color: '#f1f5f9' }
+              },
+              y: {
+                ticks: { font: { size: 11 } },
+                grid: { display: false }
+              }
+            }
+          }
+        });
+      }
+
+      // --- TAB 5: 連携・らくつむ・バックアップ ---
+      function renderSettingsSection() {
+        document.getElementById('urlMonthlyPlan').value = state.sheetUrls.monthlyPlan || '';
+        document.getElementById('urlEvents').value = state.sheetUrls.events || '';
+        document.getElementById('urlRakutsumuActual').value = state.sheetUrls.rakutsumuActual || '';
+        document.getElementById('urlRakutsumuForecast').value = state.sheetUrls.rakutsumuForecast || '';
+        document.getElementById('urlMoneyForward').value = state.sheetUrls.moneyForward || '';
+        document.getElementById('autoSyncToggle').checked = Boolean(state.autoSync);
+
+        // らくつむ実績テーブル
+        document.getElementById('rakutsumuActualTableBody').innerHTML = (state.rakutsumuActuals || []).map(r => `
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 num font-semibold text-slate-800">${escHtml(r.ym)}</td>
+            <td class="px-2.5 py-2 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === '確定' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">${escHtml(r.status)}</span>
+            </td>
+            <td class="px-3 py-2 text-right num text-slate-600">${fmtNum(r.netDeposit)}</td>
+            <td class="px-3 py-2 text-right num font-bold text-indigo-700">${fmtNum(r.evalValue)}</td>
+            <td class="px-2.5 py-2 text-right num text-slate-600">${r.ratio ? r.ratio.toFixed(1) + '%' : '-'}</td>
+            <td class="px-2.5 py-2 text-right num text-slate-600">${r.lev ? r.lev.toFixed(2) + 'x' : '-'}</td>
+          </tr>
+        `).join('');
+
+        // らくつむ予測テーブル
+        const f = state.rakutsumuForecast;
+        const years = Object.keys(f.standard || {}).map(Number).sort((a, b) => a - b);
+        document.getElementById('rakutsumuForecastTableBody').innerHTML = years.map(y => `
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 num font-semibold text-slate-800">${y}年 <span class="text-[11px] text-slate-400">(${getAge(y, 12)}歳)</span></td>
+            <td class="px-3 py-2 text-right num ${state.scenario === 'standard' ? 'font-bold text-indigo-700 bg-indigo-50/50' : 'text-slate-600'}">${fmtNum(f.standard[y])}</td>
+            <td class="px-3 py-2 text-right num ${state.scenario === 'conservative' ? 'font-bold text-indigo-700 bg-indigo-50/50' : 'text-slate-600'}">${fmtNum(f.conservative[y])}</td>
+            <td class="px-3 py-2 text-right num ${state.scenario === 'pessimistic' ? 'font-bold text-indigo-700 bg-indigo-50/50' : 'text-slate-600'}">${fmtNum(f.pessimistic[y])}</td>
+          </tr>
+        `).join('');
+
+        // 確定履歴テーブル
+        const keys = Object.keys(state.confirmedMonths).sort();
+        const histBody = document.getElementById('confirmedHistoryBody');
+        if (keys.length === 0) {
+          histBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400">確定済みの月はありません（ヘッダーまたは月次表の「確定上書き」から登録できます）</td></tr>`;
+        } else {
+          histBody.innerHTML = keys.map(ym => {
+            const c = state.confirmedMonths[ym];
+            const p = parseYm(ym);
+            return `
+              <tr class="hover:bg-slate-50">
+                <td class="px-3 py-2 num font-bold text-emerald-700">${ym} (${p ? getAge(p.year, p.month) : '-'}歳)</td>
+                <td class="px-3 py-2 text-right num font-semibold ${amtClass(c.cash)}">${fmtYen(c.cash)}</td>
+                <td class="px-3 py-2 text-right num text-indigo-700">${c.rakutsumu !== null && c.rakutsumu !== '' && c.rakutsumu !== undefined ? fmtYen(c.rakutsumu) : 'モデル連動'}</td>
+                <td class="px-3 py-2 text-right num text-slate-600">${c.income !== null && c.income !== '' && c.income !== undefined ? fmtYen(c.income) : '計画値'}</td>
+                <td class="px-3 py-2 text-right num text-slate-600">${c.expense !== null && c.expense !== '' && c.expense !== undefined ? fmtYen(c.expense) : '計画値'}</td>
+                <td class="px-3 py-2 text-slate-600">${escHtml(c.memo || '-')}</td>
+                <td class="px-3 py-2 text-center">
+                  <button type="button" data-unconfirm-ym="${ym}" class="btn-unconfirm text-rose-600 hover:text-rose-800 font-semibold px-2 py-0.5 rounded hover:bg-rose-50">解除</button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+      // =========================================================================
+      // 7. 月末残高確定モーダル制御
+      // =========================================================================
+      function openConfirmModal(targetYm = null, prefill = null) {
+        const modal = document.getElementById('confirmModal');
+        const ymSel = document.getElementById('cmYm');
+
+        if (ymSel.options.length === 0) {
+          ALL_MONTHS.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.ym;
+            opt.textContent = `${m.ym}（${m.age}歳）`;
+            ymSel.appendChild(opt);
+          });
+        }
+
+        const defaultYm = targetYm || '2026-11';
+        ymSel.value = defaultYm;
+        populateConfirmModalFields(defaultYm, prefill);
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function populateConfirmModalFields(ym, prefill = null) {
+        const row = computedMonthly.find(r => r.ym === ym);
+        const existing = state.confirmedMonths[ym];
+
+        document.getElementById('cmPlanHint').innerHTML = row
+          ? `現在計算値: 現金 <b class="num">${fmtNum(row.cashBalance)}</b> / らくつむ <b class="num">${fmtNum(row.rakutsumuBalance)}</b>`
+          : '';
+
+        document.getElementById('cmCash').value = existing?.cash ?? (row ? Math.round(row.cashBalance) : '');
+        document.getElementById('cmRakutsumu').value = existing?.rakutsumu ?? (row ? Math.round(row.rakutsumuBalance) : '');
+        document.getElementById('cmIncome').value = prefill?.income ?? (existing?.income ?? '');
+        document.getElementById('cmExpense').value = prefill?.expense ?? (existing?.expense ?? '');
+        document.getElementById('cmMemo').value = prefill?.memo ?? (existing?.memo ?? '');
+
+        const delBtn = document.getElementById('btnDeleteConfirmInModal');
+        if (existing) delBtn.classList.remove('hidden');
+        else delBtn.classList.add('hidden');
+      }
+
+      function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      // =========================================================================
+      // 8. 各シートCSVインポーター（Googleスプレッドシート＆ローカル共通）
+      // =========================================================================
+      function findColIndex(headers, keywords) {
+        return headers.findIndex(h => {
+          const norm = String(h || '').replace(/\s+/g, '').toLowerCase();
+          return keywords.some(kw => norm.includes(kw.toLowerCase()));
+        });
+      }
+
+      function importMonthlyPlanCSV(csvText) {
+        const rows = parseCSV(csvText);
+        if (rows.length < 2) throw new Error('月次プランCSVにデータ行がありません');
+        const headers = rows[0];
+        const idxYm = findColIndex(headers, ['年月', 'date', '月']);
+        const idxPension = findColIndex(headers, ['年金']);
+        const idxCorp = findColIndex(headers, ['企業年金']);
+        const idxSalary = findColIndex(headers, ['給料', '給与']);
+        const idxOther = findColIndex(headers, ['その他収入', 'その他']);
+        const idxLiving = findColIndex(headers, ['基本生活費', '生活費']);
+        const idxSpecial = findColIndex(headers, ['特別出費', '特別']);
+
+        if (idxYm === -1) throw new Error('「年月」列が見つかりません');
+
+        const overrides = {};
+        let count = 0;
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          const p = parseYm(r[idxYm]);
+          if (!p) continue;
+          const ym = formatYm(p.year, p.month);
+          const ov = {};
+          if (idxPension !== -1 && r[idxPension] !== '') ov.pension = parseAmount(r[idxPension]);
+          if (idxCorp !== -1 && r[idxCorp] !== '') ov.corpPension = parseAmount(r[idxCorp]);
+          if (idxSalary !== -1 && r[idxSalary] !== '') ov.salary = parseAmount(r[idxSalary]);
+          if (idxOther !== -1 && r[idxOther] !== '') ov.otherIncome = parseAmount(r[idxOther]);
+          if (idxLiving !== -1 && r[idxLiving] !== '') ov.livingCost = parseAmount(r[idxLiving]);
+          if (idxSpecial !== -1 && r[idxSpecial] !== '') {
+            ov.specialExpense = parseAmount(r[idxSpecial]);
+            ov.useCsvSpecial = false; // イベント連動を優先（イベントCSV未読込時のみ補助）
+          }
+          overrides[ym] = ov;
+          count++;
+        }
+        if (count === 0) throw new Error('有効な年月データが見つかりませんでした');
+        state.monthlyCsvOverrides = overrides;
+        return `${count}ヶ月分の月次プランを反映`;
+      }
+
+      function importEventsCSV(csvText) {
+        const rows = parseCSV(csvText);
+        if (rows.length < 2) throw new Error('イベントCSVにデータ行がありません');
+        const headers = rows[0];
+        const idxYm = findColIndex(headers, ['年月', '日付', '時期', '予定']);
+        const idxTitle = findColIndex(headers, ['内容', '項目', 'イベント', '品目', '名称']);
+        const idxAmt = findColIndex(headers, ['金額', '予算', '費用', '出費']);
+        const idxCat = findColIndex(headers, ['カテゴリ', '分類', '種別']);
+
+        if (idxYm === -1 || idxAmt === -1) throw new Error('「年月」または「金額」列が見つかりません');
+
+        const events = [];
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          const p = parseYm(r[idxYm]);
+          if (!p) continue;
+          const amt = Math.abs(parseAmount(r[idxAmt]));
+          if (amt <= 0) continue;
+          events.push({
+            id: `csv_ev_${i}_${Date.now()}`,
+            ym: formatYm(p.year, p.month),
+            title: idxTitle !== -1 ? (r[idxTitle] || 'イベント') : 'イベント',
+            amount: amt,
+            category: idxCat !== -1 ? (r[idxCat] || 'その他') : 'その他'
+          });
+        }
+        if (events.length === 0) throw new Error('有効なイベント行が見つかりませんでした');
+        state.events = events;
+        return `${events.length}件のイベントを反映`;
+      }
+
+      function importRakutsumuActualCSV(csvText) {
+        const rows = parseCSV(csvText);
+        if (rows.length < 2) throw new Error('らくつむ実績CSVにデータ行がありません');
+        const headers = rows[0];
+        const idxYm = findColIndex(headers, ['年月', '日付', '月']);
+        const idxDep = findColIndex(headers, ['純入金', '累計入金', '入金']);
+        const idxEval = findColIndex(headers, ['評価額', '純資産', '残高']);
+        const idxRatio = findColIndex(headers, ['有効比率', '維持率']);
+        const idxLev = findColIndex(headers, ['レバ', '実効']);
+        const idxStatus = findColIndex(headers, ['区分', 'ステータス', '確定']);
+
+        if (idxYm === -1 || idxEval === -1) throw new Error('「年月」または「評価額」列が見つかりません');
+
+        const list = [];
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          const p = parseYm(r[idxYm]);
+          if (!p) continue;
+          const evalVal = parseAmount(r[idxEval]);
+          if (evalVal === 0 && !r[idxEval]) continue;
+          list.push({
+            ym: formatYm(p.year, p.month),
+            netDeposit: idxDep !== -1 ? parseAmount(r[idxDep]) : 0,
+            evalValue: evalVal,
+            ratio: idxRatio !== -1 ? parseAmount(r[idxRatio]) : 0,
+            lev: idxLev !== -1 ? parseAmount(r[idxLev]) : 0,
+            status: idxStatus !== -1 ? (r[idxStatus] || '確定') : '確定'
+          });
+        }
+        if (list.length === 0) throw new Error('有効ならくつむ実績行が見つかりませんでした');
+        state.rakutsumuActuals = list;
+        return `${list.length}ヶ月分のらくつむ実績を反映`;
+      }
+
+      function importRakutsumuForecastCSV(csvText) {
+        const rows = parseCSV(csvText);
+        if (rows.length < 2) throw new Error('らくつむ予測CSVにデータ行がありません');
+        const headers = rows[0];
+        const idxYear = findColIndex(headers, ['年', '西暦', 'year']);
+        const idxStd = findColIndex(headers, ['標準', 'standard']);
+        const idxCon = findColIndex(headers, ['保守', 'conservative']);
+        const idxPes = findColIndex(headers, ['悲観', 'pessimistic']);
+
+        if (idxYear === -1 || idxStd === -1) throw new Error('「年」または「標準」列が見つかりません');
+
+        const std = {}, con = {}, pes = {};
+        let count = 0;
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          const ymMatch = String(r[idxYear] || '').match(/(20\d{2})/);
+          if (!ymMatch) continue;
+          const y = parseInt(ymMatch[1], 10);
+          std[y] = parseAmount(r[idxStd]);
+          if (idxCon !== -1) con[y] = parseAmount(r[idxCon]);
+          if (idxPes !== -1) pes[y] = parseAmount(r[idxPes]);
+          count++;
+        }
+        if (count === 0) throw new Error('有効な年次予測が見つかりませんでした');
+        state.rakutsumuForecast = {
+          standard: { ...state.rakutsumuForecast.standard, ...std },
+          conservative: { ...state.rakutsumuForecast.conservative, ...con },
+          pessimistic: { ...state.rakutsumuForecast.pessimistic, ...pes }
+        };
+        return `${count}年分のらくつむ予測を反映`;
+      }
+
+      function importMoneyForwardCSV(csvText) {
+        const rows = parseCSV(csvText);
+        if (rows.length < 2) throw new Error('マネーフォワードCSVにデータ行がありません');
+        const headers = rows[0];
+        const idxCalc = findColIndex(headers, ['計算対象']);
+        const idxDate = findColIndex(headers, ['日付']);
+        const idxAmt = findColIndex(headers, ['金額']);
+        const idxCat = findColIndex(headers, ['大項目', 'カテゴリ']);
+        const idxTransfer = findColIndex(headers, ['振替']);
+
+        if (idxDate === -1 || idxAmt === -1) throw new Error('「日付」または「金額」列が見つかりません');
+
+        const months = {};
+        let txCount = 0;
+
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (idxCalc !== -1 && r[idxCalc] === '0') continue;
+          if (idxTransfer !== -1 && r[idxTransfer] === '1') continue;
+
+          const p = parseYm(r[idxDate]);
+          if (!p) continue;
+          const ym = formatYm(p.year, p.month);
+          const amt = parseAmount(r[idxAmt]);
+          const cat = idxCat !== -1 ? (r[idxCat] || '未分類') : 'その他';
+
+          if (!months[ym]) {
+            months[ym] = { label: `${p.year}年${p.month}月（CSV集計）`, income: 0, expense: 0, net: 0, catMap: {} };
+          }
+          if (amt >= 0) {
+            months[ym].income += amt;
+          } else {
+            const absAmt = Math.abs(amt);
+            months[ym].expense += absAmt;
+            months[ym].catMap[cat] = (months[ym].catMap[cat] || 0) + absAmt;
+          }
+          months[ym].net += amt;
+          txCount++;
+        }
+
+        const keys = Object.keys(months).sort();
+        if (keys.length === 0) throw new Error('集計可能な明細が見つかりませんでした');
+
+        const formattedMonths = {};
+        keys.forEach(k => {
+          const m = months[k];
+          formattedMonths[k] = {
+            label: m.label,
+            income: m.income,
+            expense: m.expense,
+            net: m.net,
+            categories: Object.entries(m.catMap).map(([name, amount]) => ({ name, amount }))
+          };
+        });
+
+        state.mfData = {
+          selectedMonth: keys[keys.length - 1],
+          months: formattedMonths
+        };
+        return `${txCount}件のMF明細（${keys.length}ヶ月分）を集計`;
+      }
+
+      // =========================================================================
+      // 9. Googleスプレッドシート即時同期（キャッシュ回避フェッチ＆CORS案内）
+      // =========================================================================
+      async function syncAllGoogleSheets() {
+        const urls = state.sheetUrls;
+        const targets = [
+          { key: 'monthlyPlan', name: '月次プラン', url: urls.monthlyPlan, importer: importMonthlyPlanCSV },
+          { key: 'events', name: 'イベント', url: urls.events, importer: importEventsCSV },
+          { key: 'rakutsumuActual', name: 'らくつむ実績', url: urls.rakutsumuActual, importer: importRakutsumuActualCSV },
+          { key: 'rakutsumuForecast', name: 'らくつむ予測', url: urls.rakutsumuForecast, importer: importRakutsumuForecastCSV },
+          { key: 'moneyForward', name: 'マネーフォワード', url: urls.moneyForward, importer: importMoneyForwardCSV }
+        ].filter(t => t.url && t.url.trim() !== '');
+
+        if (targets.length === 0) {
+          showToast('「⚙️ 連携・らくつむ・バックアップ」タブでスプレッドシートの公開CSV URLを設定してください', 'warning');
+          switchTab('settings');
+          return;
+        }
+
+        const syncIcon = document.getElementById('syncIcon');
+        const logBox = document.getElementById('syncLogBox');
+        syncIcon.classList.add('animate-spin-fast', 'inline-block');
+        logBox.classList.remove('hidden');
+        logBox.innerHTML = `<div class="text-sky-400">[${new Date().toLocaleTimeString('ja-JP')}] 同期を開始します（${targets.length}シート）...</div>`;
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const t of targets) {
+          try {
+            const sep = t.url.includes('?') ? '&' : '?';
+            const fetchUrl = `${t.url.trim()}${sep}t=${Date.now()}`;
+            const res = await fetch(fetchUrl, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status} (${res.statusText})`);
+            const text = await res.text();
+            if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+              throw new Error('CSVではなくHTMLが返されました。「ウェブに公開 → CSV形式」のURLかご確認ください。');
+            }
+            const msg = t.importer(text);
+            successCount++;
+            logBox.innerHTML += `<div class="text-emerald-400">✔ [${t.name}] ${escHtml(msg)}</div>`;
+          } catch (err) {
+            errorCount++;
+            let hint = err.message;
+            if (err.name === 'TypeError' || /Failed to fetch|NetworkError/i.test(err.message)) {
+              hint = '通信またはCORSエラー：スプレッドシートが「ウェブに公開（CSV）」になっているか確認してください（編集用URLはCORSでブロックされます）。';
+            }
+            logBox.innerHTML += `<div class="text-rose-400">✖ [${t.name}] ${escHtml(hint)}</div>`;
+          }
+        }
+
+        syncIcon.classList.remove('animate-spin-fast');
+
+        if (successCount > 0) {
+          const now = new Date();
+          state.lastSyncTime = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          saveState();
+          renderAll();
+        }
+
+        if (errorCount === 0) {
+          showToast(`全${successCount}シートの同期が完了し、残高・グラフを更新しました`, 'success');
+        } else if (successCount > 0) {
+          showToast(`${successCount}シート成功 / ${errorCount}シート失敗（連携タブのログを確認してください）`, 'warning');
+        } else {
+          showToast('スプレッドシート同期に失敗しました。公開CSV URL設定をご確認ください。', 'error');
+        }
+      }
+
+      // =========================================================================
+      // 10. タブ切替＆イベントリスナー登録
+      // =========================================================================
+      function switchTab(tabId) {
+        activeTab = tabId;
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        const target = document.getElementById(`tab-${tabId}`);
+        if (target) target.classList.remove('hidden');
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          const active = btn.dataset.tab === tabId;
+          btn.className = `tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
+            active ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
+          }`;
+        });
+
+        // チャートのリサイズ再描画
+        if (tabId === 'dashboard') {
+          setTimeout(() => {
+            mainBalanceChart?.resize();
+            annualCashflowChart?.resize();
+          }, 50);
+        } else if (tabId === 'events') {
+          setTimeout(() => mfCategoryChart?.resize(), 50);
+        }
+      }
+
+      function bindEvents() {
+        // タブ切替
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        // シナリオ切替
+        document.querySelectorAll('.scenario-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.scenario = btn.dataset.scenario;
+            saveState();
+            renderAll();
+          });
+        });
+
+        // 80歳以降運用モード切替
+        document.querySelectorAll('.post80-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.post80Mode = btn.dataset.post80;
+            saveState();
+            renderAll();
+          });
+        });
+
+        // グラフ粒度切替
+        document.querySelectorAll('.granularity-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.chartGranularity = btn.dataset.chartGranularity;
+            saveState();
+            renderDashboard();
+          });
+        });
+
+        // ヘッダーボタン
+        document.getElementById('btnOpenConfirmModal').addEventListener('click', () => openConfirmModal());
+        document.getElementById('btnSyncSheets').addEventListener('click', () => syncAllGoogleSheets());
+
+        // 月次テーブルフィルター＆行内ボタン
+        document.getElementById('monthlyYearFilter').addEventListener('change', renderMonthlyTable);
+        document.getElementById('monthlyConfirmedOnly').addEventListener('change', renderMonthlyTable);
+        document.getElementById('monthlyTableBody').addEventListener('click', (e) => {
+          const btn = e.target.closest('.btn-row-confirm');
+          if (btn) openConfirmModal(btn.dataset.confirmYm);
+        });
+
+        // 確定モーダル操作
+        document.getElementById('cmYm').addEventListener('change', (e) => populateConfirmModalFields(e.target.value));
+        document.getElementById('btnCloseConfirmModal').addEventListener('click', closeConfirmModal);
+        document.getElementById('btnCancelConfirmModal').addEventListener('click', closeConfirmModal);
+        document.getElementById('confirmModal').addEventListener('click', (e) => {
+          if (e.target.id === 'confirmModal') closeConfirmModal();
+        });
+
+        document.getElementById('confirmMonthForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const ym = document.getElementById('cmYm').value;
+          const cashVal = document.getElementById('cmCash').value;
+          const rakuVal = document.getElementById('cmRakutsumu').value;
+          const incVal = document.getElementById('cmIncome').value;
+          const expVal = document.getElementById('cmExpense').value;
+          const memoVal = document.getElementById('cmMemo').value.trim();
+
+          if (cashVal === '') {
+            showToast('確定現金残高を入力してください', 'warning');
+            return;
+          }
+
+          state.confirmedMonths[ym] = {
+            cash: Number(cashVal),
+            rakutsumu: rakuVal !== '' ? Number(rakuVal) : null,
+            income: incVal !== '' ? Number(incVal) : null,
+            expense: expVal !== '' ? Number(expVal) : null,
+            memo: memoVal
+          };
+          saveState();
+          closeConfirmModal();
+          renderAll();
+          showToast(`${ym} の月末残高を確定し、全期間の残高を連動更新しました`, 'success');
+        });
+
+        document.getElementById('btnDeleteConfirmInModal').addEventListener('click', () => {
+          const ym = document.getElementById('cmYm').value;
+          delete state.confirmedMonths[ym];
+          saveState();
+          closeConfirmModal();
+          renderAll();
+          showToast(`${ym} の確定データを解除しました`, 'info');
+        });
+
+        // イベント追加・検索・削除
+        document.getElementById('addEventForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const ym = document.getElementById('evYm').value;
+          const title = document.getElementById('evTitle').value.trim();
+          const amount = Number(document.getElementById('evAmount').value);
+          const category = document.getElementById('evCategory').value;
+          if (!ym || !title || isNaN(amount) || amount <= 0) return;
+
+          state.events.push({
+            id: `ev_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            ym, title, amount, category
+          });
+          document.getElementById('evTitle').value = '';
+          document.getElementById('evAmount').value = '';
+          saveState();
+          renderAll();
+          showToast(`イベント「${title}（${fmtYen(amount)}）」を追加し全残高へ反映しました`, 'success');
+        });
+
+        document.getElementById('eventSearchInput').addEventListener('input', renderEventsTable);
+        document.getElementById('eventCategoryFilter').addEventListener('change', renderEventsTable);
+        document.getElementById('eventsTableBody').addEventListener('click', (e) => {
+          const btn = e.target.closest('.btn-del-event');
+          if (!btn) return;
+          const id = btn.dataset.delEv;
+          state.events = state.events.filter(ev => ev.id !== id);
+          saveState();
+          renderAll();
+          showToast('イベントを削除し、全期間の特別出費と残高を再計算しました', 'info');
+        });
+
+        // MF実績：月選択＆確定転記＆CSVドロップ
+        document.getElementById('mfMonthSelector').addEventListener('change', (e) => {
+          state.mfData.selectedMonth = e.target.value;
+          saveState();
+          renderMfSection();
+        });
+
+        document.getElementById('btnTransferMfToConfirm').addEventListener('click', () => {
+          const ym = state.mfData.selectedMonth;
+          const cur = state.mfData.months[ym];
+          if (!cur) return;
+          openConfirmModal(ym, {
+            income: Math.round(cur.income),
+            expense: Math.round(cur.expense),
+            memo: `MF実績(${cur.label})より転記`
+          });
+        });
+
+        const mfDropZone = document.getElementById('mfDropZone');
+        const mfFileInput = document.getElementById('mfFileInput');
+        mfDropZone.addEventListener('click', () => mfFileInput.click());
+        mfDropZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          mfDropZone.classList.add('border-sky-500', 'bg-sky-50');
+        });
+        mfDropZone.addEventListener('dragleave', () => {
+          mfDropZone.classList.remove('border-sky-500', 'bg-sky-50');
+        });
+        mfDropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          mfDropZone.classList.remove('border-sky-500', 'bg-sky-50');
+          const file = e.dataTransfer.files?.[0];
+          if (file) handleLocalCsvFile(file, 'moneyForward');
+        });
+        mfFileInput.addEventListener('change', (e) => {
+          const file = e.target.files?.[0];
+          if (file) handleLocalCsvFile(file, 'moneyForward');
+          e.target.value = '';
+        });
+
+        // 設定タブ：URL保存＆同期
+        const saveUrlsFromForm = () => {
+          state.sheetUrls = {
+            monthlyPlan: document.getElementById('urlMonthlyPlan').value.trim(),
+            events: document.getElementById('urlEvents').value.trim(),
+            rakutsumuActual: document.getElementById('urlRakutsumuActual').value.trim(),
+            rakutsumuForecast: document.getElementById('urlRakutsumuForecast').value.trim(),
+            moneyForward: document.getElementById('urlMoneyForward').value.trim()
+          };
+          saveState();
+        };
+
+        document.getElementById('sheetUrlsForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          saveUrlsFromForm();
+          showToast('スプレッドシートURL設定を保存しました', 'success');
+        });
+
+        document.getElementById('btnSyncFromSettings').addEventListener('click', () => {
+          saveUrlsFromForm();
+          syncAllGoogleSheets();
+        });
+
+        document.getElementById('autoSyncToggle').addEventListener('change', (e) => {
+          state.autoSync = e.target.checked;
+          saveState();
+        });
+
+        // ローカルCSV個別読み込み
+        document.querySelectorAll('.local-csv-input').forEach(inp => {
+          inp.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            if (file) handleLocalCsvFile(file, inp.dataset.csvType);
+            e.target.value = '';
+          });
+        });
+
+        // 確定履歴解除
+        document.getElementById('confirmedHistoryBody').addEventListener('click', (e) => {
+          const btn = e.target.closest('.btn-unconfirm');
+          if (!btn) return;
+          const ym = btn.dataset.unconfirmYm;
+          delete state.confirmedMonths[ym];
+          saveState();
+          renderAll();
+          showToast(`${ym} の確定を解除しました`, 'info');
+        });
+
+        // JSONエクスポート / インポート / 初期化
+        document.getElementById('btnExportJson').addEventListener('click', () => {
+          const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `financial_plan_backup_${new Date().toISOString().slice(0, 10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast('JSONバックアップをダウンロードしました', 'success');
+        });
+
+        document.getElementById('importJsonInput').addEventListener('change', (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const parsed = JSON.parse(reader.result);
+              if (!parsed || typeof parsed !== 'object') throw new Error('不正なJSON形式');
+              state = { ...createInitialState(), ...parsed };
+              saveState();
+              renderAll();
+              showToast('JSONバックアップを復元しました', 'success');
+            } catch (err) {
+              showToast(`JSON復元に失敗しました: ${err.message}`, 'error');
+            }
+          };
+          reader.readAsText(file, 'UTF-8');
+          e.target.value = '';
+        });
+
+        document.getElementById('btnResetAll').addEventListener('click', async () => {
+          const ok = await showConfirmDialog(
+            '全データの初期化',
+            '確定済み月末残高・イベント編集・URL設定をすべて初期状態（内蔵データ）に戻します。よろしいですか？'
+          );
+          if (!ok) return;
+          localStorage.removeItem(STORAGE_KEY);
+          state = createInitialState();
+          renderAll();
+          showToast('全データを初期状態にリセットしました', 'info');
+        });
+      }
+
+      function handleLocalCsvFile(file, type) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const text = reader.result;
+            let msg = '';
+            if (type === 'monthlyPlan') msg = importMonthlyPlanCSV(text);
+            else if (type === 'events') msg = importEventsCSV(text);
+            else if (type === 'rakutsumuActual') msg = importRakutsumuActualCSV(text);
+            else if (type === 'rakutsumuForecast') msg = importRakutsumuForecastCSV(text);
+            else if (type === 'moneyForward') msg = importMoneyForwardCSV(text);
+            saveState();
+            renderAll();
+            showToast(`ローカルCSV読込完了: ${msg}`, 'success');
+          } catch (err) {
+            showToast(`CSV解析エラー: ${err.message}`, 'error');
+          }
+        };
+        // Shift-JISの可能性もあるためまずUTF-8で読み込み
+        reader.readAsText(file, 'UTF-8');
+      }
+
+      // =========================================================================
+      // 11. アプリケーション起動
+      // =========================================================================
+      function init() {
+        bindEvents();
+        renderAll();
+
+        // 起動時自動同期がONでURLが登録されていれば自動実行
+        if (state.autoSync && Object.values(state.sheetUrls).some(u => u && u.trim() !== '')) {
+          syncAllGoogleSheets();
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</body>
+</html>
