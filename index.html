@@ -44,11 +44,11 @@
     .table-scroll::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
-    @keyframes spin {
+    @keyframes spinFast {
       to { transform: rotate(360deg); }
     }
     .animate-spin-fast {
-      animation: spin 0.8s linear infinite;
+      animation: spinFast 0.8s linear infinite;
     }
   </style>
 </head>
@@ -92,10 +92,10 @@
     <nav class="bg-slate-800/95 border-t border-slate-700">
       <div class="max-w-7xl mx-auto px-3 sm:px-6 overflow-x-auto">
         <div class="flex space-x-1.5 py-2 min-w-max" role="tablist">
-          <button data-tab="dashboard" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-sky-600 text-white">📊 ダッシュボード＆推移グラフ</button>
-          <button data-tab="tables" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">📅 年次サマリー ＆ 月次明細</button>
-          <button data-tab="events" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">🛒 イベント ＆ MF実績</button>
-          <button data-tab="settings" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">⚙️ 連携・設定・バックアップ</button>
+          <button data-tab="dashboard" type="button" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-sky-600 text-white">📊 ダッシュボード＆推移グラフ</button>
+          <button data-tab="tables" type="button" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">📅 年次サマリー ＆ 月次明細</button>
+          <button data-tab="events" type="button" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">🛒 イベント ＆ MF実績</button>
+          <button data-tab="settings" type="button" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition text-slate-300 hover:text-white hover:bg-slate-700">⚙️ 連携・設定・バックアップ</button>
         </div>
       </div>
     </nav>
@@ -110,7 +110,7 @@
       <!-- シミュレーション条件コントロールバー -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
-          <h2 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+          <h2 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2 flex-wrap">
             <span>🎛️ シミュレーション条件コントロール</span>
             <span class="text-xs font-normal text-slate-500">（変更すると全KPI・グラフ・表に即時反映）</span>
           </h2>
@@ -120,7 +120,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <!-- 1. らくつむ積立停止 -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-700">らくつむ積立停止（最終積立月）</label>
+            <label for="ctrlStopYm" class="block text-xs font-bold text-slate-700">らくつむ積立停止（最終積立月）</label>
             <select id="ctrlStopYm" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
               <option value="2036-12">2036年12月（80歳到達で停止）</option>
               <option value="2037-12">2037年12月（81歳到達で停止）</option>
@@ -168,9 +168,7 @@
       </div>
 
       <!-- KPIサマリーカード（5枚） -->
-      <div id="kpiGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- JS描画 -->
-      </div>
+      <div id="kpiGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"></div>
 
       <!-- 第1グラフ：資産残高の長期推移（＋100万円防衛ライン破線） -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
@@ -214,7 +212,7 @@
           <button type="button" id="btnSubMonthly" class="subtable-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition text-slate-600 hover:text-slate-900">📅 月次明細（全362ヶ月）</button>
         </div>
 
-        <!-- 月次明細用フィルタ（月次表示時に表示） -->
+        <!-- 月次明細用フィルタ -->
         <div id="monthlyFiltersWrap" class="hidden flex-wrap items-center gap-2.5">
           <select id="monthlyYearFilter" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none">
             <option value="ALL">全期間（2026〜2056・362ヶ月）</option>
@@ -234,7 +232,7 @@
       <!-- 年次サマリー表 -->
       <div id="annualTableSection" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <p class="text-xs text-slate-600">※2026年は11月・12月の2ヶ月間集計。年齢は各年12月末時点。</p>
+          <p class="text-xs text-slate-600">※2026年は11月・12月の2ヶ月間集計。年齢は各年12月末時点（2026年12月＝70歳）。</p>
           <span id="annualConditionBadge" class="text-xs font-bold text-indigo-700"></span>
         </div>
         <div class="table-scroll overflow-x-auto max-h-[72vh]">
@@ -291,32 +289,32 @@
       <!-- 左：大きな買い物・イベント管理 -->
       <div class="lg:col-span-7 space-y-4">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <div>
               <h2 class="text-base sm:text-lg font-bold text-slate-900">🛒 大きな買い物・イベント管理</h2>
-              <p class="text-xs text-slate-500">追加・削除すると即座に月次明細の特別出費・自動補填・スワップ推移へ連動します。</p>
+              <p class="text-xs text-slate-500">追加・削除すると即座に全期間へ連動し、GAS設定時はスプレッドシートへ自動書き込みします。</p>
             </div>
-            <span id="eventTotalCount" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 num">0件</span>
+            <span id="eventTotalCount" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 num shrink-0">0件</span>
           </div>
 
           <form id="addEventForm" class="bg-slate-50 rounded-xl p-3.5 border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
             <div class="sm:col-span-3">
-              <label class="block text-xs font-bold text-slate-700 mb-1">年月</label>
+              <label for="evYm" class="block text-xs font-bold text-slate-700 mb-1">年月</label>
               <input id="evYm" type="month" min="2026-11" max="2056-12" value="2027-06" required
                 class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div class="sm:col-span-4">
-              <label class="block text-xs font-bold text-slate-700 mb-1">イベント内容</label>
+              <label for="evTitle" class="block text-xs font-bold text-slate-700 mb-1">イベント内容</label>
               <input id="evTitle" type="text" placeholder="例：家電買い替え" required
                 class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div class="sm:col-span-3">
-              <label class="block text-xs font-bold text-slate-700 mb-1">金額（円）</label>
-              <input id="evAmount" type="number" min="1" step="1" placeholder="50000" required
+              <label for="evAmount" class="block text-xs font-bold text-slate-700 mb-1">金額（円）</label>
+              <input id="evAmount" type="number" min="1" step="1" placeholder="200000" required
                 class="w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm num bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs font-bold text-slate-700 mb-1">カテゴリ</label>
+              <label for="evCategory" class="block text-xs font-bold text-slate-700 mb-1">カテゴリ</label>
               <select id="evCategory" class="w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
                 <option value="家族">家族</option>
                 <option value="住宅">住宅</option>
@@ -329,11 +327,95 @@
               </select>
             </div>
             <div class="sm:col-span-12 flex justify-end pt-1">
-            <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-sm transition">
-              ＋ イベントを追加して全期間へ反映
+              <button type="submit" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-sm transition">
+                ＋ イベントを追加して全期間へ反映
+              </button>
+            </div>
+          </form>
+
+          <!-- 検索＆フィルタ -->
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input id="eventSearchInput" type="text" placeholder="キーワードや年月（例: 2028）で検索..."
+              class="flex-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs sm:text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
+            <select id="eventCategoryFilter" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+              <option value="ALL">全カテゴリ</option>
+              <option value="家族">家族</option>
+              <option value="住宅">住宅</option>
+              <option value="自動車">自動車</option>
+              <option value="通信">通信</option>
+              <option value="サブスク">サブスク</option>
+              <option value="医療・介護">医療・介護</option>
+              <option value="旅行・趣味">旅行・趣味</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+
+          <!-- イベント一覧テーブル -->
+          <div class="table-scroll overflow-x-auto max-h-[54vh] border border-slate-200 rounded-xl">
+            <table class="min-w-full text-xs sm:text-sm border-collapse">
+              <thead class="bg-slate-100 text-slate-800 sticky top-0 z-10">
+                <tr>
+                  <th class="px-3 py-2.5 text-left font-bold whitespace-nowrap">年月（年齢）</th>
+                  <th class="px-3 py-2.5 text-left font-bold">内容 / 同期状態</th>
+                  <th class="px-2.5 py-2.5 text-left font-bold whitespace-nowrap">カテゴリ</th>
+                  <th class="px-3 py-2.5 text-right font-bold whitespace-nowrap">金額</th>
+                  <th class="px-2.5 py-2.5 text-center font-bold whitespace-nowrap">削除</th>
+                </tr>
+              </thead>
+              <tbody id="eventsTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：マネーフォワード月次実績集計 -->
+      <div class="lg:col-span-5 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-900">💳 マネーフォワード月次実績</h2>
+              <p id="mfSubtitle" class="text-xs text-slate-500 mt-0.5">2026年11月（11/1〜11/27実績）</p>
+            </div>
+            <button id="btnTransferMfToConfirm" type="button"
+              class="shrink-0 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition">
+              月末確定へ転記 →
             </button>
           </div>
-        </form>
+
+          <div id="mfMonthSelectorWrap" class="hidden items-center justify-between bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+            <span class="text-xs font-bold text-slate-700">表示月を選択:</span>
+            <select id="mfMonthSelector" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none"></select>
+          </div>
+
+          <div id="mfSummaryCards" class="grid grid-cols-3 gap-2.5"></div>
+
+          <!-- MF CSVドロップゾーン -->
+          <label id="mfDropZone" class="block rounded-xl border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50 hover:bg-sky-50/40 p-3.5 text-center cursor-pointer transition">
+            <div class="text-xs font-bold text-slate-700">📂 マネーフォワード明細CSVをドロップ / クリックして選択</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">大項目別に自動集計し、月末確定入力へワンクリック転記できます</div>
+            <input id="mfLocalFileInput" type="file" accept=".csv" class="hidden" />
+          </label>
+
+          <div class="relative w-full h-56">
+            <canvas id="mfCategoryChart"></canvas>
+          </div>
+
+          <div class="table-scroll overflow-x-auto max-h-52 border border-slate-200 rounded-xl">
+            <table class="min-w-full text-xs border-collapse">
+              <thead class="bg-slate-100 text-slate-800 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 text-left font-bold">大項目</th>
+                  <th class="px-3 py-2 text-right font-bold">支出額</th>
+                  <th class="px-3 py-2 text-right font-bold">構成比</th>
+                </tr>
+              </thead>
+              <tbody id="mfTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ==================== TAB 4: 連携・設定・バックアップ ==================== -->
     <section id="tab-settings" class="tab-panel hidden space-y-6">
 
@@ -341,7 +423,7 @@
       <div class="bg-white rounded-2xl border-2 border-emerald-200 shadow-sm p-5 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 flex-wrap">
               <span>✍️ スプレッドシート書き込み連携（GAS WebアプリURL）</span>
               <span id="unsyncedCountBadge" class="hidden inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">未同期 0件</span>
             </h2>
@@ -368,17 +450,52 @@
             </button>
           </div>
         </form>
-        <div id="gasStatusBox" class="hidden rounded-xl bg-slate-900 text-slate-200 p-3 text-xs font-mono"></div>
+        <div id="gasStatusBox" class="hidden rounded-xl bg-slate-900 text-slate-200 p-3 text-xs font-mono break-all"></div>
       </div>
 
-      <!-- らくつむ詳細パラメータ設定 -->
+      <!-- らくつむ＆補填ルール詳細パラメータ設定 -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">⚙️ らくつむ・自動補填ルール詳細設定</h2>
+          <p class="text-xs text-slate-500 mt-0.5">毎月積立額・積立停止月・現金下限防衛ライン・カスタム税引後年利を細かく調整できます。</p>
+        </div>
+        <form id="paramSettingsForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div>
+            <label for="setMonthlyDeposit" class="block text-xs font-bold text-slate-700 mb-1">らくつむ毎月積立額（円）</label>
+            <input id="setMonthlyDeposit" type="number" min="0" step="1" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label for="setStopYm" class="block text-xs font-bold text-slate-700 mb-1">積立停止月（この月まで積立）</label>
+            <input id="setStopYm" type="month" min="2026-11" max="2056-12" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          </div>
+          <div>
+            <label for="setCashFloor" class="block text-xs font-bold text-slate-700 mb-1">現金下限補填ライン（円）</label>
+            <input id="setCashFloor" type="number" min="0" step="1" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+          </div>
+          <div>
+            <label for="setCustomRate" class="block text-xs font-bold text-slate-700 mb-1">カスタムスワップ年利（税引後%）</label>
+            <input id="setCustomRate" type="number" min="0" max="30" step="0.01" required
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+          </div>
+          <div class="sm:col-span-2 lg:col-span-4 flex justify-end">
+            <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm transition">
+              💾 ルール設定を保存して全期間を再計算
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Googleスプレッドシート 公開CSV URL連携 -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-900">🔗 Googleスプレッドシート 公開CSV URL連携</h2>
-            <p class="text-xs text-slate-500">5つの公開CSV URLを登録しておくと、同期ボタンでキャッシュを回避して最新データを一括反映します。</p>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">🔗 Googleスプレッドシート 公開CSV URL連携（読み込み）</h2>
+            <p class="text-xs text-slate-500">5つの公開CSV URL（末尾が <code class="bg-slate-100 px-1 rounded">output=csv</code>）を登録しておくと、キャッシュを回避して最新データを一括反映します。</p>
           </div>
-          <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 bg-slate-100 px-3.5 py-2 rounded-xl cursor-pointer select-none">
+          <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 bg-slate-100 px-3.5 py-2 rounded-xl cursor-pointer select-none shrink-0">
             <input id="autoSyncToggle" type="checkbox" class="rounded text-sky-600 focus:ring-sky-500" />
             <span>起動時に自動同期する</span>
           </label>
@@ -387,27 +504,27 @@
         <form id="sheetUrlsForm" class="space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">(1) 長期プラン_月次プラン CSV URL</label>
+              <label for="urlMonthlyPlan" class="block text-xs font-bold text-slate-700 mb-1">(1) 長期プラン_月次プラン CSV URL</label>
               <input id="urlMonthlyPlan" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
                 class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">(2) 長期プラン_大きな買い物・イベント CSV URL</label>
+              <label for="urlEvents" class="block text-xs font-bold text-slate-700 mb-1">(2) 長期プラン_大きな買い物・イベント CSV URL</label>
               <input id="urlEvents" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
                 class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">(3) らくつむ_月次実績管理 CSV URL</label>
+              <label for="urlRakutsumuActual" class="block text-xs font-bold text-slate-700 mb-1">(3) らくつむ_月次実績管理 CSV URL</label>
               <input id="urlRakutsumuActual" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
                 class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">(4) らくつむ_CF表連携サマリー CSV URL</label>
+              <label for="urlRakutsumuCf" class="block text-xs font-bold text-slate-700 mb-1">(4) らくつむ_CF表連携サマリー CSV URL</label>
               <input id="urlRakutsumuCf" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
                 class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
             <div class="md:col-span-2">
-              <label class="block text-xs font-bold text-slate-700 mb-1">(5) マネーフォワード明細 CSV URL</label>
+              <label for="urlMoneyForward" class="block text-xs font-bold text-slate-700 mb-1">(5) マネーフォワード明細 CSV URL</label>
               <input id="urlMoneyForward" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&single=true&output=csv"
                 class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none" />
             </div>
@@ -422,7 +539,7 @@
           </div>
         </form>
 
-        <div id="syncLogBox" class="hidden rounded-xl bg-slate-900 text-slate-200 p-3.5 text-xs font-mono space-y-1 max-h-40 overflow-y-auto"></div>
+        <div id="syncLogBox" class="hidden rounded-xl bg-slate-900 text-slate-200 p-3.5 text-xs font-mono space-y-1 max-h-44 overflow-y-auto"></div>
 
         <!-- ローカルCSV個別読込 -->
         <div class="pt-3 border-t border-slate-200 space-y-3">
@@ -482,13 +599,13 @@
           <table class="min-w-full text-xs sm:text-sm border-collapse">
             <thead class="bg-slate-100 text-slate-800">
               <tr>
-                <th class="px-3 py-2.5 text-left font-bold">確定年月（年齢）</th>
-                <th class="px-3 py-2.5 text-right font-bold">確定現金残高</th>
-                <th class="px-3 py-2.5 text-right font-bold">確定らくつむ残高</th>
-                <th class="px-3 py-2.5 text-right font-bold">確定収入</th>
-                <th class="px-3 py-2.5 text-right font-bold">確定支出</th>
+                <th class="px-3 py-2.5 text-left font-bold whitespace-nowrap">確定年月（年齢）</th>
+                <th class="px-3 py-2.5 text-right font-bold whitespace-nowrap">確定現金残高</th>
+                <th class="px-3 py-2.5 text-right font-bold whitespace-nowrap">確定らくつむ残高</th>
+                <th class="px-3 py-2.5 text-right font-bold whitespace-nowrap">確定収入</th>
+                <th class="px-3 py-2.5 text-right font-bold whitespace-nowrap">確定支出</th>
                 <th class="px-3 py-2.5 text-left font-bold">メモ</th>
-                <th class="px-3 py-2.5 text-center font-bold">解除</th>
+                <th class="px-3 py-2.5 text-center font-bold whitespace-nowrap">解除</th>
               </tr>
             </thead>
             <tbody id="confirmedHistoryBody" class="divide-y divide-slate-100"></tbody>
@@ -503,7 +620,7 @@
   <footer class="bg-white border-t border-slate-200 py-4 mt-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
       <span>総合財務管理ダッシュボード（2026年11月〜2056年12月｜69歳〜100歳）</span>
-      <span>80歳積立停止・100万円自動補填・スワップ動的減少シミュレーション搭載</span>
+      <span>80歳積立停止・100万円自動補填・スワップ動的減少・GAS双方向同期搭載</span>
     </div>
   </footer>
 
@@ -521,7 +638,7 @@
       <form id="confirmMonthForm" class="p-5 space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">対象年月</label>
+            <label for="cmYm" class="block text-xs font-bold text-slate-700 mb-1">対象年月</label>
             <select id="cmYm" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
           </div>
           <div class="flex flex-col justify-end">
@@ -531,12 +648,12 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">確定 現金残高（円）<span class="text-rose-500">*</span></label>
+            <label for="cmCash" class="block text-xs font-bold text-slate-700 mb-1">確定 現金残高（円）<span class="text-rose-500">*</span></label>
             <input id="cmCash" type="number" step="1" required placeholder="例: -592358"
               class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">確定 らくつむ残高（円）</label>
+            <label for="cmRakutsumu" class="block text-xs font-bold text-slate-700 mb-1">確定 らくつむ残高（円）</label>
             <input id="cmRakutsumu" type="number" step="1" placeholder="空欄なら自動計算値"
               class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
           </div>
@@ -544,19 +661,19 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">当月の確定収入（任意）</label>
+            <label for="cmIncome" class="block text-xs font-bold text-slate-700 mb-1">当月の確定収入（任意）</label>
             <input id="cmIncome" type="number" step="1" placeholder="空欄なら計画値"
               class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-sky-500 focus:outline-none" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">当月の確定支出（任意・正の値）</label>
+            <label for="cmExpense" class="block text-xs font-bold text-slate-700 mb-1">当月の確定支出（任意・正の値）</label>
             <input id="cmExpense" type="number" step="1" min="0" placeholder="空欄なら計画値"
               class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm num focus:ring-2 focus:ring-sky-500 focus:outline-none" />
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">メモ（任意）</label>
+          <label for="cmMemo" class="block text-xs font-bold text-slate-700 mb-1">メモ（任意）</label>
           <input id="cmMemo" type="text" placeholder="例：11月末マネーフォワード＆らくつむ確定"
             class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none" />
         </div>
@@ -611,14 +728,14 @@
       const BASE_START_RAKU_2026_10 = 68575;
 
       const SCENARIO_RATES = {
-        standard: 4.32,     // ① 標準（1万通貨13円/日水準・税引後）
-        conservative: 3.72, // ② 保守
-        pessimistic: 2.67   // ③ 悲観
+        standard: 4.32,     // 標準（税引後）
+        conservative: 3.72, // 保守（税引後）
+        pessimistic: 2.67   // 悲観（税引後）
       };
 
       /** 2026年12月を70歳とし、毎年12月に+1歳 */
       function getAge(year, month) {
-        return (year - 1957) + (month === 12 ? 1 : 0);
+        return month === 12 ? (year - 1956) : (year - 1957);
       }
 
       function formatYm(year, month) {
@@ -830,7 +947,7 @@
         if (ym <= '2027-06') livingCost = 307450;
         else if (ym <= '2037-05') livingCost = 302450;
         else if (ym <= '2038-12') livingCost = 260000;
-        else livingCost = 260000 + (year - 2038) * 800; // 2039〜2056: 毎年+800円 (2056年=274,400円)
+        else livingCost = 260000 + (year - 2038) * 800;
 
         return { pension, corpPension, salary, otherIncome, livingCost };
       }
@@ -867,15 +984,14 @@
 
       function createInitialState() {
         return {
-          // らくつむ＆補填シミュレーションパラメータ
-          monthlyDeposit: 15000,         // 毎月積立額（円）
-          stopDepositYm: '2036-12',      // 積立停止月（80歳到達月まで積立、翌月2037-01から0円）
-          cashFloor: 1000000,            // 現金口座 下限防衛ライン（100万円）
-          topupCondition: 'afterStop',   // 'afterStop' | 'alwaysAfterReach'
-          scenario: 'standard',          // 'standard' | 'conservative' | 'pessimistic' | 'custom'
-          customAnnualRate: 4.32,        // カスタム税引後スワップ年利（%）
-          chartGranularity: 'annual',    // 'annual' | 'monthly'
-          subTableView: 'annual',        // 'annual' | 'monthly'
+          monthlyDeposit: 15000,
+          stopDepositYm: '2036-12',
+          cashFloor: 1000000,
+          topupCondition: 'afterStop',
+          scenario: 'standard',
+          customAnnualRate: 4.32,
+          chartGranularity: 'annual',
+          subTableView: 'annual',
           autoSync: false,
           lastSyncTime: null,
           gasUrl: '',
@@ -894,7 +1010,6 @@
           monthlyCsvOverrides: {},
           events: createDefaultEvents(),
           mfData: createDefaultMfData(),
-          // 初期確定実績（2026年11月：11/27時点の確定値をアンカーとして初期搭載）
           confirmedMonths: {
             '2026-11': {
               cash: -592358,
@@ -908,7 +1023,7 @@
       }
 
       // =========================================================================
-      // 4. 状態管理
+      // 4. 状態管理・GAS双方向同期ユーティリティ
       // =========================================================================
       let state = loadState();
       let computedMonthly = [];
@@ -956,12 +1071,12 @@
         return SCENARIO_RATES[state.scenario] ?? 4.32;
       }
 
-      /** イベントの重複排除・照合用キー */
+      /** イベントの照合・重複排除用キー */
       function getEventKey(ev) {
         return `${String(ev.ym || '').trim()}|${String(ev.title || '').trim()}|${Math.round(Number(ev.amount) || 0)}`;
       }
 
-      /** GASへPOST送信（text/plainでCORSプリフライト回避） */
+      /** GAS WebアプリへPOST送信（CORSプリフライト回避のためtext/plainを使用） */
       async function postToGas(payload) {
         const url = (state.gasUrl || '').trim();
         if (!url) return { ok: false, reason: 'no_url' };
@@ -972,8 +1087,16 @@
             body: JSON.stringify(payload)
           });
           if (!res.ok) return { ok: false, reason: `HTTP ${res.status}` };
-          const json = await res.json().catch(() => ({}));
-          if (json && json.status === 'ok') return { ok: true, data: json };
+          const text = await res.text();
+          let json = null;
+          try { json = JSON.parse(text); } catch (_) { json = null; }
+          if (json && (json.status === 'ok' || json.ok === true || json.result === 'success')) {
+            return { ok: true, data: json };
+          }
+          // JSONでなくてもHTTP 200でエラー文言がなければ成功とみなす場合
+          if (!json && !text.toLowerCase().includes('<html') && !text.toLowerCase().includes('error')) {
+            return { ok: true, data: { raw: text } };
+          }
           return { ok: false, reason: json?.message || 'GAS応答エラー' };
         } catch (err) {
           return { ok: false, reason: err.message };
@@ -994,12 +1117,13 @@
 
         const remaining = [];
         let sent = 0;
+
         for (const op of state.pendingOps) {
           const r = await postToGas(op.payload);
           if (r.ok) {
             sent++;
-            if (op.payload.action === 'addEvent' && op.localId) {
-              const ev = state.events.find(e => e.localId === op.localId);
+            if (op.payload.action === 'addEvent') {
+              const ev = state.events.find(e => e.localId && e.localId === op.localId);
               if (ev) ev.syncStatus = 'synced';
               const key = getEventKey(op.payload.event);
               if (!state.recentSyncedAdds.some(e => getEventKey(e) === key)) {
@@ -1022,8 +1146,11 @@
         renderSettingsSection();
 
         if (!silent) {
-          if (remaining.length === 0) showToast(`未同期データ ${sent}件をスプレッドシートへ送信しました`, 'success');
-          else showToast(`${sent}件送信完了 / ${remaining.length}件失敗（ネットワークまたはGAS設定を確認）`, 'warning');
+          if (remaining.length === 0) {
+            showToast(`未同期データ ${sent}件をスプレッドシートへ送信しました`, 'success');
+          } else {
+            showToast(`${sent}件送信完了 / ${remaining.length}件失敗（GAS設定や通信を確認してください）`, 'warning');
+          }
         }
         return { sent, failed: remaining.length };
       }
@@ -1045,8 +1172,6 @@
         let hasReachedFloor = (state.cashFloor > 0 && prevCash >= state.cashFloor);
 
         const monthlyRows = [];
-
-        // 統計集計用
         let firstTopupRow = null;
         let totalTopupAmount = 0;
         let totalTopupCount = 0;
@@ -1081,22 +1206,21 @@
 
           const netCashflow = incomeTotal - expenseTotal;
 
-          // らくつむ積立（停止月まで毎月積立、翌月以降は0円）
+          // らくつむ積立（停止月まで積立、翌月以降は0円）
           const isDepositing = ym <= state.stopDepositYm;
           const rakuDeposit = isDepositing ? Math.max(0, Number(state.monthlyDeposit) || 0) : 0;
 
-          // 毎月の税引後スワップポイント（前月末らくつむ残高に比例）
+          // 毎月の税引後スワップ（前月末らくつむ残高に比例 → 補填で減るとスワップも減少）
           const monthlySwap = prevRaku > 0 ? Math.round(prevRaku * monthlyRate) : 0;
 
-          let cashBeforeTopup = prevCash + netCashflow;
-          let rakuBeforeTopup = Math.max(0, prevRaku + rakuDeposit + monthlySwap);
+          const cashBeforeTopup = prevCash + netCashflow;
+          const rakuBeforeTopup = Math.max(0, prevRaku + rakuDeposit + monthlySwap);
 
           let topupAmount = 0;
           let cashBalance = cashBeforeTopup;
           let rakutsumuBalance = rakuBeforeTopup;
 
           if (isConfirmed) {
-            // 確定月は入力実績をアンカーとしてそのまま上書き
             if (conf.cash !== null && conf.cash !== undefined && conf.cash !== '') {
               cashBalance = Number(conf.cash);
             }
@@ -1107,12 +1231,10 @@
               hasReachedFloor = true;
             }
           } else {
-            // 一度でも下限ライン以上に到達したかを記録
             if (state.cashFloor > 0 && cashBeforeTopup >= state.cashFloor) {
               hasReachedFloor = true;
             }
 
-            // 100万円自動補填の判定
             const canTopup = state.cashFloor > 0 && (
               state.topupCondition === 'afterStop'
                 ? (ym > state.stopDepositYm)
@@ -1139,7 +1261,6 @@
             cashBalance, rakutsumuBalance, totalBalance
           };
 
-          // 統計更新
           if (topupAmount > 0) {
             if (!firstTopupRow) firstTopupRow = rowObj;
             totalTopupAmount += topupAmount;
@@ -1229,9 +1350,7 @@
         }
       }
 
-      // --- TAB 1: ダッシュボード ---
       function renderDashboard() {
-        // コントロールバーの状態同期
         const ctrlStop = document.getElementById('ctrlStopYm');
         if ([...ctrlStop.options].some(o => o.value === state.stopDepositYm)) {
           ctrlStop.value = state.stopDepositYm;
@@ -1271,7 +1390,6 @@
         document.getElementById('activeRuleSummary').textContent =
           `${state.stopDepositYm}(${stopAge}歳)で積立停止｜下限${fmtMan(state.cashFloor)}補填｜年利${simStats.annualRate.toFixed(2)}%`;
 
-        // 5枚のKPIカードデータ
         const confKeys = Object.keys(state.confirmedMonths).sort();
         const latestYm = confKeys.length > 0 ? confKeys[confKeys.length - 1] : '2026-11';
         const latestRow = computedMonthly.find(r => r.ym === latestYm) || computedMonthly[0];
@@ -1286,10 +1404,9 @@
         const endSwap = row100 ? row100.monthlySwap : 0;
 
         document.getElementById('kpiGrid').innerHTML = `
-          <!-- KPI 1: 現在（最新確定月） -->
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-1">
-              <span class="text-xs font-bold text-slate-500">① 現在残高</span>
+              <span class="text-xs font-bold text-slate-500">① 最新確定残高</span>
               <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">${latestRow.ym}(${latestRow.age}歳)</span>
             </div>
             <div class="text-xl sm:text-2xl font-bold num mt-2 ${latestRow.totalBalance < 0 ? 'text-rose-600' : 'text-slate-900'}">${fmtYen(latestRow.totalBalance)}</div>
@@ -1299,7 +1416,6 @@
             </div>
           </div>
 
-          <!-- KPI 2: 80歳（積立停止時） -->
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-1">
               <span class="text-xs font-bold text-sky-700">② 積立停止時見込</span>
@@ -1312,7 +1428,6 @@
             </div>
           </div>
 
-          <!-- KPI 3: 初回補填＆累計補填 -->
           <div class="bg-white rounded-2xl border ${simStats.totalTopupCount > 0 ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200'} shadow-sm p-4 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-1">
               <span class="text-xs font-bold text-amber-800">③ 100万円自動補填</span>
@@ -1325,7 +1440,6 @@
             </div>
           </div>
 
-          <!-- KPI 4: 月次スワップ推移 -->
           <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-1">
               <span class="text-xs font-bold text-indigo-700">④ 月次スワップ推移</span>
@@ -1342,7 +1456,6 @@
             </div>
           </div>
 
-          <!-- KPI 5: 100歳最終残高 -->
           <div class="bg-white rounded-2xl border border-emerald-200 bg-emerald-50/30 shadow-sm p-4 flex flex-col justify-between">
             <div class="flex items-center justify-between gap-1">
               <span class="text-xs font-bold text-emerald-800">⑤ 100歳 最終残高</span>
@@ -1485,7 +1598,6 @@
           swapLabel = '月次スワップ（税引後・左軸）';
           topupLabel = '月次自動補填額（右軸）';
         } else {
-          // 年次表示では「年末時点の月次スワップ額」と「年間補填合計額」を対比
           labels = computedAnnual.map(a => `${a.year}年(${a.ageEnd}歳)`);
           ages = computedAnnual.map(a => a.ageEnd);
           swapData = computedAnnual.map(a => {
@@ -1576,7 +1688,6 @@
         });
       }
 
-      // --- TAB 2: 年次サマリー ＆ 月次明細 ---
       function renderAnnualTable() {
         document.getElementById('annualConditionBadge').textContent =
           `積立停止: ${state.stopDepositYm}｜補填ライン: ${fmtMan(state.cashFloor)}｜年利: ${simStats.annualRate.toFixed(2)}%`;
@@ -1679,7 +1790,6 @@
         }).join('');
       }
 
-      // --- TAB 3: イベント ＆ MF実績 ---
       function renderEventsTable() {
         const kw = (document.getElementById('eventSearchInput').value || '').trim().toLowerCase();
         const cat = document.getElementById('eventCategoryFilter').value;
@@ -1798,7 +1908,6 @@
         });
       }
 
-      // --- TAB 4: 設定・連携・バックアップ ---
       function renderSettingsSection() {
         document.getElementById('gasUrl').value = state.gasUrl || '';
         const pendingCount = (state.pendingOps || []).length;
@@ -1834,11 +1943,11 @@
             const p = parseYm(ym);
             return `
               <tr class="hover:bg-slate-50">
-                <td class="px-3 py-2.5 num font-bold text-emerald-800">${ym} (${p ? getAge(p.year, p.month) : '-'}歳)</td>
-                <td class="px-3 py-2.5 text-right num font-bold ${amtClass(c.cash)}">${fmtYen(c.cash)}</td>
-                <td class="px-3 py-2.5 text-right num font-bold text-indigo-700">${c.rakutsumu !== null && c.rakutsumu !== '' && c.rakutsumu !== undefined ? fmtYen(c.rakutsumu) : '自動計算'}</td>
-                <td class="px-3 py-2.5 text-right num text-slate-700">${c.income !== null && c.income !== '' && c.income !== undefined ? fmtYen(c.income) : '計画値'}</td>
-                <td class="px-3 py-2.5 text-right num text-slate-700">${c.expense !== null && c.expense !== '' && c.expense !== undefined ? fmtYen(c.expense) : '計画値'}</td>
+                <td class="px-3 py-2.5 num font-bold text-emerald-800 whitespace-nowrap">${ym} (${p ? getAge(p.year, p.month) : '-'}歳)</td>
+                <td class="px-3 py-2.5 text-right num font-bold ${amtClass(c.cash)} whitespace-nowrap">${fmtYen(c.cash)}</td>
+                <td class="px-3 py-2.5 text-right num font-bold text-indigo-700 whitespace-nowrap">${c.rakutsumu !== null && c.rakutsumu !== '' && c.rakutsumu !== undefined ? fmtYen(c.rakutsumu) : '自動計算'}</td>
+                <td class="px-3 py-2.5 text-right num text-slate-700 whitespace-nowrap">${c.income !== null && c.income !== '' && c.income !== undefined ? fmtYen(c.income) : '計画値'}</td>
+                <td class="px-3 py-2.5 text-right num text-slate-700 whitespace-nowrap">${c.expense !== null && c.expense !== '' && c.expense !== undefined ? fmtYen(c.expense) : '計画値'}</td>
                 <td class="px-3 py-2.5 text-slate-700">${escHtml(c.memo || '-')}</td>
                 <td class="px-3 py-2.5 text-center">
                   <button type="button" data-unconfirm-ym="${ym}" class="btn-unconfirm text-rose-600 hover:text-rose-800 font-bold px-2 py-1 rounded hover:bg-rose-50">解除</button>
@@ -1895,7 +2004,7 @@
       }
 
       // =========================================================================
-      // 8. CSVインポーター ＆ Googleスプレッドシート即時同期
+      // 8. CSVインポーター ＆ Googleスプレッドシート双方向同期
       // =========================================================================
       function findColIndex(headers, keywords) {
         return headers.findIndex(h => {
@@ -1963,7 +2072,7 @@
         }
         if (csvEvents.length === 0) throw new Error('有効なイベント行がありません');
 
-        // 1) 未同期の削除＆最近GAS同期済みの削除を再適用（CSVキャッシュ遅延対策）
+        // 1) 未同期の削除＆最近GAS同期済みの削除を保護（公開CSVキャッシュ遅延対策）
         const pendingDeleteKeys = new Set(
           (state.pendingOps || [])
             .filter(op => op.payload && op.payload.action === 'deleteEvent')
@@ -1972,7 +2081,7 @@
         const recentDeleteKeys = new Set(state.recentSyncedDeletes || []);
         const csvKeySet = new Set(csvEvents.map(getEventKey));
 
-        // CSVから実際に消えた削除履歴はクリーンアップ
+        // 公開CSVから実際に消えた削除履歴はクリーンアップ
         state.recentSyncedDeletes = (state.recentSyncedDeletes || []).filter(k => csvKeySet.has(k));
 
         const merged = [];
@@ -2006,7 +2115,7 @@
           }
         }
 
-        // 3) GAS書き込み直後で公開CSVキャッシュにまだ載っていない追加分を保護
+        // 3) GAS書き込み直後で公開CSVキャッシュにまだ反映されていない追加分を保護
         const stillMissingAdds = [];
         for (const ev of (state.recentSyncedAdds || [])) {
           const k = getEventKey(ev);
@@ -2031,10 +2140,6 @@
         state.events = merged.sort((a, b) => a.ym.localeCompare(b.ym));
         return `${merged.length}件のイベントを反映（ローカル編集保護済）`;
       }
-        if (events.length === 0) throw new Error('有効なイベント行がありません');
-        state.events = events;
-        return `${events.length}件のイベントを反映`;
-      }
 
       function importRakutsumuActualCSV(csvText) {
         const rows = parseCSV(csvText);
@@ -2056,9 +2161,18 @@
           if (ym < '2026-11') continue;
           const evalVal = parseAmount(r[iEval]);
           if (evalVal <= 0) continue;
-          const existing = state.confirmedMonths[ym] || { cash: null, income: null, expense: null, memo: 'らくつむ実績CSV同期' };
-          state.confirmedMonths[ym] = { ...existing, rakutsumu: evalVal };
-          updated++;
+
+          // ローカルで既に確定済みの月は現金残高などを維持しつつ保護
+          const existing = state.confirmedMonths[ym];
+          if (existing) {
+            if (existing.rakutsumu === null || existing.rakutsumu === undefined || existing.rakutsumu === '') {
+              state.confirmedMonths[ym] = { ...existing, rakutsumu: evalVal };
+              updated++;
+            }
+          } else {
+            state.confirmedMonths[ym] = { cash: null, rakutsumu: evalVal, income: null, expense: null, memo: 'らくつむ実績CSV同期' };
+            updated++;
+          }
         }
         return `${updated}ヶ月分のらくつむ確定残高を反映`;
       }
@@ -2066,7 +2180,6 @@
       function importRakutsumuCfCSV(csvText) {
         const rows = parseCSV(csvText);
         if (rows.length < 2) throw new Error('CF表連携サマリーCSVにデータがありません');
-        // 毎月積立額などの設定行があれば抽出
         let found = 0;
         for (let i = 0; i < rows.length; i++) {
           const line = rows[i].join(' ');
@@ -2146,7 +2259,7 @@
         const logBox = document.getElementById('syncLogBox');
         icon.classList.add('animate-spin-fast', 'inline-block');
         logBox.classList.remove('hidden');
-        logBox.innerHTML = `<div class="text-sky-400">[${new Date().toLocaleTimeString('ja-JP')}] 同期処理を開始...</div>`;
+        logBox.innerHTML = `<div class="text-sky-400">[${new Date().toLocaleTimeString('ja-JP')}] ${targets.length}シートの同期を開始...</div>`;
 
         // Step 1: GAS URLが設定されていて未同期データがあれば先に送信
         if ((state.gasUrl || '').trim() && (state.pendingOps || []).length > 0) {
@@ -2155,154 +2268,51 @@
           logBox.innerHTML += `<div class="text-emerald-300">✔ GAS送信完了（成功: ${pushRes.sent}件 / 残: ${pushRes.failed}件）</div>`;
         }
 
-        // Step 2: 5つの公開CSVを取得して反映（ローカル追加・削除は保護）
+        // Step 2: 公開CSVを取得して反映
         let ok = 0, ng = 0;
         for (const t of targets) {
-        document.getElementById('confirmMonthForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const ym = document.getElementById('cmYm').value;
-          const cashVal = document.getElementById('cmCash').value;
-          if (cashVal === '') { showToast('確定現金残高を入力してください', 'warning'); return; }
-          const rakuVal = document.getElementById('cmRakutsumu').value;
-          const incVal = document.getElementById('cmIncome').value;
-          const expVal = document.getElementById('cmExpense').value;
-
-          const confirmObj = {
-            cash: Number(cashVal),
-            rakutsumu: rakuVal !== '' ? Number(rakuVal) : null,
-            income: incVal !== '' ? Number(incVal) : null,
-            expense: expVal !== '' ? Number(expVal) : null,
-            memo: document.getElementById('cmMemo').value.trim()
-          };
-          state.confirmedMonths[ym] = confirmObj;
-          saveState(); closeConfirmModal(); renderAll();
-
-          const payload = {
-            action: 'confirmMonth',
-            data: {
-              ym,
-              cash: confirmObj.cash,
-              rak: confirmObj.rakutsumu,
-              income: confirmObj.income,
-              expense: confirmObj.expense
+          try {
+            const sep = t.url.includes('?') ? '&' : '?';
+            const fetchUrl = `${t.url.trim()}${sep}_t=${Date.now()}`;
+            const res = await fetch(fetchUrl, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const text = await res.text();
+            const head = text.trim().slice(0, 60).toLowerCase();
+            if (head.startsWith('<!doctype') || head.startsWith('<html')) {
+              throw new Error('CSVではなくHTMLが返されました（「ウェブに公開」のoutput=csv URLをご確認ください）');
             }
-          };
-
-          if ((state.gasUrl || '').trim()) {
-            const res = await postToGas(payload);
-            if (res.ok) {
-              showToast(`${ym} を確定し、スプレッドシートへ書き込みました`, 'success');
-            } else {
-              state.pendingOps.push({ id: `op_${Date.now()}`, payload });
-              saveState(); renderSettingsSection();
-              showToast(`${ym} をアプリに保存しました（GAS未同期）`, 'warning');
-            }
-          } else {
-            showToast(`${ym} を確定上書きし、翌月以降の全残高・補填・スワップを連動更新しました`, 'success');
+            const msg = t.importer(text);
+            logBox.innerHTML += `<div class="text-emerald-400">✔ [${escHtml(t.name)}] ${escHtml(msg)}</div>`;
+            ok++;
+          } catch (err) {
+            logBox.innerHTML += `<div class="text-rose-400">✖ [${escHtml(t.name)}] ${escHtml(err.message)}</div>`;
+            ng++;
           }
-        });
+        }
 
-        document.getElementById('btnDeleteConfirmInModal').addEventListener('click', () => {
-          const ym = document.getElementById('cmYm').value;
-          delete state.confirmedMonths[ym];
-          saveState(); closeConfirmModal(); renderAll();
-          showToast(`${ym} の確定を解除しました`, 'info');
-        });
+        icon.classList.remove('animate-spin-fast');
+        const now = new Date();
+        state.lastSyncTime = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        saveState();
+        renderAll();
 
-        // イベント追加・検索・削除
-        document.getElementById('addEventForm').addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const ym = document.getElementById('evYm').value;
-          const title = document.getElementById('evTitle').value.trim();
-          const amount = Number(document.getElementById('evAmount').value);
-          const category = document.getElementById('evCategory').value;
-          if (!ym || !title || isNaN(amount) || amount <= 0) return;
+        if (ng === 0) showToast(`全${ok}シートの同期が完了しました`, 'success');
+        else showToast(`同期完了（成功:${ok} / エラー:${ng}）詳細は設定タブのログを確認`, 'warning');
+      }
 
-          const localId = `ev_${Date.now()}`;
-          const newEv = { id: localId, localId, ym, title, amount, category, syncStatus: 'pending' };
-          state.events.push(newEv);
+      // =========================================================================
+      // 9. タブ・イベントバインド
+      // =========================================================================
+      function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        const activePanel = document.getElementById(`tab-${tabId}`);
+        if (activePanel) activePanel.classList.remove('hidden');
 
-          // 同じキーが削除保護リストにあれば解除
-          const evKey = getEventKey(newEv);
-          state.recentSyncedDeletes = (state.recentSyncedDeletes || []).filter(k => k !== evKey);
-
-          document.getElementById('evTitle').value = '';
-          document.getElementById('evAmount').value = '';
-          saveState(); renderAll();
-
-          const payload = {
-            action: 'addEvent',
-            event: { ym, title, amount, category, memo: '' }
-          };
-
-          if ((state.gasUrl || '').trim()) {
-            const res = await postToGas(payload);
-            if (res.ok) {
-              newEv.syncStatus = 'synced';
-              if (!state.recentSyncedAdds.some(item => getEventKey(item) === evKey)) {
-                state.recentSyncedAdds.push({ ...newEv });
-              }
-              saveState(); renderEventsTable(); renderSettingsSection();
-              showToast('スプレッドシートへ書き込みました', 'success');
-            } else {
-              state.pendingOps.push({ id: `op_${Date.now()}`, localId, payload });
-              saveState(); renderSettingsSection();
-              showToast('アプリに保存しました（未同期）', 'warning');
-            }
-          } else {
-            state.pendingOps.push({ id: `op_${Date.now()}`, localId, payload });
-            saveState(); renderSettingsSection();
-            showToast('アプリに保存しました（未同期）', 'info');
-          }
-        });
-        document.getElementById('eventSearchInput').addEventListener('input', renderEventsTable);
-        document.getElementById('eventCategoryFilter').addEventListener('change', renderEventsTable);
-        document.getElementById('eventsTableBody').addEventListener('click', async (e) => {
-          const btn = e.target.closest('.btn-del-event');
-          if (!btn) return;
-          const targetId = btn.dataset.delEv;
-          const targetEv = state.events.find(ev => ev.id === targetId);
-          if (!targetEv) return;
-
-          state.events = state.events.filter(ev => ev.id !== targetId);
-          const evKey = getEventKey(targetEv);
-
-          // 未同期のローカル追加だった場合はpendingOpsから取り消すだけで完了
-          const pendingAddIdx = state.pendingOps.findIndex(
-            op => op.payload?.action === 'addEvent' && (op.localId === targetEv.localId || getEventKey(op.payload.event) === evKey)
-          );
-
-          if (pendingAddIdx !== -1) {
-            state.pendingOps.splice(pendingAddIdx, 1);
-            saveState(); renderAll();
-            showToast('未同期イベントを削除しました', 'info');
-            return;
-          }
-
-          // 同期済みまたはCSV由来のイベント削除
-          state.recentSyncedAdds = (state.recentSyncedAdds || []).filter(item => getEventKey(item) !== evKey);
-          const payload = {
-            action: 'deleteEvent',
-            event: { ym: targetEv.ym, title: targetEv.title, amount: targetEv.amount, category: targetEv.category }
-          };
-
-          if ((state.gasUrl || '').trim()) {
-            saveState(); renderAll();
-            const res = await postToGas(payload);
-            if (res.ok) {
-              if (!state.recentSyncedDeletes.includes(evKey)) state.recentSyncedDeletes.push(evKey);
-              saveState();
-              showToast('イベントを削除し、スプレッドシートへ反映しました', 'success');
-            } else {
-              state.pendingOps.push({ id: `op_${Date.now()}`, payload });
-              saveState(); renderSettingsSection();
-              showToast('アプリから削除しました（スプレッドシート未同期）', 'warning');
-            }
-          } else {
-            state.pendingOps.push({ id: `op_${Date.now()}`, payload });
-            saveState(); renderAll();
-            showToast('イベントを削除しました（未同期）', 'info');
-          }
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          const active = btn.dataset.tab === tabId;
+          btn.className = `tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
+            active ? 'bg-sky-600 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-700'
+          }`;
         });
 
         if (tabId === 'dashboard') {
@@ -2329,12 +2339,34 @@
         }`;
       }
 
+      function handleLocalCsvFile(file, type) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const text = reader.result;
+            let msg = '';
+            if (type === 'monthlyPlan') msg = importMonthlyPlanCSV(text);
+            else if (type === 'events') msg = importEventsCSV(text);
+            else if (type === 'rakutsumuActual') msg = importRakutsumuActualCSV(text);
+            else if (type === 'rakutsumuCf') msg = importRakutsumuCfCSV(text);
+            else if (type === 'moneyForward') msg = importMoneyForwardCSV(text);
+            saveState();
+            renderAll();
+            showToast(`CSV読込完了: ${msg}`, 'success');
+          } catch (err) {
+            showToast(`CSV解析エラー: ${err.message}`, 'error');
+          }
+        };
+        reader.readAsText(file, 'UTF-8');
+      }
+
       function bindEvents() {
+        // メインタブ切替
         document.querySelectorAll('.tab-btn').forEach(btn => {
           btn.addEventListener('click', () => switchTab(btn.dataset.tab));
         });
 
-        // ダッシュボード：コントロールバー
+        // TAB 1: コントロールバー
         document.getElementById('ctrlStopYm').addEventListener('change', (e) => {
           state.stopDepositYm = e.target.value;
           saveState(); renderAll();
@@ -2364,11 +2396,11 @@
           });
         });
 
-        // ヘッダー
+        // ヘッダー操作
         document.getElementById('btnOpenConfirmModal').addEventListener('click', () => openConfirmModal());
         document.getElementById('btnSyncSheets').addEventListener('click', () => syncAllGoogleSheets());
 
-        // TAB 2 サブ切替＆フィルタ
+        // TAB 2: 年次/月次サブ切替 ＆ フィルタ
         document.getElementById('btnSubAnnual').addEventListener('click', () => switchSubTable('annual'));
         document.getElementById('btnSubMonthly').addEventListener('click', () => switchSubTable('monthly'));
         document.getElementById('monthlyYearFilter').addEventListener('change', renderMonthlyTable);
@@ -2379,13 +2411,15 @@
           if (btn) openConfirmModal(btn.dataset.confirmYm);
         });
 
-        // 確定モーダル
+        // 月末確定モーダル
         document.getElementById('cmYm').addEventListener('change', (e) => populateConfirmModalFields(e.target.value));
         document.getElementById('btnCloseConfirmModal').addEventListener('click', closeConfirmModal);
         document.getElementById('btnCancelConfirmModal').addEventListener('click', closeConfirmModal);
-        document.getElementById('confirmModal').addEventListener('click', (e) => { if (e.target.id === 'confirmModal') closeConfirmModal(); });
+        document.getElementById('confirmModal').addEventListener('click', (e) => {
+          if (e.target.id === 'confirmModal') closeConfirmModal();
+        });
 
-        document.getElementById('confirmMonthForm').addEventListener('submit', (e) => {
+        document.getElementById('confirmMonthForm').addEventListener('submit', async (e) => {
           e.preventDefault();
           const ym = document.getElementById('cmYm').value;
           const cashVal = document.getElementById('cmCash').value;
@@ -2394,36 +2428,195 @@
           const incVal = document.getElementById('cmIncome').value;
           const expVal = document.getElementById('cmExpense').value;
 
-          state.confirmedMonths[ym] = {
+          const confirmObj = {
             cash: Number(cashVal),
             rakutsumu: rakuVal !== '' ? Number(rakuVal) : null,
             income: incVal !== '' ? Number(incVal) : null,
             expense: expVal !== '' ? Number(expVal) : null,
             memo: document.getElementById('cmMemo').value.trim()
           };
-          saveState(); closeConfirmModal(); renderAll();
-          showToast(`${ym} を確定上書きし、翌月以降の全残高・補填・スワップを連動更新しました`, 'success');
+          state.confirmedMonths[ym] = confirmObj;
+          saveState();
+          closeConfirmModal();
+          renderAll();
+
+          const payload = {
+            action: 'confirmMonth',
+            data: {
+              ym,
+              cash: confirmObj.cash,
+              rak: confirmObj.rakutsumu,
+              income: confirmObj.income,
+              expense: confirmObj.expense,
+              memo: confirmObj.memo
+            }
+          };
+
+          if ((state.gasUrl || '').trim()) {
+            const res = await postToGas(payload);
+            if (res.ok) {
+              showToast(`${ym} を確定し、スプレッドシートへ書き込みました`, 'success');
+            } else {
+              state.pendingOps.push({ id: `op_${Date.now()}`, payload });
+              saveState();
+              renderSettingsSection();
+              showToast(`${ym} をアプリに保存しました（GAS未同期）`, 'warning');
+            }
+          } else {
+            showToast(`${ym} を確定上書きし、翌月以降の全残高・補填・スワップを連動更新しました`, 'success');
+          }
         });
 
         document.getElementById('btnDeleteConfirmInModal').addEventListener('click', () => {
           const ym = document.getElementById('cmYm').value;
           delete state.confirmedMonths[ym];
-          saveState(); closeConfirmModal(); renderAll();
+          saveState();
+          closeConfirmModal();
+          renderAll();
           showToast(`${ym} の確定を解除しました`, 'info');
         });
 
-        // イベント追加・検索・削除
-        document.getElementById('addEventForm').addEventListener('submit', (e) => {
+        // TAB 3: イベント追加・検索・削除（GAS自動書き込み＆保護付き）
+        document.getElementById('addEventForm').addEventListener('submit', async (e) => {
           e.preventDefault();
           const ym = document.getElementById('evYm').value;
           const title = document.getElementById('evTitle').value.trim();
           const amount = Number(document.getElementById('evAmount').value);
           const category = document.getElementById('evCategory').value;
           if (!ym || !title || isNaN(amount) || amount <= 0) return;
-          state.events.push({ id: `ev_${Date.now()}`, ym, title, amount, category });
+
+          const localId = `ev_${Date.now()}`;
+          const newEv = { id: localId, localId, ym, title, amount, category, syncStatus: 'pending' };
+          state.events.push(newEv);
+
+          const evKey = getEventKey(newEv);
+          state.recentSyncedDeletes = (state.recentSyncedDeletes || []).filter(k => k !== evKey);
+
           document.getElementById('evTitle').value = '';
           document.getElementById('evAmount').value = '';
-        // TAB 4: GAS URL設定・テスト・未同期送信
+          saveState();
+          renderAll();
+
+          const payload = {
+            action: 'addEvent',
+            event: { ym, title, amount, category, memo: '' }
+          };
+
+          if ((state.gasUrl || '').trim()) {
+            const res = await postToGas(payload);
+            if (res.ok) {
+              newEv.syncStatus = 'synced';
+              if (!state.recentSyncedAdds.some(item => getEventKey(item) === evKey)) {
+                state.recentSyncedAdds.push({ ...newEv });
+              }
+              saveState();
+              renderEventsTable();
+              renderSettingsSection();
+              showToast('イベントを追加し、スプレッドシートへ書き込みました', 'success');
+            } else {
+              state.pendingOps.push({ id: `op_${Date.now()}`, localId, payload });
+              saveState();
+              renderSettingsSection();
+              showToast('イベントをアプリに保存しました（GAS未同期）', 'warning');
+            }
+          } else {
+            state.pendingOps.push({ id: `op_${Date.now()}`, localId, payload });
+            saveState();
+            renderSettingsSection();
+            showToast('イベントを追加しました（GAS未設定のためローカル保護中）', 'info');
+          }
+        });
+
+        document.getElementById('eventSearchInput').addEventListener('input', renderEventsTable);
+        document.getElementById('eventCategoryFilter').addEventListener('change', renderEventsTable);
+
+        document.getElementById('eventsTableBody').addEventListener('click', async (e) => {
+          const btn = e.target.closest('.btn-del-event');
+          if (!btn) return;
+          const targetId = btn.dataset.delEv;
+          const targetEv = state.events.find(ev => ev.id === targetId);
+          if (!targetEv) return;
+
+          state.events = state.events.filter(ev => ev.id !== targetId);
+          const evKey = getEventKey(targetEv);
+
+          // 未同期のローカル追加だった場合はキューから取り消すだけで完了
+          const pendingAddIdx = state.pendingOps.findIndex(
+            op => op.payload?.action === 'addEvent' && (op.localId === targetEv.localId || getEventKey(op.payload.event) === evKey)
+          );
+          if (pendingAddIdx !== -1) {
+            state.pendingOps.splice(pendingAddIdx, 1);
+            saveState();
+            renderAll();
+            showToast('未同期イベントを削除しました', 'info');
+            return;
+          }
+
+          state.recentSyncedAdds = (state.recentSyncedAdds || []).filter(item => getEventKey(item) !== evKey);
+          const payload = {
+            action: 'deleteEvent',
+            event: { ym: targetEv.ym, title: targetEv.title, amount: targetEv.amount, category: targetEv.category }
+          };
+
+          if ((state.gasUrl || '').trim()) {
+            saveState();
+            renderAll();
+            const res = await postToGas(payload);
+            if (res.ok) {
+              if (!state.recentSyncedDeletes.includes(evKey)) state.recentSyncedDeletes.push(evKey);
+              saveState();
+              showToast('イベントを削除し、スプレッドシートへ反映しました', 'success');
+            } else {
+              state.pendingOps.push({ id: `op_${Date.now()}`, payload });
+              saveState();
+              renderSettingsSection();
+              showToast('アプリから削除しました（スプレッドシート未同期）', 'warning');
+            }
+          } else {
+            state.pendingOps.push({ id: `op_${Date.now()}`, payload });
+            saveState();
+            renderAll();
+            showToast('イベントを削除しました（未同期キューに保存）', 'info');
+          }
+        });
+
+        // TAB 3: マネーフォワード操作
+        document.getElementById('mfMonthSelector').addEventListener('change', (e) => {
+          state.mfData.selectedMonth = e.target.value;
+          saveState();
+          renderMfSection();
+        });
+
+        document.getElementById('btnTransferMfToConfirm').addEventListener('click', () => {
+          const ym = state.mfData.selectedMonth || '2026-11';
+          const cur = state.mfData.months[ym];
+          if (!cur) return;
+          openConfirmModal(ym, {
+            income: Math.round(cur.income),
+            expense: Math.round(cur.expense),
+            memo: `MF実績転記（${cur.label || ym}）`
+          });
+        });
+
+        const mfDrop = document.getElementById('mfDropZone');
+        document.getElementById('mfLocalFileInput').addEventListener('change', (e) => {
+          if (e.target.files?.[0]) handleLocalCsvFile(e.target.files[0], 'moneyForward');
+          e.target.value = '';
+        });
+        mfDrop.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          mfDrop.classList.add('border-sky-500', 'bg-sky-50');
+        });
+        mfDrop.addEventListener('dragleave', () => {
+          mfDrop.classList.remove('border-sky-500', 'bg-sky-50');
+        });
+        mfDrop.addEventListener('drop', (e) => {
+          e.preventDefault();
+          mfDrop.classList.remove('border-sky-500', 'bg-sky-50');
+          if (e.dataTransfer.files?.[0]) handleLocalCsvFile(e.dataTransfer.files[0], 'moneyForward');
+        });
+
+        // TAB 4: GAS URL設定・接続テスト・未同期送信
         document.getElementById('gasUrlForm').addEventListener('submit', (e) => {
           e.preventDefault();
           state.gasUrl = document.getElementById('gasUrl').value.trim();
@@ -2462,18 +2655,19 @@
           flushPendingOps(false);
         });
 
-        // TAB 4: パラメータ設定
+        // TAB 4: らくつむ・補填パラメータ設定
         document.getElementById('paramSettingsForm').addEventListener('submit', (e) => {
           e.preventDefault();
           state.monthlyDeposit = Math.max(0, Number(document.getElementById('setMonthlyDeposit').value) || 0);
           state.stopDepositYm = document.getElementById('setStopYm').value;
           state.cashFloor = Math.max(0, Number(document.getElementById('setCashFloor').value) || 0);
           state.customAnnualRate = Math.max(0, Number(document.getElementById('setCustomRate').value) || 0);
-          saveState(); renderAll();
+          saveState();
+          renderAll();
           showToast('らくつむ・補填パラメータを更新し、全期間を再計算しました', 'success');
         });
 
-        // URL設定
+        // TAB 4: 公開CSV URL設定
         const saveUrls = () => {
           state.sheetUrls = {
             monthlyPlan: document.getElementById('urlMonthlyPlan').value.trim(),
@@ -2485,10 +2679,18 @@
           saveState();
         };
         document.getElementById('sheetUrlsForm').addEventListener('submit', (e) => {
-          e.preventDefault(); saveUrls(); showToast('公開CSV URL設定を保存しました', 'success');
+          e.preventDefault();
+          saveUrls();
+          showToast('公開CSV URL設定を保存しました', 'success');
         });
-        document.getElementById('btnSyncFromSettings').addEventListener('click', () => { saveUrls(); syncAllGoogleSheets(); });
-        document.getElementById('autoSyncToggle').addEventListener('change', (e) => { state.autoSync = e.target.checked; saveState(); });
+        document.getElementById('btnSyncFromSettings').addEventListener('click', () => {
+          saveUrls();
+          syncAllGoogleSheets();
+        });
+        document.getElementById('autoSyncToggle').addEventListener('change', (e) => {
+          state.autoSync = e.target.checked;
+          saveState();
+        });
 
         document.querySelectorAll('.local-csv-input').forEach(inp => {
           inp.addEventListener('change', (e) => {
@@ -2497,15 +2699,17 @@
           });
         });
 
+        // 確定履歴解除
         document.getElementById('confirmedHistoryBody').addEventListener('click', (e) => {
           const btn = e.target.closest('.btn-unconfirm');
           if (!btn) return;
           delete state.confirmedMonths[btn.dataset.unconfirmYm];
-          saveState(); renderAll();
+          saveState();
+          renderAll();
           showToast(`${btn.dataset.unconfirmYm} の確定を解除しました`, 'info');
         });
 
-        // JSONエクスポート・インポート・初期化
+        // JSONバックアップ出力・復元・初期化
         document.getElementById('btnExportJson').addEventListener('click', () => {
           const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
@@ -2526,7 +2730,8 @@
               const parsed = JSON.parse(reader.result);
               if (!parsed || typeof parsed !== 'object') throw new Error('不正なJSON');
               state = { ...createInitialState(), ...parsed };
-              saveState(); renderAll();
+              saveState();
+              renderAll();
               showToast('JSONバックアップを復元しました', 'success');
             } catch (err) {
               showToast(`復元エラー: ${err.message}`, 'error');
@@ -2544,26 +2749,6 @@
           renderAll();
           showToast('初期データにリセットしました', 'info');
         });
-      }
-
-      function handleLocalCsvFile(file, type) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            const text = reader.result;
-            let msg = '';
-            if (type === 'monthlyPlan') msg = importMonthlyPlanCSV(text);
-            else if (type === 'events') msg = importEventsCSV(text);
-            else if (type === 'rakutsumuActual') msg = importRakutsumuActualCSV(text);
-            else if (type === 'rakutsumuCf') msg = importRakutsumuCfCSV(text);
-            else if (type === 'moneyForward') msg = importMoneyForwardCSV(text);
-            saveState(); renderAll();
-            showToast(`CSV読込完了: ${msg}`, 'success');
-          } catch (err) {
-            showToast(`CSV解析エラー: ${err.message}`, 'error');
-          }
-        };
-        reader.readAsText(file, 'UTF-8');
       }
 
       // =========================================================================
